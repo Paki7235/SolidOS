@@ -18,6 +18,7 @@ plocate
 iproute2
 iw
 ?avahi-daemon
+?libnss-mdns
 
 # Condivisione Vicina (AirDrop: librerie usate da OWL)
 ?libpcap0.8t64
