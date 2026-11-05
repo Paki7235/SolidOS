@@ -72,13 +72,13 @@ Finestra {
             ColumnLayout {
                 spacing: 10
                 BarraProgresso { Layout.fillWidth: true; indeterminate: true; visible: finestra.qr === null }
-                Testo { visible: finestra.qr && finestra.qr.errore; color: Tema.pericolo; text: finestra.qr ? (finestra.qr.errore || "") : ""; Layout.fillWidth: true }
+                Testo { visible: !!(finestra.qr && finestra.qr.errore); color: Tema.pericolo; text: finestra.qr ? (finestra.qr.errore || "") : ""; Layout.fillWidth: true }
                 RowLayout {
                     Layout.alignment: Qt.AlignHCenter
                     spacing: 20
-                    visible: finestra.qr && !finestra.qr.errore
+                    visible: !!(finestra.qr && !finestra.qr.errore)
                     ColumnLayout {
-                        visible: finestra.qr && !!finestra.qr.qrWifi
+                        visible: !!(finestra.qr && finestra.qr.qrWifi)
                         Testo { text: "1. " + I18n.t("Collega il telefono"); Layout.alignment: Qt.AlignHCenter }
                         Rectangle { color: "#FFFFFF"; radius: 8; width: 190; height: 190; Image { anchors.fill: parent; anchors.margins: 6; source: finestra.qr && finestra.qr.qrWifi ? "file://" + finestra.qr.qrWifi : ""; sourceSize.width: 400 } }
                     }
@@ -91,7 +91,7 @@ Finestra {
                     Layout.fillWidth: true
                     horizontalAlignment: Text.AlignHCenter
                     secondario: true
-                    visible: finestra.qr && !finestra.qr.errore
+                    visible: !!(finestra.qr && !finestra.qr.errore)
                     text: I18n.t("Il codice vale per un solo telefono, solo in questa rete, e scade tra 10 minuti. Non serve installare nulla.")
                 }
                 Pulsante {

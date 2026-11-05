@@ -24,8 +24,8 @@ AMBIENTE+=(WAYLAND_DISPLAY=wayland-0 XDG_RUNTIME_DIR="$RUN" DBUS_SESSION_BUS_ADD
 come_utente() { runuser -u "$UTENTE" -- env "${AMBIENTE[@]}" "$@"; }
 
 immagine() { # NOME
-	local f=/tmp/autotest-$1.jpg
-	if ! come_utente grim -t jpeg -q 55 -s 0.6 "$f" 2>/tmp/autotest-grim.err; then
+	local f=/tmp/autotest-$1.png
+	if ! come_utente grim -t png -l 9 -s 0.5 "$f" 2>/tmp/autotest-grim.err; then
 		scrivi "AUTOTEST-LOG grim: $(head -c 300 /tmp/autotest-grim.err | tr '\n' ' ')"
 		return
 	fi
@@ -35,6 +35,15 @@ immagine() { # NOME
 
 scrivi "AUTOTEST INIZIO $(date -Is) RAM: $(free -m | awk '/^Mem/{print $3"MB usati su "$2}')"
 immagine 00-desktop
+
+# Stato della shell e dei servizi utente (per i pulsanti del pannello)
+STATO=/home/$UTENTE/.local/state/@OS_ID@
+come_utente busctl --user list --no-pager 2>&1 | grep -i '@OS_ID@' | sed 's/^/AUTOTEST-BUS /' >"$USCITA"
+for f in shell.log sessione.log; do
+	[ -f "$STATO/$f" ] && tail -n 25 "$STATO/$f" | sed "s/^/AUTOTEST-$f: /" >"$USCITA"
+done
+come_utente systemctl --user --failed --no-legend --no-pager 2>&1 | sed 's/^/AUTOTEST-FALLITO /' >"$USCITA"
+pgrep -u "$UTENTE" -af 'nucleo|lxqt|swaybg|swayidle' | sed 's/^/AUTOTEST-PROC /' >"$USCITA"
 
 # Elenco: app del sistema + app di base del menu
 ELENCO=()

@@ -7,39 +7,39 @@ LXQtPanel #BackgroundWidget {
 }
 
 /* ── Barra dei menu ─────────────────────────────────────────────────────── */
-LXQtPanel#barra #BackgroundWidget {
+LXQtPanel[objectName="LXQtPanel barra"] #BackgroundWidget {
 	background-color: #8C0C0E14;
 	border-bottom: 1px solid #14FFFFFF;
 }
 
-LXQtPanel#barra QToolButton,
-LXQtPanel#barra QLabel {
+LXQtPanel[objectName="LXQtPanel barra"] QToolButton,
+LXQtPanel[objectName="LXQtPanel barra"] QLabel {
 	color: #F5F5F7;
 	font-size: 10pt;
 	font-weight: 500;
 }
 
-LXQtPanel#barra QToolButton {
+LXQtPanel[objectName="LXQtPanel barra"] QToolButton {
 	border: none;
 	border-radius: 5px;
 	padding: 2px 8px;
 	margin: 3px 1px;
 }
 
-LXQtPanel#barra QToolButton:hover,
-LXQtPanel#barra QToolButton:checked {
+LXQtPanel[objectName="LXQtPanel barra"] QToolButton:hover,
+LXQtPanel[objectName="LXQtPanel barra"] QToolButton:checked {
 	background-color: #33FFFFFF;
 }
 
 /* ── Dock ───────────────────────────────────────────────────────────────── */
-LXQtPanel#dock #BackgroundWidget {
+LXQtPanel[objectName="LXQtPanel dock"] #BackgroundWidget {
 	background-color: #6B282A32;
 	border: 1px solid #24FFFFFF;
 	border-radius: 20px;
 	margin: 0 0 8px 0;
 }
 
-LXQtPanel#dock QToolButton {
+LXQtPanel[objectName="LXQtPanel dock"] QToolButton {
 	border: none;
 	border-radius: 12px;
 	padding: 4px;
@@ -47,20 +47,20 @@ LXQtPanel#dock QToolButton {
 	color: transparent;
 }
 
-LXQtPanel#dock QToolButton:hover {
+LXQtPanel[objectName="LXQtPanel dock"] QToolButton:hover {
 	background-color: #1FFFFFFF;
 }
 
-LXQtPanel#dock QToolButton:pressed {
+LXQtPanel[objectName="LXQtPanel dock"] QToolButton:pressed {
 	background-color: #33FFFFFF;
 }
 
 /* Le app aperte: puntino chiaro sotto l'icona */
-LXQtPanel#dock #TaskBar QToolButton {
+LXQtPanel[objectName="LXQtPanel dock"] #TaskBar QToolButton {
 	border-bottom: 3px solid transparent;
 }
-LXQtPanel#dock #TaskBar QToolButton:checked,
-LXQtPanel#dock #TaskBar QToolButton[urgent="true"] {
+LXQtPanel[objectName="LXQtPanel dock"] #TaskBar QToolButton:checked,
+LXQtPanel[objectName="LXQtPanel dock"] #TaskBar QToolButton[urgent="true"] {
 	background-color: transparent;
 	border-bottom: 3px solid #D4D4D8;
 }

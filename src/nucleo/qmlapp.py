@@ -39,7 +39,7 @@ def crea_app(nome_app: str, argv: list[str] | None = None):
     font = QFont(branding.get("FONT_UI", "Inter"))
     font.setPointSize(int(branding.get("FONT_UI_DIMENSIONE", "10") or 10))
     app.setFont(font)
-    app.setWindowIcon(QIcon.fromTheme(f"{branding.id_os()}-logo"))
+    app.setWindowIcon(QIcon.fromTheme(f"{branding.id_os()}-logo-chiaro"))
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     return app
 
@@ -81,6 +81,7 @@ def tema_effettivo() -> dict:
     else:
         base.update({"superficieAlta": "#2F3037", "testoSecondario": "#A1A1AA", "bordo": "#3A3B42"})
     base["chiaro"] = chiaro
+    base["logo"] = base["idSistema"] + ("-logo" if chiaro else "-logo-chiaro")
     base["pericolo"] = "#E5484D"
     base["successo"] = "#30A46C"
     base["avviso"] = "#F5A524"

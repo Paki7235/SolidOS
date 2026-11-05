@@ -25,7 +25,7 @@ Finestra {
         caricamento = true
         ponte.avvia("voci", [corrente], "voci:" + corrente)
     }
-    function apri(id, voce) { corrente = id; evidenzia = voce || ""; filtro.text = ""; carica() }
+    function apri(id, voce) { corrente = id; evidenzia = voce || ""; campoFiltro.text = ""; carica() }
     function imposta(voce, valore) { ponte.avvia("imposta", [corrente, voce, valore], "imposta") }
     function esegui(voce, elemento, azione, dati) { ponte.avvia("azione", [corrente, voce, elemento, azione, dati || {}], "azione") }
 
@@ -110,7 +110,7 @@ Finestra {
                 Layout.fillWidth: true
                 titolo: finestra.titoloCorrente
                 CampoRicerca {
-                    id: filtro
+                    id: campoFiltro
                     width: 240
                     placeholderText: I18n.t("Cerca in questo pannello…")
                 }
@@ -132,7 +132,7 @@ Finestra {
                             Layout.leftMargin: 24
                             Layout.rightMargin: 24
                             voce: modelData
-                            filtro: filtro.text
+                            filtro: campoFiltro.text
                             evidenziata: finestra.evidenzia !== "" && modelData.id === finestra.evidenzia
                             onCambia: function (valore) { finestra.imposta(modelData.id, valore) }
                             onEsegui: function (elemento, azione, dati) { finestra.esegui(modelData.id, elemento, azione, dati) }

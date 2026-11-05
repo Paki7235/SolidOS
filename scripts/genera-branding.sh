@@ -82,7 +82,7 @@ else
 	# Tema del menu GRUB: voce scelta in una pillola bianca (immagini a 9 parti)
 	TEMA="$BINARY/boot/grub/$OS_ID"
 	mkdir -p "$TEMA"
-	r=10
+	r=8
 	angolo() { # nome trasformazione
 		# quarto di cerchio pieno nell'angolo in alto a sinistra, poi specchiato
 		printf '<svg xmlns="http://www.w3.org/2000/svg" width="%d" height="%d"><path d="M%d 0 A%d %d 0 0 0 0 %d L%d %d Z" fill="#FFFFFF" transform="%s"/></svg>' \

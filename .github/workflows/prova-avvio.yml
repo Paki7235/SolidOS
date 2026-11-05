@@ -81,7 +81,7 @@ jobs:
           kill $pid; wait $pid 2>/dev/null || true
           mkdir -p risultati/app
           grep -a '^AUTOTEST-IMG ' risultati/app.log | while read -r _ nome dati; do
-            echo "$dati" | base64 -d > "risultati/app/$nome.jpg" 2>/dev/null || true
+            echo "$dati" | base64 -d > "risultati/app/$nome.png" 2>/dev/null || true
           done
           grep -av '^AUTOTEST-IMG ' risultati/app.log | tee risultati/app-risultati.txt
 

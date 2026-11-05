@@ -37,7 +37,7 @@ Finestra {
         ColumnLayout {
             spacing: 18
             Item { Layout.fillHeight: true }
-            Image { Layout.alignment: Qt.AlignHCenter; source: "image://icona/" + Tema.idSistema + "-logo"; sourceSize.width: 128; sourceSize.height: 128 }
+            Image { Layout.alignment: Qt.AlignHCenter; source: "image://icona/" + Tema.logo; sourceSize.width: 128; sourceSize.height: 128 }
             Titolo { Layout.alignment: Qt.AlignHCenter; text: I18n.t("Benvenuto in") + " " + Tema.nomeSistema }
             Testo { Layout.alignment: Qt.AlignHCenter; secondario: true; text: I18n.t("Il sistema che non si rompe, non rallenta e ricorda tutto.") }
             Testo { Layout.alignment: Qt.AlignHCenter; text: I18n.t("Bastano un paio di minuti per sistemare tutto.") }

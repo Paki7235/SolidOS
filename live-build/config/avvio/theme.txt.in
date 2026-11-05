@@ -8,16 +8,16 @@ terminal-font: "Unifont Regular 16"
 
 + boot_menu {
 	left = 50%-210
-	top = 38%
+	top = 36%
 	width = 420
 	height = 50%
 	item_font = "@FONT_UI@ Regular 16"
 	selected_item_font = "@FONT_UI@ Regular 16"
 	item_color = "#A1A1AA"
 	selected_item_color = "#000000"
-	item_height = 38
+	item_height = 24
 	item_padding = 16
-	item_spacing = 2
+	item_spacing = 18
 	icon_width = 0
 	icon_height = 0
 	item_icon_space = 0

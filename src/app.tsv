@@ -22,5 +22,5 @@ barra	nucleo.barra	Barra Unica	system-search	Utility;	Cerca e agisci con una sco
 salvataggio	nucleo.salvataggio	Salvataggio	system-help	System;	Recupera file e ripara il computer	no
 migrazione	nucleo.migrazione	Migrazione da Windows	folder-download	System;	Importa file e impostazioni da Windows	no
 chiavetta	nucleo.chiavetta	Crea chiavetta @OS_NAME@	media-removable	System;	Crea una chiavetta avviabile con salvataggio dei dati	no
-benvenuto	nucleo.benvenuto	Benvenuto	@OS_ID@-logo	System;	Configurazione iniziale	si
+benvenuto	nucleo.benvenuto	Benvenuto	@OS_ID@-logo-chiaro	System;	Configurazione iniziale	si
 privacy	nucleo.privacy
