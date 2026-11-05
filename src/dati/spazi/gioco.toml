@@ -1,0 +1,15 @@
+nome = "Gioco"
+icona = "applications-games"
+descrizione = "Massime prestazioni"
+ordine = 30
+app = ["com.valvesoftware.Steam.desktop", "firefox-esr.desktop", "com.discordapp.Discord.desktop", "vlc.desktop"]
+cartelle = []
+energia = "performance"
+
+[notifiche]
+non_disturbare = true
+consentite = []
+
+[rete]
+connessione = ""
+vpn = ""

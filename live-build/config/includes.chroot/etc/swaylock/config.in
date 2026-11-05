@@ -1,0 +1,26 @@
+# Blocco schermo di @OS_NAME@ (swaylock)
+image=/usr/share/backgrounds/@OS_ID@/predefinito.png
+scaling=fill
+show-failed-attempts
+indicator-radius=90
+indicator-thickness=10
+font=@FONT_UI@
+inside-color=@COLORE_SFONDO_SCURO_HEX@CC
+inside-clear-color=@COLORE_SFONDO_SCURO_HEX@CC
+inside-ver-color=@COLORE_ACCENTO_SCURO_HEX@CC
+inside-wrong-color=E5484DCC
+ring-color=@COLORE_ACCENTO_HEX@
+ring-ver-color=@COLORE_ACCENTO_HEX@
+ring-clear-color=@COLORE_TESTO_CHIARO_HEX@
+ring-wrong-color=E5484D
+key-hl-color=FFFFFF
+bs-hl-color=E5484D
+line-color=00000000
+line-ver-color=00000000
+line-clear-color=00000000
+line-wrong-color=00000000
+separator-color=00000000
+text-color=FFFFFF
+text-ver-color=FFFFFF
+text-wrong-color=FFFFFF
+text-clear-color=FFFFFF

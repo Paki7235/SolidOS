@@ -1,0 +1,36 @@
+---
+componentName: @OS_ID@
+welcomeStyleCalamares: false
+welcomeExpandingLogo: true
+windowExpanding: normal
+windowSize: 900px,620px
+windowPlacement: center
+sidebar: widget
+navigation: widget
+
+strings:
+    productName:         "@OS_NAME@"
+    shortProductName:    "@OS_NAME@"
+    version:             "@OS_VERSION@"
+    shortVersion:        "@OS_VERSION@"
+    versionedName:       "@OS_NAME@ @OS_VERSION@"
+    shortVersionedName:  "@OS_NAME@ @OS_VERSION@"
+    bootloaderEntryName: "@OS_NAME@"
+    productUrl:          "@OS_HOME_URL@"
+    supportUrl:          "@OS_SUPPORT_URL@"
+    knownIssuesUrl:      "@OS_BUG_URL@"
+    releaseNotesUrl:     "@OS_HOME_URL@"
+
+images:
+    productLogo:         "logo.svg"
+    productIcon:         "logo.svg"
+    productWelcome:      "logo.svg"
+
+slideshow:               "show.qml"
+slideshowAPI:            2
+
+style:
+   SidebarBackground:        "@COLORE_SFONDO_SCURO@"
+   SidebarText:              "@COLORE_TESTO_CHIARO@"
+   SidebarTextCurrent:       "#FFFFFF"
+   SidebarBackgroundCurrent: "@COLORE_ACCENTO@"

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Action
+Name=Condividi con dispositivi vicini
+Icon=document-send
+Profiles=file;
+
+[X-Action-Profile file]
+MimeTypes=all/allfiles;
+Exec=@OS_ID@-condividi %F

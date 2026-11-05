@@ -1,0 +1,36 @@
+# Desktop della Fase 1: labwc + pannello LXQt provvisorio (sostituito da
+# solid-shell nella Fase 2) e app di base.
+
+# Compositor e sessione
+labwc
+swaybg
+xwayland
+greetd
+grim
+?slurp
+libnotify-bin
+
+# Pannello, notifiche, polkit (provvisori)
+lxqt-panel
+lxqt-notificationd
+lxqt-policykit
+lxqt-qtplugin
+lxqt-menu-data
+layer-shell-qt
+qt6-wayland
+qt6-svg-plugins
+?nm-tray
+
+# App di base
+pcmanfm-qt
+?gvfs-daemons
+qterminal
+featherpad
+firefox-esr
+
+# Aspetto
+papirus-icon-theme
+breeze-cursor-theme
+fonts-inter
+fonts-noto-core
+?fonts-noto-color-emoji

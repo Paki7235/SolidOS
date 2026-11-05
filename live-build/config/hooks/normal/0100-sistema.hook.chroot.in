@@ -1,0 +1,91 @@
+#!/bin/sh
+# Hook eseguito nel chroot dopo l'installazione dei pacchetti e la copia di
+# includes.chroot: identità del sistema, lingua, servizi, tema di avvio.
+set -e
+
+echo "[@OS_ID@] Configurazione del sistema @OS_NAME@ @OS_VERSION@"
+
+# ── Lingua e fuso orario ─────────────────────────────────────────────────────
+sed -i -e 's/^# *\(@LOCALE@ UTF-8\)/\1/' -e 's/^# *\(en_US.UTF-8 UTF-8\)/\1/' /etc/locale.gen
+locale-gen
+update-locale LANG=@LOCALE@
+ln -sf /usr/share/zoneinfo/@FUSO_ORARIO@ /etc/localtime
+echo "@FUSO_ORARIO@" >/etc/timezone
+
+cat >/etc/default/keyboard <<'FINE'
+XKBMODEL="pc105"
+XKBLAYOUT="@TASTIERA@"
+XKBVARIANT=""
+XKBOPTIONS=""
+BACKSPACE="guess"
+FINE
+
+# ── Identità: os-release, issue, lsb-release ─────────────────────────────────
+# I file originali di base-files vengono deviati, così gli aggiornamenti di
+# Debian non sovrascrivono il nome del sistema.
+for f in /usr/lib/os-release /etc/issue /etc/issue.net; do
+	if ! dpkg-divert --list "$f" | grep -q .; then
+		dpkg-divert --local --rename --divert "$f.debian" --add "$f"
+	fi
+done
+
+cat >/usr/lib/os-release <<'FINE'
+PRETTY_NAME="@OS_NAME@ @OS_VERSION@"
+NAME="@OS_NAME@"
+VERSION_ID="@OS_VERSION@"
+VERSION="@OS_VERSION@ (@OS_CODENAME@)"
+VERSION_CODENAME=trixie
+ID=@OS_ID@
+ID_LIKE=debian
+HOME_URL="@OS_HOME_URL@"
+SUPPORT_URL="@OS_SUPPORT_URL@"
+BUG_REPORT_URL="@OS_BUG_URL@"
+LOGO=@OS_ID@-logo
+FINE
+ln -sf ../usr/lib/os-release /etc/os-release
+
+printf '%s \\n \\l\n\n' "@OS_NAME@ @OS_VERSION@" >/etc/issue
+printf '%s\n' "@OS_NAME@ @OS_VERSION@" >/etc/issue.net
+
+cat >/etc/lsb-release <<'FINE'
+DISTRIB_ID=@OS_NAME@
+DISTRIB_RELEASE=@OS_VERSION@
+DISTRIB_CODENAME=@OS_CODENAME@
+DISTRIB_DESCRIPTION="@OS_NAME@ @OS_VERSION@"
+FINE
+
+echo "@OS_ID@" >/etc/hostname
+
+# ── Servizi ──────────────────────────────────────────────────────────────────
+systemctl set-default graphical.target
+systemctl enable greetd.service
+
+# Nessuna attività di manutenzione automatica nella sessione live (gli
+# aggiornamenti sicuri arrivano nella Fase 5).
+for t in apt-daily.timer apt-daily-upgrade.timer man-db.timer e2scrub_all.timer fstrim.timer; do
+	systemctl disable "$t" 2>/dev/null || true
+done
+
+# ── Tema di avvio Plymouth ───────────────────────────────────────────────────
+if [ -f /usr/share/plymouth/themes/@OS_ID@/@OS_ID@.plymouth ]; then
+	plymouth-set-default-theme @OS_ID@
+else
+	echo "[@OS_ID@] ATTENZIONE: tema Plymouth @OS_ID@ mancante" >&2
+fi
+
+# ── Componenti del sistema ───────────────────────────────────────────────────
+install -d -o _greetd -g _greetd /var/cache/nucleo-greeter 2>/dev/null || install -d /var/cache/nucleo-greeter
+python3 -m compileall -q /usr/lib/python3/dist-packages/nucleo || true
+glib-compile-schemas /usr/share/glib-2.0/schemas 2>/dev/null || true
+update-mime-database /usr/share/mime 2>/dev/null || true
+
+# ── Icone, font, cache ───────────────────────────────────────────────────────
+gtk-update-icon-cache -q -f /usr/share/icons/hicolor 2>/dev/null || true
+fc-cache -f >/dev/null 2>&1 || true
+update-desktop-database -q /usr/share/applications 2>/dev/null || true
+
+# initramfs con il tema Plymouth appena impostato
+update-initramfs -u -k all
+
+apt-get clean
+echo "[@OS_ID@] Configurazione completata"

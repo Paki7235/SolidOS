@@ -1,0 +1,15 @@
+#!/bin/sh
+# Avvio da un punto di ripristino: la radice (snapshot in sola lettura) viene
+# coperta da uno strato scrivibile in memoria, così il sistema funziona
+# normalmente senza modificare lo snapshot.
+PREREQ=""
+prereqs() { echo "$PREREQ"; }
+case "$1" in prereqs) prereqs; exit 0 ;; esac
+
+grep -q "@OS_ID@.snapshot=" /proc/cmdline || exit 0
+modprobe overlay 2>/dev/null || true
+mkdir -p /run/@OS_ID@-ro /run/@OS_ID@-rw
+mount -o move "${rootmnt}" /run/@OS_ID@-ro
+mount -t tmpfs -o mode=0755 tmpfs /run/@OS_ID@-rw
+mkdir -p /run/@OS_ID@-rw/upper /run/@OS_ID@-rw/work
+mount -t overlay overlay -o lowerdir=/run/@OS_ID@-ro,upperdir=/run/@OS_ID@-rw/upper,workdir=/run/@OS_ID@-rw/work "${rootmnt}"

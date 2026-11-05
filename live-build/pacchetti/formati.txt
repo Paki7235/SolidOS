@@ -1,0 +1,55 @@
+# Fase 4: file system, codec, formati, installazione universale.
+
+# File system
+ntfs-3g
+exfatprogs
+dosfstools
+f2fs-tools
+xfsprogs
+btrfs-progs
+?hfsprogs
+?hfsplus
+dislocker
+cryptsetup
+udisks2
+?udisks2-btrfs
+
+# Codec audio/video
+ffmpeg
+gstreamer1.0-plugins-good
+gstreamer1.0-plugins-bad
+gstreamer1.0-plugins-ugly
+gstreamer1.0-libav
+?gstreamer1.0-pipewire
+ffmpegthumbnailer
+
+# Immagini (HEIC, AVIF, WebP, RAW, JPEG XL) e PDF
+kimageformat6-plugins
+qt6-image-formats-plugins
+libheif-plugin-libde265
+?libheif-plugin-aomdec
+?heif-gdk-pixbuf
+?webp-pixbuf-loader
+?libraw-bin
+poppler-utils
+imagemagick
+
+# Archivi
+unar
+?7zip-rar
+?unrar
+zstd
+xz-utils
+bzip2
+
+# Installazione universale
+flatpak
+distrobox
+podman
+wine
+wine64
+?libfuse2t64
+?rpm
+alien
+file
+python3-magic

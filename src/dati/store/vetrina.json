@@ -1,0 +1,22 @@
+[
+  {"id": "org.mozilla.Thunderbird", "nome": "Thunderbird", "descrizione": "Posta elettronica e calendario", "origine": "flatpak", "icona": "thunderbird"},
+  {"id": "org.gimp.GIMP", "nome": "GIMP", "descrizione": "Fotoritocco professionale", "origine": "flatpak", "icona": "gimp"},
+  {"id": "org.inkscape.Inkscape", "nome": "Inkscape", "descrizione": "Grafica vettoriale", "origine": "flatpak", "icona": "inkscape"},
+  {"id": "org.kde.krita", "nome": "Krita", "descrizione": "Disegno e pittura digitale", "origine": "flatpak", "icona": "krita"},
+  {"id": "com.obsproject.Studio", "nome": "OBS Studio", "descrizione": "Registrazione e dirette video", "origine": "flatpak", "icona": "com.obsproject.Studio"},
+  {"id": "org.audacityteam.Audacity", "nome": "Audacity", "descrizione": "Registrazione e montaggio audio", "origine": "flatpak", "icona": "audacity"},
+  {"id": "org.kde.kdenlive", "nome": "Kdenlive", "descrizione": "Montaggio video", "origine": "flatpak", "icona": "kdenlive"},
+  {"id": "com.spotify.Client", "nome": "Spotify", "descrizione": "Musica in streaming", "origine": "flatpak", "icona": "spotify"},
+  {"id": "org.telegram.desktop", "nome": "Telegram", "descrizione": "Messaggi", "origine": "flatpak", "icona": "telegram"},
+  {"id": "com.discordapp.Discord", "nome": "Discord", "descrizione": "Chat vocale e testuale", "origine": "flatpak", "icona": "discord"},
+  {"id": "us.zoom.Zoom", "nome": "Zoom", "descrizione": "Videochiamate", "origine": "flatpak", "icona": "zoom"},
+  {"id": "com.valvesoftware.Steam", "nome": "Steam", "descrizione": "Giochi (anche per Windows, con Proton)", "origine": "flatpak", "icona": "steam"},
+  {"id": "com.google.Chrome", "nome": "Google Chrome", "descrizione": "Browser web", "origine": "flatpak", "icona": "google-chrome"},
+  {"id": "com.visualstudio.code", "nome": "Visual Studio Code", "descrizione": "Editor per programmatori", "origine": "flatpak", "icona": "com.visualstudio.code"},
+  {"id": "org.keepassxc.KeePassXC", "nome": "KeePassXC", "descrizione": "Gestore di password", "origine": "flatpak", "icona": "keepassxc"},
+  {"id": "org.qbittorrent.qBittorrent", "nome": "qBittorrent", "descrizione": "Download torrent", "origine": "flatpak", "icona": "qbittorrent"},
+  {"id": "com.github.johnfactotum.Foliate", "nome": "Foliate", "descrizione": "Lettore di libri elettronici", "origine": "flatpak", "icona": "com.github.johnfactotum.Foliate"},
+  {"id": "org.localsend.localsend_app", "nome": "LocalSend", "descrizione": "Invia file a qualsiasi dispositivo", "origine": "flatpak", "icona": "localsend"},
+  {"id": "gnome-chess", "nome": "Scacchi", "descrizione": "Gioco degli scacchi", "origine": "apt", "icona": "gnome-chess"},
+  {"id": "org.blender.Blender", "nome": "Blender", "descrizione": "Grafica e animazione 3D", "origine": "flatpak", "icona": "blender"}
+]

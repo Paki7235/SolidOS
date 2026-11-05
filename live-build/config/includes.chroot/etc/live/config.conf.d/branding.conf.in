@@ -1,0 +1,7 @@
+# Impostazioni di live-config per la sessione live di @OS_NAME@ (generato dal branding).
+LIVE_HOSTNAME="@OS_ID@"
+LIVE_USERNAME="@OS_ID@"
+LIVE_USER_FULLNAME="@T_UTENTE_LIVE@"
+LIVE_LOCALES="@LOCALE@"
+LIVE_TIMEZONE="@FUSO_ORARIO@"
+LIVE_KEYBOARD_LAYOUTS="@TASTIERA@"

@@ -1,0 +1,56 @@
+#!/bin/sh
+# Eseguito dall'installer nel sistema appena installato (chroot):
+# punti di ripristino (snapper), voci «Torna a ieri», servizi, primo avvio.
+set -u
+registro() { echo "[configura-installazione] $*"; }
+
+ID=$(. /etc/os-release && echo "$ID")
+
+# ── Snapper: radice e home ────────────────────────────────────────────────────
+if [ "$(stat -f -c %T /)" = "btrfs" ] && command -v snapper >/dev/null; then
+	registro "configurazione snapper"
+	# /.snapshots è il subvolume @snapshots montato dall'installer: snapper vuole crearlo da sé
+	if mountpoint -q /.snapshots; then
+		umount /.snapshots
+		rmdir /.snapshots 2>/dev/null || true
+	fi
+	snapper --no-dbus -c root create-config -t nucleo-root / || registro "create-config root non riuscito"
+	if [ -d /.snapshots ]; then
+		btrfs subvolume delete /.snapshots >/dev/null 2>&1 || true
+		rm -rf /.snapshots
+	fi
+	mkdir -p /.snapshots
+	mount /.snapshots 2>/dev/null || registro "impossibile rimontare /.snapshots (verrà montato al riavvio)"
+	chmod 750 /.snapshots
+	snapper --no-dbus -c home create-config -t nucleo-home /home || registro "create-config home non riuscito"
+	snapper --no-dbus -c root create -c number -d "Installazione completata" || true
+	systemctl enable snapper-timeline.timer snapper-cleanup.timer nucleo-menu-ripristino.timer 2>/dev/null || true
+	grep -q '^overlay' /etc/initramfs-tools/modules 2>/dev/null || echo overlay >>/etc/initramfs-tools/modules
+	update-initramfs -u -k all || true
+else
+	registro "file system non Btrfs: Linea del Tempo di sistema non disponibile"
+	chmod -x "/etc/grub.d/41_${ID}_ripristino" 2>/dev/null || true
+fi
+
+# ── Servizi ───────────────────────────────────────────────────────────────────
+systemctl enable greetd.service nucleo-aggiornamenti.timer firewalld.service 2>/dev/null || true
+systemctl enable "nucleo-profilo.service" 2>/dev/null || true
+for t in apt-daily.timer apt-daily-upgrade.timer man-db.timer e2scrub_all.timer fstrim.timer; do
+	systemctl enable "$t" 2>/dev/null || true
+done
+systemctl disable unattended-upgrades.service 2>/dev/null || true
+
+# ── Avvio UEFI con Secure Boot (shim firmato Debian) ─────────────────────────
+if [ -d /sys/firmware/efi ] && [ -d /boot/efi/EFI ] && dpkg -s shim-signed >/dev/null 2>&1; then
+	registro "installazione del bootloader firmato per Secure Boot"
+	grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id="$ID" \
+		--uefi-secure-boot --force-extra-removable 2>/dev/null \
+		&& efibootmgr -q 2>/dev/null; true
+fi
+
+# ── Primo avvio guidato e menu di avvio ───────────────────────────────────────
+mkdir -p /var/lib/nucleo
+touch /var/lib/nucleo/primo-avvio
+update-grub || true
+registro "fatto"
+exit 0

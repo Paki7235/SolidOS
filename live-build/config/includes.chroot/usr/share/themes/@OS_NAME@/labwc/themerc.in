@@ -1,0 +1,41 @@
+# Tema delle finestre di @OS_NAME@ per labwc (colori dal branding).
+
+border.width: 1
+padding.height: 6
+window.button.width: 28
+window.button.spacing: 2
+window.label.text.justify: left
+window.active.shadow.size: 30
+window.inactive.shadow.size: 18
+window.active.shadow.color: #00000066
+window.inactive.shadow.color: #00000040
+
+window.active.border.color: @COLORE_ACCENTO@
+window.inactive.border.color: @COLORE_SUPERFICIE_SCURA@
+window.active.title.bg.color: @COLORE_SUPERFICIE_SCURA@
+window.inactive.title.bg.color: @COLORE_SFONDO_SCURO@
+window.active.label.text.color: @COLORE_TESTO_CHIARO@
+window.inactive.label.text.color: #8A94A8
+window.active.button.unpressed.image.color: @COLORE_TESTO_CHIARO@
+window.inactive.button.unpressed.image.color: #8A94A8
+window.active.button.hover.image.color: #FFFFFF
+window.active.button.close.hover.image.color: #FFFFFF
+window.active.handle.bg.color: @COLORE_SUPERFICIE_SCURA@
+
+menu.border.width: 1
+menu.border.color: #2A3550
+menu.items.bg.color: @COLORE_SUPERFICIE_SCURA@
+menu.items.text.color: @COLORE_TESTO_CHIARO@
+menu.items.active.bg.color: @COLORE_ACCENTO@
+menu.items.active.text.color: #FFFFFF
+menu.items.padding.x: 12
+menu.items.padding.y: 6
+menu.separator.color: #2A3550
+menu.title.bg.color: @COLORE_SFONDO_SCURO@
+menu.title.text.color: @COLORE_TESTO_CHIARO@
+
+osd.bg.color: @COLORE_SUPERFICIE_SCURA@
+osd.border.color: @COLORE_ACCENTO@
+osd.border.width: 1
+osd.label.text.color: @COLORE_TESTO_CHIARO@
+osd.window-switcher.item.active.border.color: @COLORE_ACCENTO@

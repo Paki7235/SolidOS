@@ -1,0 +1,7 @@
+// Solo sessione live: gli amministratori non devono digitare la password.
+// L'installer elimina questo file dal sistema installato.
+polkit.addRule(function (action, subject) {
+    if (subject.isInGroup("sudo") && subject.local && subject.active) {
+        return polkit.Result.YES;
+    }
+});

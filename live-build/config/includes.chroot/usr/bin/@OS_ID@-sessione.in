@@ -1,0 +1,51 @@
+#!/bin/sh
+# Avvia la sessione grafica di @OS_NAME@ (compositor labwc su Wayland).
+# Sceglie da solo il rendering software quando l'accelerazione non c'è o
+# quando all'avvio è stata scelta la voce «grafica sicura».
+
+export XDG_SESSION_TYPE=wayland
+export XDG_SESSION_DESKTOP=@OS_ID@
+export DESKTOP_SESSION=@OS_ID@
+
+# Toolkit
+export QT_QPA_PLATFORM=wayland
+export QT_QPA_PLATFORMTHEME=lxqt
+export GDK_BACKEND=wayland,x11
+export MOZ_ENABLE_WAYLAND=1
+export XCURSOR_THEME=@TEMA_CURSORE@
+export XCURSOR_SIZE=@DIMENSIONE_CURSORE@
+
+# Tastiera: segue /etc/default/keyboard (impostata da live-config o dall'installer)
+XKBLAYOUT="" XKBVARIANT="" XKBOPTIONS=""
+[ -r /etc/default/keyboard ] && . /etc/default/keyboard
+export XKB_DEFAULT_LAYOUT="${XKBLAYOUT:-@TASTIERA@}"
+[ -n "$XKBVARIANT" ] && export XKB_DEFAULT_VARIANT="$XKBVARIANT"
+[ -n "$XKBOPTIONS" ] && export XKB_DEFAULT_OPTIONS="$XKBOPTIONS"
+
+# Senza un dispositivo KMS il compositor non può partire
+if ! ls /dev/dri/card* >/dev/null 2>&1; then
+	printf '\n%s\n' "@T_NESSUNA_GRAFICA@"
+	read -r _
+	exec /bin/bash -l
+fi
+
+# Grafica sicura: scelta all'avvio oppure nessun nodo di rendering (niente GPU 3D)
+GRAFICA_SICURA=0
+grep -qw '@OS_ID@.grafica=sicura' /proc/cmdline && GRAFICA_SICURA=1
+ls /dev/dri/renderD* >/dev/null 2>&1 || GRAFICA_SICURA=1
+# Macchine virtuali (VirtualBox, VMware, QEMU senza 3D): rendering software, più affidabile
+case "$(systemd-detect-virt 2>/dev/null)" in
+	oracle|vmware|qemu|kvm|microsoft) GRAFICA_SICURA=1 ;;
+esac
+if [ "$GRAFICA_SICURA" = 1 ]; then
+	export WLR_RENDERER=pixman
+	export WLR_NO_HARDWARE_CURSORS=1
+	export QT_QUICK_BACKEND=software
+	export LIBGL_ALWAYS_SOFTWARE=1
+fi
+export GRAFICA_SICURA
+
+STATO="${XDG_STATE_HOME:-$HOME/.local/state}/@OS_ID@"
+mkdir -p "$STATO"
+[ -f "$STATO/sessione.log" ] && mv -f "$STATO/sessione.log" "$STATO/sessione.log.precedente"
+exec labwc >"$STATO/sessione.log" 2>&1

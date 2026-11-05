@@ -1,0 +1,11 @@
+---
+# Rimuove dal sistema installato ciò che serve solo alla sessione live.
+dontChroot: false
+timeout: 900
+script:
+    - "-apt-get purge -y calamares live-boot live-config live-config-systemd live-tools"
+    - "-apt-get autoremove -y"
+    - "rm -f /etc/polkit-1/rules.d/49-@OS_ID@-live.rules"
+    - "rm -f /etc/live/config.conf.d/branding.conf"
+    - "rm -f /usr/share/applications/@OS_ID@-installa-sistema.desktop"
+    - "sed -i '/^\\[initial_session\\]/,$d' /etc/greetd/config.toml"

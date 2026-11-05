@@ -1,0 +1,12 @@
+# Fase 8: Modalità Salvataggio, migrazione, chiavetta persistente.
+memtester
+gddrescue
+partclone
+chntpw
+smartmontools
+dislocker
+ntfs-3g
+parted
+fdisk
+?testdisk
+python3-libarchive-c

@@ -1,0 +1,32 @@
+#!/bin/sh
+# Profilo «PC vecchio»: attivato automaticamente con 3 GB di RAM o meno.
+#   profilo-prestazioni           rileva (all'avvio) e applica
+#   profilo-prestazioni --applica applica la scelta corrente (dopo una modifica dalle Impostazioni)
+# File di stato: /etc/<id>/profilo-leggero (attivo) · /etc/<id>/profilo-normale (scelta manuale: mai leggero)
+set -u
+ID=$(. /etc/os-release && echo "$ID")
+CONF="/etc/$ID"
+mkdir -p "$CONF"
+RAM_MB=$(awk '/MemTotal/ { print int($2 / 1024) }' /proc/meminfo)
+
+if [ "${1:-}" != "--applica" ] && [ ! -f "$CONF/profilo-normale" ] && [ ! -f "$CONF/profilo-leggero" ]; then
+	if [ "$RAM_MB" -le 3072 ]; then
+		echo "rilevati ${RAM_MB} MB di RAM: profilo PC vecchio" >"$CONF/profilo-leggero"
+	fi
+fi
+
+mkdir -p /etc/systemd/zram-generator.conf.d /etc/firefox-esr
+if [ -f "$CONF/profilo-leggero" ]; then
+	# zram grande quanto la RAM (dal prossimo avvio), Firefox con meno processi
+	printf '[zram0]\nzram-size = ram\ncompression-algorithm = zstd\n' >/etc/systemd/zram-generator.conf.d/50-pc-vecchio.conf
+	cat >/etc/firefox-esr/50-pc-vecchio.js <<'FINE'
+pref("dom.ipc.processCount", 2);
+pref("browser.tabs.unloadOnLowMemory", true);
+pref("gfx.webrender.software", true);
+FINE
+	# Snapshot orari meno frequenti
+	[ -f /etc/snapper/configs/root ] && sed -i 's/^TIMELINE_LIMIT_HOURLY=.*/TIMELINE_LIMIT_HOURLY="2"/' /etc/snapper/configs/root
+else
+	rm -f /etc/systemd/zram-generator.conf.d/50-pc-vecchio.conf /etc/firefox-esr/50-pc-vecchio.js
+fi
+exit 0

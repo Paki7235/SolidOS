@@ -1,0 +1,15 @@
+nome = "Famiglia"
+icona = "user-home"
+descrizione = "Foto, video e videochiamate"
+ordine = 40
+app = ["pcmanfm-qt.desktop", "firefox-esr.desktop", "qimgv.desktop", "vlc.desktop"]
+cartelle = ["~/Immagini", "~/Video"]
+energia = "power-saver"
+
+[notifiche]
+non_disturbare = false
+consentite = []
+
+[rete]
+connessione = ""
+vpn = ""

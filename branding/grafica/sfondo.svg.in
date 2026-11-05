@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Sfondo predefinito del desktop (nessun testo). Reso a 1920x1080. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <defs>
+    <linearGradient id="base" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="@COLORE_SUPERFICIE_SCURA@"/>
+      <stop offset="1" stop-color="@COLORE_SFONDO_SCURO@"/>
+    </linearGradient>
+    <radialGradient id="luce1" cx="0.78" cy="0.22" r="0.55">
+      <stop offset="0" stop-color="@COLORE_ACCENTO@" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="@COLORE_ACCENTO@" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="luce2" cx="0.12" cy="0.95" r="0.6">
+      <stop offset="0" stop-color="@COLORE_ACCENTO_SCURO@" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="@COLORE_ACCENTO_SCURO@" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#base)"/>
+  <rect width="1920" height="1080" fill="url(#luce1)"/>
+  <rect width="1920" height="1080" fill="url(#luce2)"/>
+  <!-- strati del logo, grandi e quasi trasparenti -->
+  <g transform="translate(1180 330) scale(3.2)" fill="#FFFFFF">
+    <path d="M128 132 L216 176 L128 220 L40 176 Z" opacity="0.025"/>
+    <path d="M128 92 L216 136 L128 180 L40 136 Z" opacity="0.04"/>
+    <path d="M128 36 L216 80 L128 124 L40 80 Z" opacity="0.06"/>
+  </g>
+</svg>

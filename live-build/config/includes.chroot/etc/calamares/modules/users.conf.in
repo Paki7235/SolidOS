@@ -1,0 +1,32 @@
+---
+defaultGroups:
+    - name: users
+      must_exist: true
+      system: true
+    - audio
+    - video
+    - plugdev
+    - netdev
+    - bluetooth
+    - lpadmin
+    - scanner
+    - render
+    - input
+autologinGroup: autologin
+doAutologin: false
+sudoersGroup: sudo
+sudoersConfigureWithGroup: true
+setRootPassword: false
+doReusePassword: true
+passwordRequirements:
+    minLength: 4
+    maxLength: -1
+allowWeakPasswords: true
+allowWeakPasswordsDefault: true
+user:
+  shell: /bin/bash
+  forbidden_names: [ root, @OS_ID@ ]
+hostname:
+  location: EtcFile
+  writeHostsFile: true
+  template: "@OS_ID@-${cpu}"

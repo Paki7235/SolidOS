@@ -1,0 +1,4 @@
+#!/bin/sh
+# Rigenera il menu di avvio dopo l'installazione di un nuovo kernel (sistema installato).
+[ -f /boot/grub/grub.cfg ] && command -v update-grub >/dev/null && update-grub >/dev/null 2>&1
+exit 0

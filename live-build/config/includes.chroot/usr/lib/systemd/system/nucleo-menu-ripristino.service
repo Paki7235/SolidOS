@@ -1,0 +1,8 @@
+[Unit]
+Description=Aggiorna le voci «Torna a ieri» nel menu di avvio
+ConditionPathExists=/etc/snapper/configs/root
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/update-grub
+Nice=15

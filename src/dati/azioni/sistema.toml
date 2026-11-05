@@ -1,0 +1,322 @@
+# Azioni predefinite della Barra Unica. Ogni frase viene normalizzata
+# (minuscole, senza accenti, sinonimi: «spegni/disattiva» = off, «accendi/attiva» = on…).
+# Per aggiungerne: crea un file .toml in ~/.config/<sistema>/azioni/ con la stessa struttura.
+
+[[azione]]
+id = "wifi-off"
+titolo = "Spegni il Wi-Fi"
+icona = "network-wireless-offline"
+frasi = ["wifi off", "spegni wifi", "spegni il wifi", "disattiva wifi", "niente internet"]
+comando = ["nmcli", "radio", "wifi", "off"]
+messaggio = "Wi-Fi spento"
+attendi = true
+
+[[azione]]
+id = "wifi-on"
+titolo = "Accendi il Wi-Fi"
+icona = "network-wireless"
+frasi = ["wifi on", "accendi wifi", "accendi il wifi", "attiva wifi"]
+comando = ["nmcli", "radio", "wifi", "on"]
+messaggio = "Wi-Fi acceso"
+attendi = true
+
+[[azione]]
+id = "bluetooth-off"
+titolo = "Spegni il Bluetooth"
+icona = "bluetooth-disabled"
+frasi = ["bluetooth off", "spegni bluetooth", "spegni il bluetooth"]
+comando = ["bluetoothctl", "power", "off"]
+messaggio = "Bluetooth spento"
+attendi = true
+
+[[azione]]
+id = "bluetooth-on"
+titolo = "Accendi il Bluetooth"
+icona = "bluetooth"
+frasi = ["bluetooth on", "accendi bluetooth", "accendi il bluetooth"]
+comando = ["bluetoothctl", "power", "on"]
+messaggio = "Bluetooth acceso"
+attendi = true
+
+[[azione]]
+id = "volume-su"
+titolo = "Alza il volume"
+icona = "audio-volume-high"
+frasi = ["volume su", "alza volume", "alza il volume", "piu volume"]
+interno = "volume"
+passo = 10
+
+[[azione]]
+id = "volume-giu"
+titolo = "Abbassa il volume"
+icona = "audio-volume-low"
+frasi = ["volume giu", "abbassa volume", "abbassa il volume", "meno volume"]
+interno = "volume"
+passo = -10
+
+[[azione]]
+id = "muto"
+titolo = "Disattiva l'audio"
+icona = "audio-volume-muted"
+frasi = ["muto", "silenzio", "togli audio", "audio off"]
+comando = ["wpctl", "set-mute", "@DEFAULT_AUDIO_SINK@", "toggle"]
+
+[[azione]]
+id = "luminosita-su"
+titolo = "Aumenta la luminosità"
+icona = "display-brightness"
+frasi = ["luminosita su", "piu luce", "alza luminosita"]
+comando = ["@OS_ID@-ctl", "luminosita", "15"]
+
+[[azione]]
+id = "luminosita-giu"
+titolo = "Diminuisci la luminosità"
+icona = "display-brightness"
+frasi = ["luminosita giu", "meno luce", "abbassa luminosita"]
+comando = ["@OS_ID@-ctl", "luminosita", "-15"]
+
+[[azione]]
+id = "non-disturbare-on"
+titolo = "Attiva Non disturbare"
+icona = "notifications-disabled"
+frasi = ["non disturbare", "non disturbare on", "attiva non disturbare", "niente notifiche"]
+comando = ["@OS_ID@-ctl", "non-disturbare", "si"]
+messaggio = "Non disturbare attivo"
+
+[[azione]]
+id = "non-disturbare-off"
+titolo = "Disattiva Non disturbare"
+icona = "notifications"
+frasi = ["non disturbare off", "disattiva non disturbare", "mostra notifiche"]
+comando = ["@OS_ID@-ctl", "non-disturbare", "no"]
+
+[[azione]]
+id = "luce-notturna"
+titolo = "Luce notturna"
+icona = "weather-clear-night"
+frasi = ["luce notturna", "modalita notte", "colori caldi"]
+comando = ["@OS_ID@-impostazioni", "schermo"]
+
+[[azione]]
+id = "hotspot"
+titolo = "Condividi la connessione (hotspot)"
+icona = "network-wireless-hotspot"
+frasi = ["hotspot", "hotspot on", "condividi connessione", "punto di accesso"]
+comando = ["nmcli", "device", "wifi", "hotspot", "con-name", "Hotspot"]
+messaggio = "Hotspot attivo: dati in Impostazioni → Wi-Fi e rete"
+attendi = true
+
+[[azione]]
+id = "screenshot"
+titolo = "Cattura lo schermo"
+icona = "applets-screenshooter"
+frasi = ["screenshot", "cattura schermo", "fai uno screenshot"]
+comando = ["sh", "-c", "sleep 1; @OS_ID@-cattura --subito"]
+
+[[azione]]
+id = "registra-schermo"
+titolo = "Registra lo schermo"
+icona = "media-record"
+frasi = ["registra schermo", "registra lo schermo", "video dello schermo"]
+comando = ["@OS_ID@-cattura"]
+
+[[azione]]
+id = "blocca"
+titolo = "Blocca lo schermo"
+icona = "system-lock-screen"
+frasi = ["blocca", "blocca schermo", "blocca il computer"]
+comando = ["swaylock", "-f"]
+
+[[azione]]
+id = "spegni-pc"
+titolo = "Spegni il computer"
+icona = "system-shutdown"
+frasi = ["off computer", "off il computer", "off pc", "arresta"]
+comando = ["systemctl", "poweroff"]
+
+[[azione]]
+id = "riavvia-pc"
+titolo = "Riavvia il computer"
+icona = "system-reboot"
+frasi = ["riavvia", "riavvia computer", "riavvia il computer", "riavvio"]
+comando = ["systemctl", "reboot"]
+
+[[azione]]
+id = "sospendi"
+titolo = "Sospendi"
+icona = "system-suspend"
+frasi = ["sospendi", "metti in pausa il computer", "standby"]
+comando = ["systemctl", "suspend"]
+
+[[azione]]
+id = "esci"
+titolo = "Esci dalla sessione"
+icona = "system-log-out"
+frasi = ["esci", "logout", "esci dalla sessione", "cambia utente"]
+comando = ["labwc", "--exit"]
+
+[[azione]]
+id = "installa"
+titolo = "Installa {app}"
+icona = "system-software-install"
+frasi = ["installa {app}", "installa l app {app}", "voglio {app}"]
+interno = "installa"
+
+[[azione]]
+id = "apri-app"
+titolo = "Apri {app}"
+icona = "system-run"
+frasi = ["apri {app}", "avvia {app}", "lancia {app}"]
+interno = "apri"
+
+[[azione]]
+id = "invia-telefono"
+titolo = "Invia al telefono"
+icona = "document-send"
+frasi = ["invia al telefono", "manda al telefono", "condividi", "invia file"]
+interno = "invia"
+
+[[azione]]
+id = "invia-file-telefono"
+titolo = "Invia «{file}» al telefono"
+icona = "document-send"
+frasi = ["invia {file} al telefono", "manda {file} al telefono", "condividi {file}"]
+interno = "invia"
+
+[[azione]]
+id = "ricevi-telefono"
+titolo = "Ricevi file dal telefono (QR)"
+icona = "phone"
+frasi = ["ricevi dal telefono", "ricevi foto", "foto dal telefono", "prendi dal telefono"]
+comando = ["@OS_ID@-condividi"]
+
+[[azione]]
+id = "converti-pdf"
+titolo = "Converti «{file}» in PDF"
+icona = "application-pdf"
+frasi = ["converti {file} in pdf", "trasforma {file} in pdf", "pdf di {file}"]
+interno = "converti-pdf"
+
+[[azione]]
+id = "converti-pdf-generico"
+titolo = "Converti in PDF…"
+icona = "application-pdf"
+frasi = ["converti in pdf", "crea pdf", "salva come pdf"]
+comando = ["pcmanfm-qt"]
+messaggio = "Clic destro sul file → Converti in PDF"
+
+[[azione]]
+id = "spazio"
+titolo = "Passa allo Spazio {nome}"
+icona = "preferences-desktop-workspaces"
+frasi = ["spazio {nome}", "on spazio {nome}", "modalita {nome}", "passa a {nome}"]
+interno = "spazio"
+
+[[azione]]
+id = "linea-tempo"
+titolo = "Apri la Linea del Tempo"
+icona = "document-open-recent"
+frasi = ["torna indietro", "linea del tempo", "versioni precedenti", "recupera file", "ripristina"]
+comando = ["@OS_ID@-linea-del-tempo"]
+
+[[azione]]
+id = "versioni-file"
+titolo = "Versioni precedenti di «{file}»"
+icona = "document-open-recent"
+frasi = ["versioni di {file}", "recupera {file}", "torna indietro su {file}"]
+interno = "versioni"
+
+[[azione]]
+id = "punto-ripristino"
+titolo = "Crea un punto di ripristino"
+icona = "document-save"
+frasi = ["crea punto di ripristino", "salva stato del sistema", "snapshot"]
+comando = ["pkexec", "/usr/libexec/nucleo/helper", "snapshot-crea", "Dalla Barra Unica"]
+attendi = true
+messaggio = "Punto di ripristino creato"
+
+[[azione]]
+id = "aggiorna"
+titolo = "Aggiorna il sistema"
+icona = "system-software-update"
+frasi = ["aggiorna", "aggiorna sistema", "aggiornamenti", "update"]
+comando = ["pkexec", "/usr/libexec/nucleo/helper", "aggiorna-ora"]
+messaggio = "Aggiornamento avviato in background"
+
+[[azione]]
+id = "svuota-cestino"
+titolo = "Svuota il cestino"
+icona = "user-trash"
+frasi = ["svuota cestino", "svuota il cestino", "cancella cestino"]
+comando = ["sh", "-c", "rm -rf ~/.local/share/Trash/files/* ~/.local/share/Trash/info/*"]
+messaggio = "Cestino svuotato"
+
+[[azione]]
+id = "impostazioni"
+titolo = "Apri le Impostazioni"
+icona = "preferences-system"
+frasi = ["impostazioni", "pannello di controllo", "configurazione"]
+comando = ["@OS_ID@-impostazioni"]
+
+[[azione]]
+id = "store"
+titolo = "Apri lo store delle app"
+icona = "system-software-install"
+frasi = ["store", "negozio app", "trova app", "nuove app"]
+comando = ["@OS_ID@-store"]
+
+[[azione]]
+id = "file"
+titolo = "Apri i file"
+icona = "system-file-manager"
+frasi = ["file", "esplora risorse", "documenti", "le mie cartelle"]
+comando = ["pcmanfm-qt"]
+
+[[azione]]
+id = "terminale"
+titolo = "Apri il terminale"
+icona = "utilities-terminal"
+frasi = ["terminale", "prompt dei comandi", "console", "cmd"]
+comando = ["qterminal"]
+
+[[azione]]
+id = "monitor"
+titolo = "Monitor di sistema"
+icona = "utilities-system-monitor"
+frasi = ["task manager", "gestione attivita", "monitor di sistema", "programmi aperti", "computer lento"]
+comando = ["@OS_ID@-monitor"]
+
+[[azione]]
+id = "guida"
+titolo = "Apri la Guida"
+icona = "help-browser"
+frasi = ["guida", "aiuto", "help", "come si fa"]
+comando = ["@OS_ID@-guida"]
+
+[[azione]]
+id = "backup"
+titolo = "Fai un backup"
+icona = "document-save"
+frasi = ["backup", "copia di sicurezza", "salva i miei file"]
+comando = ["@OS_ID@-backup"]
+
+[[azione]]
+id = "stampanti"
+titolo = "Stampanti"
+icona = "printer"
+frasi = ["stampante", "aggiungi stampante", "stampa"]
+comando = ["@OS_ID@-impostazioni", "stampanti"]
+
+[[azione]]
+id = "tastiera-schermo"
+titolo = "Tastiera a schermo"
+icona = "input-keyboard"
+frasi = ["tastiera a schermo", "tastiera virtuale"]
+comando = ["wvkbd-mobintl", "-L", "280"]
+
+[[azione]]
+id = "migrazione"
+titolo = "Importa da Windows"
+icona = "folder-download"
+frasi = ["importa da windows", "migrazione", "copia da windows", "vecchio computer"]
+comando = ["@OS_ID@-migrazione"]

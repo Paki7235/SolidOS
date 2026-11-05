@@ -1,0 +1,63 @@
+#!/bin/bash
+# Misura la RAM usata a riposo da @OS_NAME@ e scrive un rapporto Markdown.
+#
+#   @OS_ID@-misura-ram [--attesa SECONDI] [--uscita FILE]
+#
+# Metodo: dopo un'attesa a riposo (predefinita 120 s) registra
+#   - RAM usata = MemTotal - MemAvailable (come «free»)
+#   - stato di zram
+#   - i 20 processi con più memoria PSS (memoria proporzionale, conta le
+#     librerie condivise una volta sola). Per leggere tutti i processi serve
+#     sudo; senza, vengono elencati solo quelli dell'utente.
+set -euo pipefail
+
+ATTESA=120
+USCITA="$HOME/misura-ram-$(date +%Y%m%d-%H%M%S).md"
+while [[ $# -gt 0 ]]; do
+	case $1 in
+		--attesa) ATTESA=$2; shift 2 ;;
+		--uscita) USCITA=$2; shift 2 ;;
+		-h|--aiuto) sed -n '2,12p' "$0"; exit 0 ;;
+		*) echo "Opzione sconosciuta: $1" >&2; exit 1 ;;
+	esac
+done
+
+echo "Attendo ${ATTESA} secondi a riposo: non usare il computer..."
+sleep "$ATTESA"
+
+kb() { awk -v k="$1" '$1 == k":" { print $2 }' /proc/meminfo; }
+totale=$(kb MemTotal)
+disponibile=$(kb MemAvailable)
+usata=$(( (totale - disponibile) / 1024 ))
+
+{
+	echo "# Misura RAM — @OS_NAME@ @OS_VERSION@"
+	echo
+	echo "| Voce | Valore |"
+	echo "|---|---|"
+	echo "| Data | $(date '+%Y-%m-%d %H:%M') |"
+	echo "| Kernel | $(uname -r) |"
+	echo "| Macchina | $(cat /sys/class/dmi/id/product_name 2>/dev/null || echo sconosciuta) |"
+	echo "| RAM totale | $(( totale / 1024 )) MB |"
+	echo "| **RAM usata a riposo** | **${usata} MB** |"
+	echo "| Attesa prima della misura | ${ATTESA} s |"
+	echo "| Grafica sicura | ${GRAFICA_SICURA:-0} |"
+	echo
+	echo "## zram"
+	echo '```'
+	zramctl 2>/dev/null || echo "zram non attivo"
+	echo '```'
+	echo
+	echo "## Processi (PSS, primi 20)"
+	echo
+	echo "| PSS MB | Processo |"
+	echo "|---:|---|"
+	for d in /proc/[0-9]*; do
+		pss=$(awk '/^Pss:/ { print $2 }' "$d/smaps_rollup" 2>/dev/null || true)
+		[[ -n $pss && $pss -gt 0 ]] || continue
+		printf '%s\t%s\n' "$pss" "$(tr -d '\n' <"$d/comm" 2>/dev/null)"
+	done | sort -rn | head -n 20 | awk -F'\t' '{ printf "| %.1f | %s |\n", $1/1024, $2 }' || true
+} >"$USCITA"
+
+echo "RAM usata a riposo: ${usata} MB"
+echo "Rapporto salvato in: $USCITA"

@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=@OS_NAME@
+Description=Schermata di avvio di @OS_NAME@
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/@OS_ID@
+ScriptFile=/usr/share/plymouth/themes/@OS_ID@/@OS_ID@.script

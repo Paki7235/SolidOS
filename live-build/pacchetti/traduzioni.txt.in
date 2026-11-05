@@ -1,0 +1,10 @@
+# Traduzioni delle app (lingua predefinita: @LINGUA@).
+# I pacchetti -l10n di LXQt contengono tutte le lingue.
+
+?lxqt-panel-l10n
+?lxqt-notificationd-l10n
+?lxqt-policykit-l10n
+?pcmanfm-qt-l10n
+?qterminal-l10n
+?featherpad-l10n
+?firefox-esr-l10n-@LINGUA@

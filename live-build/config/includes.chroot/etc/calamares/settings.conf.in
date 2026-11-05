@@ -1,0 +1,50 @@
+# Installer di @OS_NAME@ (Calamares)
+---
+modules-search: [ local, /usr/lib/x86_64-linux-gnu/calamares/modules ]
+
+instances:
+- id:       pulizia-live
+  module:   shellprocess
+  config:   shellprocess_pulizia.conf
+- id:       sistema
+  module:   shellprocess
+  config:   shellprocess_sistema.conf
+
+sequence:
+- show:
+  - welcome
+  - locale
+  - keyboard
+  - partition
+  - users
+  - summary
+- exec:
+  - partition
+  - mount
+  - unpackfs
+  - machineid
+  - fstab
+  - locale
+  - keyboard
+  - localecfg
+  - users
+  - networkcfg
+  - hwclock
+  - shellprocess@pulizia-live
+  - initramfscfg
+  - initramfs
+  - grubcfg
+  - bootloader
+  - shellprocess@sistema
+  - umount
+- show:
+  - finished
+
+branding: @OS_ID@
+prompt-install: true
+dont-chroot: false
+oem-setup: false
+disable-cancel: false
+disable-cancel-during-exec: true
+hide-back-and-next-during-exec: true
+quit-at-end: false

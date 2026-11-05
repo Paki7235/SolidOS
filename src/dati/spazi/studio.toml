@@ -1,0 +1,15 @@
+nome = "Studio"
+icona = "applications-education"
+descrizione = "Niente distrazioni: solo notifiche importanti"
+ordine = 20
+app = ["pcmanfm-qt.desktop", "firefox-esr.desktop", "libreoffice-writer.desktop", "qpdfview.desktop"]
+cartelle = ["~/Documenti/Studio"]
+energia = "balanced"
+
+[notifiche]
+non_disturbare = true
+consentite = []
+
+[rete]
+connessione = ""
+vpn = ""

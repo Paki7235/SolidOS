@@ -1,0 +1,56 @@
+#!/bin/sh
+# Aggiornamento sicuro in background: punto di ripristino → apt → Flatpak → verifica.
+# Eseguito da nucleo-aggiornamenti.service (root).
+set -u
+STATO=/var/lib/nucleo/aggiornamenti.json
+mkdir -p /var/lib/nucleo
+export DEBIAN_FRONTEND=noninteractive
+
+notifica_utenti() { # titolo testo
+	for sessione in $(loginctl list-sessions --no-legend 2>/dev/null | awk '{print $1}'); do
+		utente=$(loginctl show-session "$sessione" -p Name --value 2>/dev/null)
+		uid=$(id -u "$utente" 2>/dev/null) || continue
+		[ -S "/run/user/$uid/bus" ] || continue
+		runuser -u "$utente" -- env DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$uid/bus" \
+			notify-send --app-name="$(. /etc/os-release && echo "$NAME")" --icon=system-software-update "$1" "$2" 2>/dev/null || true
+	done
+}
+scrivi_stato() { printf '{"ultimo": "%s", "esito": "%s"}\n' "$(date '+%d/%m/%Y %H:%M')" "$1" >"$STATO"; }
+
+# Batteria scarica o connessione a consumo: rimanda
+systemd-ac-power || { scrivi_stato "Rimandato: computer a batteria"; exit 0; }
+
+if [ -f /etc/snapper/configs/root ]; then
+	snapper -c root create -c number -d "Prima dell'aggiornamento automatico" || true
+fi
+
+if ! apt-get update -qq; then
+	scrivi_stato "Impossibile contattare i server degli aggiornamenti"
+	exit 0
+fi
+DISPONIBILI=$(apt-get -s full-upgrade | grep -c '^Inst ' || true)
+ESITO="Nessun aggiornamento"
+if [ "$DISPONIBILI" -gt 0 ]; then
+	if apt-get -y -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold full-upgrade; then
+		apt-get -y autoremove --purge >/dev/null 2>&1 || true
+		ESITO="Installati $DISPONIBILI aggiornamenti"
+	else
+		dpkg --configure -a || true
+		ESITO="Errore durante l'aggiornamento: puoi tornare al punto precedente dalla Linea del Tempo"
+		notifica_utenti "Aggiornamento non riuscito" "$ESITO"
+	fi
+fi
+command -v flatpak >/dev/null && flatpak update --system -y --noninteractive >/dev/null 2>&1 || true
+
+scrivi_stato "$ESITO"
+update-grub >/dev/null 2>&1 || true
+
+# Pulizia dei sistemi sostituiti da un ripristino da più di 30 giorni
+/usr/libexec/nucleo/ripristina-sistema --pulisci >/dev/null 2>&1 || true
+
+if [ -f /run/reboot-required ]; then
+	notifica_utenti "Aggiornamento completato" "Riavvia il computer quando vuoi per completare l'aggiornamento."
+elif [ "$DISPONIBILI" -gt 0 ]; then
+	notifica_utenti "Sistema aggiornato" "$ESITO"
+fi
+exit 0

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=@T_APP_SPEGNI_NOME@
+Comment=@T_APP_SPEGNI_DESC@
+Exec=systemctl poweroff
+Icon=system-shutdown
+Categories=System;
+Terminal=false

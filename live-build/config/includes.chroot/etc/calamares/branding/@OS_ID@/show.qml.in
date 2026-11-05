@@ -1,0 +1,34 @@
+// Presentazione mostrata durante l'installazione.
+import QtQuick 2.15
+import calamares.slideshow 1.0
+
+Presentation {
+    id: presentazione
+    Timer { interval: 8000; running: presentazione.activatedInCalamares; repeat: true; onTriggered: presentazione.goToNextSlide() }
+    function onActivate() {}
+    function onLeave() {}
+
+    Repeater {
+        model: [
+            ["Benvenuto in @OS_NAME@", "@OS_TAGLINE@"],
+            ["Linea del Tempo", "Ogni ora e prima di ogni aggiornamento il sistema salva un punto di ripristino. Se qualcosa va storto, scegli «Torna a ieri» all'accensione."],
+            ["Installa qualsiasi programma", "Doppio clic su .deb, .rpm, .AppImage, Flatpak, .exe e .msi: ci pensa «Installa con @OS_NAME@»."],
+            ["Condivisione Vicina", "Invia e ricevi file da telefoni Android, iPhone e altri computer, anche solo con un codice QR."],
+            ["Spazi di vita", "Lavoro, Studio, Gioco, Famiglia: app, notifiche e sfondo cambiano con un clic."]
+        ]
+        Slide {
+            Rectangle {
+                anchors.fill: parent
+                color: "@COLORE_SFONDO_SCURO@"
+                Column {
+                    anchors.centerIn: parent
+                    width: parent.width * 0.75
+                    spacing: 18
+                    Image { source: "logo.svg"; width: 96; height: 96; sourceSize.width: 192; anchors.horizontalCenter: parent.horizontalCenter }
+                    Text { text: modelData[0]; color: "#FFFFFF"; font.pixelSize: 28; font.weight: Font.DemiBold; anchors.horizontalCenter: parent.horizontalCenter }
+                    Text { text: modelData[1]; color: "@COLORE_TESTO_CHIARO@"; font.pixelSize: 17; wrapMode: Text.WordWrap; width: parent.width; horizontalAlignment: Text.AlignHCenter }
+                }
+            }
+        }
+    }
+}

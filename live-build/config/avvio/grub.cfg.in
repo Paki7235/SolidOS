@@ -1,0 +1,68 @@
+# Menu di avvio UEFI di @OS_NAME@ @OS_VERSION@ (generato: non modificare a mano)
+# %KERNEL% e %INITRD% vengono completati dall'hook 9000-menu-avvio.
+
+set default=0
+set timeout=@TIMEOUT_MENU_AVVIO@
+set timeout_style=menu
+
+insmod part_gpt
+insmod part_msdos
+insmod all_video
+insmod gfxterm
+insmod png
+insmod font
+
+if loadfont /boot/grub/font.pf2 ; then
+	set gfxmode=auto
+	set gfxpayload=keep
+	terminal_output gfxterm
+fi
+
+if background_image -m stretch /boot/grub/@OS_ID@/sfondo.png ; then
+	set color_normal=light-gray/black
+	set menu_color_normal=light-gray/black
+	set menu_color_highlight=white/blue
+else
+	set menu_color_normal=white/black
+	set menu_color_highlight=black/light-gray
+fi
+
+menuentry "@T_AVVIO_PROVA@" --id prova {
+	linux /live/%KERNEL% @KERNEL_PARAMETRI_LIVE@
+	initrd /live/%INITRD%
+}
+
+menuentry "@T_AVVIO_PERSISTENTE@" --id persistente {
+	linux /live/%KERNEL% @KERNEL_PARAMETRI_LIVE@ persistence persistence-label=persistence
+	initrd /live/%INITRD%
+}
+
+menuentry "@T_AVVIO_GRAFICA_SICURA@" --id grafica-sicura {
+	linux /live/%KERNEL% @KERNEL_PARAMETRI_LIVE@ @OS_ID@.grafica=sicura
+	initrd /live/%INITRD%
+}
+
+menuentry "@T_AVVIO_SALVATAGGIO@" --id salvataggio {
+	linux /live/%KERNEL% @KERNEL_PARAMETRI_LIVE@ @OS_ID@.modalita=salvataggio
+	initrd /live/%INITRD%
+}
+
+if [ "$grub_platform" = "efi" ]; then
+	menuentry "@T_AVVIO_MEMTEST@" --id memtest {
+		chainloader /boot/memtest/memtest.efi
+	}
+	menuentry "@T_AVVIO_DISCO@" --id disco {
+		exit
+	}
+	menuentry "@T_AVVIO_FIRMWARE@" --id firmware {
+		fwsetup
+	}
+else
+	menuentry "@T_AVVIO_MEMTEST@" --id memtest {
+		linux16 /boot/memtest/memtest.bin
+	}
+fi
+
+menuentry "@T_AVVIO_SPEGNI@" --id spegni {
+	halt
+}

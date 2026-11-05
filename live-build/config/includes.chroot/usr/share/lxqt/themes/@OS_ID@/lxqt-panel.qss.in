@@ -1,0 +1,48 @@
+/* Tema provvisorio del pannello per @OS_NAME@ (Fase 1). */
+
+LXQtPanel #BackgroundWidget {
+	background-color: #EB@COLORE_SFONDO_SCURO_HEX@;
+	border-top: 1px solid #22FFFFFF;
+}
+
+LXQtPanel QToolButton,
+LXQtPanel QLabel {
+	color: @COLORE_TESTO_CHIARO@;
+}
+
+LXQtPanel QToolButton {
+	border: none;
+	border-radius: 6px;
+	padding: 3px;
+	margin: 3px 1px;
+}
+
+LXQtPanel QToolButton:hover {
+	background-color: #26FFFFFF;
+}
+
+LXQtPanel QToolButton:pressed,
+LXQtPanel QToolButton:checked {
+	background-color: #59@COLORE_ACCENTO_HEX@;
+}
+
+#TaskBar QToolButton:checked {
+	border-bottom: 2px solid @COLORE_ACCENTO@;
+}
+
+QMenu {
+	background-color: @COLORE_SUPERFICIE_SCURA@;
+	color: @COLORE_TESTO_CHIARO@;
+	border: 1px solid #2A3550;
+	padding: 4px;
+}
+
+QMenu::item {
+	padding: 6px 24px 6px 12px;
+	border-radius: 4px;
+}
+
+QMenu::item:selected {
+	background-color: @COLORE_ACCENTO@;
+	color: #FFFFFF;
+}

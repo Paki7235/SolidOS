@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Action
+Name=Converti in PDF
+Icon=application-pdf
+Profiles=documento;
+
+[X-Action-Profile documento]
+MimeTypes=application/vnd.openxmlformats-officedocument.wordprocessingml.document;application/msword;application/vnd.oasis.opendocument.text;application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;application/vnd.ms-excel;application/vnd.oasis.opendocument.spreadsheet;application/vnd.openxmlformats-officedocument.presentationml.presentation;application/vnd.oasis.opendocument.presentation;text/plain;image/jpeg;image/png;
+Exec=/usr/libexec/nucleo/converti-pdf %F

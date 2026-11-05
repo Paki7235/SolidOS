@@ -1,0 +1,37 @@
+#!/bin/sh
+# Configurazione live-build di @OS_NAME@ @OS_VERSION@ (generata dal branding).
+# SNAPSHOT_MIRROR / SNAPSHOT_MIRROR_SECURITY sono impostati da build.sh quando
+# si usa --snapshot (build riproducibile da snapshot.debian.org).
+set -e
+
+MIRROR="${SNAPSHOT_MIRROR:-http://deb.debian.org/debian/}"
+MIRROR_SICUREZZA="${SNAPSHOT_MIRROR_SECURITY:-http://security.debian.org/debian-security/}"
+
+lb config noauto \
+	--mode debian \
+	--distribution trixie \
+	--architecture amd64 \
+	--archive-areas "main contrib non-free non-free-firmware" \
+	--linux-flavours amd64 \
+	--bootloaders "syslinux,grub-efi" \
+	--debian-installer none \
+	--firmware-binary false \
+	--firmware-chroot false \
+	--apt-recommends false \
+	--security true \
+	--updates true \
+	--memtest none \
+	--iso-application "@OS_NAME@" \
+	--iso-publisher "@OS_NAME@" \
+	--iso-volume "@ISO_VOLUME@" \
+	--image-name "@OS_ID@-@OS_VERSION@" \
+	--bootappend-live "@KERNEL_PARAMETRI_LIVE@" \
+	--mirror-bootstrap "$MIRROR" \
+	--mirror-chroot "$MIRROR" \
+	--mirror-binary "$MIRROR" \
+	--mirror-chroot-security "$MIRROR_SICUREZZA" \
+	--mirror-binary-security "$MIRROR_SICUREZZA" \
+	--cache true \
+	--checksums sha256 \
+	--zsync false \
+	"${@}"

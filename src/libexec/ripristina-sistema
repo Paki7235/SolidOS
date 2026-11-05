@@ -1,0 +1,29 @@
+#!/bin/sh
+# Rende permanente il ritorno a un punto di ripristino (root).
+#   ripristina-sistema NUMERO   → il sistema attuale diventa @guasto-DATA, lo snapshot diventa il nuovo @
+#   ripristina-sistema --pulisci → elimina i sistemi @guasto-* più vecchi di 30 giorni
+# La modifica è attiva dal riavvio successivo.
+set -eu
+DISPOSITIVO=$(findmnt -no SOURCE /home | sed 's/\[.*\]//')
+[ -n "$DISPOSITIVO" ] || DISPOSITIVO=$(findmnt -no SOURCE /.snapshots | sed 's/\[.*\]//')
+PUNTO=/run/nucleo-btrfs
+mkdir -p "$PUNTO"
+mount -o subvolid=5 "$DISPOSITIVO" "$PUNTO"
+trap 'umount "$PUNTO" 2>/dev/null || true' EXIT
+
+if [ "${1:-}" = "--pulisci" ]; then
+	find "$PUNTO" -maxdepth 1 -name '@guasto-*' -mtime +30 | while read -r vecchio; do
+		btrfs subvolume delete "$vecchio" >/dev/null 2>&1 || true
+	done
+	exit 0
+fi
+
+NUMERO=${1:?numero dello snapshot}
+case "$NUMERO" in *[!0-9]*) echo "numero non valido" >&2; exit 1 ;; esac
+SORGENTE="$PUNTO/@snapshots/$NUMERO/snapshot"
+[ -d "$SORGENTE" ] || { echo "snapshot $NUMERO non trovato" >&2; exit 1; }
+
+DATA=$(date +%Y%m%d-%H%M%S)
+mv "$PUNTO/@" "$PUNTO/@guasto-$DATA"
+btrfs subvolume snapshot "$SORGENTE" "$PUNTO/@"
+echo "Ripristino pronto: riavvia il computer. Il sistema precedente è conservato come @guasto-$DATA per 30 giorni."

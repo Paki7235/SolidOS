@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<service>
+  <short>Condivisione Vicina</short>
+  <description>Invio e ricezione di file con telefoni e computer vicini (LocalSend, QR, Quick Share, AirDrop) e scoperta mDNS.</description>
+  <port protocol="tcp" port="53317"/>
+  <port protocol="udp" port="53317"/>
+  <port protocol="tcp" port="53318"/>
+  <port protocol="tcp" port="53319"/>
+  <port protocol="tcp" port="8771"/>
+  <port protocol="udp" port="5353"/>
+</service>

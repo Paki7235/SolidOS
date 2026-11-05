@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Sfondo del menu ISOLINUX (BIOS). Deve essere esattamente 640x480. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="480" viewBox="0 0 640 480">
+  <defs>
+    <radialGradient id="luce" cx="0.5" cy="0.0" r="0.9">
+      <stop offset="0" stop-color="@COLORE_ACCENTO@" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="@COLORE_ACCENTO@" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="640" height="480" fill="@COLORE_SFONDO_SCURO@"/>
+  <rect width="640" height="480" fill="url(#luce)"/>
+  <g transform="translate(288 6) scale(0.25)">
+    <path d="M128 132 L216 176 L128 220 L40 176 Z" fill="@COLORE_ACCENTO_SCURO@" opacity="0.55"/>
+    <path d="M128 92 L216 136 L128 180 L40 136 Z" fill="@COLORE_ACCENTO@" opacity="0.85"/>
+    <path d="M128 36 L216 80 L128 124 L40 80 Z" fill="#FFFFFF" opacity="0.92"/>
+  </g>
+  <text x="320" y="86" text-anchor="middle" font-family="@FONT_UI@" font-size="24" font-weight="600" fill="@COLORE_TESTO_CHIARO@">@OS_NAME@ @OS_VERSION@</text>
+</svg>

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Installa @OS_NAME@
+Comment=Installa @OS_NAME@ sul disco di questo computer
+Exec=sh -c "sudo -E calamares >/tmp/calamares.log 2>&1"
+Icon=@OS_ID@-logo
+Categories=System;
+Terminal=false

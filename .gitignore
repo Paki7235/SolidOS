@@ -1,0 +1,11 @@
+# Prodotti della build
+/build/
+/dist/
+*.iso
+*.qcow2
+
+# macOS
+.DS_Store
+
+# App non legata al sistema desktop (vedi docs/STRUTTURA.md)
+/app di sistema/

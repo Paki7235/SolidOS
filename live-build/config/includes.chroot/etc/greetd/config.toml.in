@@ -1,0 +1,15 @@
+# greetd — gestore di accesso di @OS_NAME@.
+# La schermata di accesso grafica (@OS_ID@-greeter) gira nel compositor kiosk «cage».
+# Nella sessione live l'utente live entra automaticamente (initial_session);
+# l'installer rimuove questa sezione.
+
+[terminal]
+vt = 7
+
+[default_session]
+command = "cage -s -d -- /usr/bin/@OS_ID@-greeter"
+user = "_greetd"
+
+[initial_session]
+command = "/usr/bin/@OS_ID@-sessione"
+user = "@OS_ID@"

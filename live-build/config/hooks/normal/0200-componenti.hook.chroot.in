@@ -1,0 +1,52 @@
+#!/bin/sh
+# Componenti aggiuntivi compilati o configurati nel chroot (Fasi 4-10).
+# Ogni passo è facoltativo: un errore qui non deve impedire di produrre la ISO.
+export DEBIAN_FRONTEND=noninteractive
+registro() { echo "[@OS_ID@/componenti] $*"; }
+
+# ── Wine a 32 bit (molti programmi Windows sono ancora a 32 bit) ──────────────
+if ! dpkg --print-foreign-architectures | grep -qx i386; then
+	dpkg --add-architecture i386
+	apt-get update -qq || true
+fi
+apt-get install -y -qq --no-install-recommends wine32:i386 >/dev/null 2>&1 \
+	&& registro "wine32 installato" || registro "wine32 non disponibile (solo programmi a 64 bit)"
+
+# ── OWL (AWDL per AirDrop, GPL-3.0) compilato dai sorgenti ────────────────────
+DIPENDENZE="git cmake build-essential libpcap-dev libev-dev libnl-3-dev libnl-genl-3-dev pkg-config"
+if apt-get install -y -qq --no-install-recommends $DIPENDENZE >/dev/null 2>&1; then
+	rm -rf /tmp/owl
+	if git clone --depth 1 --recurse-submodules https://github.com/seemoo-lab/owl.git /tmp/owl >/dev/null 2>&1 \
+		&& cmake -S /tmp/owl -B /tmp/owl/build -DCMAKE_BUILD_TYPE=Release >/dev/null \
+		&& cmake --build /tmp/owl/build -j"$(nproc)" >/dev/null; then
+		BINARIO=$(find /tmp/owl/build -type f -name owl -perm -u+x | head -n 1)
+		[ -n "$BINARIO" ] && install -m 0755 "$BINARIO" /usr/local/bin/owl && registro "OWL installato"
+		mkdir -p /usr/share/doc/owl && cp /tmp/owl/LICENSE /usr/share/doc/owl/copyright 2>/dev/null || true
+	else
+		registro "ATTENZIONE: compilazione di OWL non riuscita: AirDrop non sarà disponibile"
+	fi
+	rm -rf /tmp/owl
+	apt-get install -y -qq --no-install-recommends libpcap0.8t64 libev4t64 libnl-3-200 libnl-genl-3-200 >/dev/null 2>&1 || true
+	apt-get purge -y -qq git cmake build-essential libpcap-dev libev-dev libnl-3-dev libnl-genl-3-dev >/dev/null 2>&1 || true
+	apt-get autoremove -y -qq >/dev/null 2>&1 || true
+else
+	registro "ATTENZIONE: strumenti di compilazione non disponibili: AirDrop non sarà disponibile"
+fi
+
+# ── Firewall: Condivisione Vicina ammessa nelle reti di casa/lavoro e nell'hotspot ──
+if command -v firewall-offline-cmd >/dev/null; then
+	firewall-offline-cmd --set-default-zone=home >/dev/null 2>&1 || true
+	for zona in home work nm-shared; do
+		firewall-offline-cmd --zone="$zona" --add-service=condivisione-vicina >/dev/null 2>&1 || true
+	done
+	registro "firewall configurato"
+fi
+
+# ── Servizi ───────────────────────────────────────────────────────────────────
+systemctl enable nucleo-profilo.service >/dev/null 2>&1 || true
+systemctl enable plocate-updatedb.timer >/dev/null 2>&1 || true
+systemctl disable cups-browsed.service >/dev/null 2>&1 || true
+
+# ── Pulizia ───────────────────────────────────────────────────────────────────
+apt-get clean
+exit 0

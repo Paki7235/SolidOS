@@ -1,0 +1,33 @@
+# Fase 2: ambiente (accesso, blocco, schermo, energia) e app di base.
+
+# Accesso, blocco e schermo
+cage
+swaylock
+swayidle
+wlr-randr
+wlsunset
+brightnessctl
+wf-recorder
+wl-clipboard
+?wtype
+power-profiles-daemon
+bluez
+?bluez-obexd
+?rfkill
+xdg-desktop-portal-wlr
+?xdg-desktop-portal-lxqt
+
+# App di base
+qimgv
+qpdfview
+vlc
+?vlc-plugin-pipewire
+qalculate-qt
+lxqt-archiver
+7zip
+restic
+smartmontools
+libreoffice-qt6
+?libreoffice-l10n-@LINGUA@
+?libreoffice-help-@LINGUA@
+?hunspell-@LINGUA@

@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Configurazione di sistema di labwc per @OS_NAME@.
+     L'utente può sovrascriverla in ~/.config/labwc/rc.xml. -->
+<labwc_config>
+
+  <core>
+    <decoration>server</decoration>
+    <gap>0</gap>
+    <adaptiveSync>no</adaptiveSync>
+  </core>
+
+  <placement>
+    <policy>cascade</policy>
+  </placement>
+
+  <theme>
+    <name>@OS_NAME@</name>
+    <icon>@TEMA_ICONE@</icon>
+    <cornerRadius>8</cornerRadius>
+    <dropShadows>yes</dropShadows>
+    <titlebar>
+      <layout>icon:iconify,max,close</layout>
+      <showTitle>yes</showTitle>
+    </titlebar>
+    <font place="ActiveWindow"><name>@FONT_UI@</name><size>@FONT_UI_DIMENSIONE@</size><weight>bold</weight></font>
+    <font place="InactiveWindow"><name>@FONT_UI@</name><size>@FONT_UI_DIMENSIONE@</size><weight>normal</weight></font>
+    <font place="MenuItem"><name>@FONT_UI@</name><size>@FONT_UI_DIMENSIONE@</size></font>
+    <font place="OnScreenDisplay"><name>@FONT_UI@</name><size>@FONT_UI_DIMENSIONE@</size></font>
+  </theme>
+
+  <windowSwitcher show="yes" preview="yes" outlines="yes">
+    <fields>
+      <field content="icon" width="5%" />
+      <field content="title" width="95%" />
+    </fields>
+  </windowSwitcher>
+
+  <focus>
+    <followMouse>no</followMouse>
+    <raiseOnFocus>no</raiseOnFocus>
+  </focus>
+
+  <snapping>
+    <range>10</range>
+    <topMaximize>yes</topMaximize>
+  </snapping>
+
+  <desktops number="1" />
+
+  <keyboard>
+    <numlock>on</numlock>
+    <repeatRate>25</repeatRate>
+    <repeatDelay>600</repeatDelay>
+
+    <!-- Finestre (come su Windows) -->
+    <keybind key="A-Tab"><action name="NextWindow" /></keybind>
+    <keybind key="A-S-Tab"><action name="PreviousWindow" /></keybind>
+    <keybind key="A-F4"><action name="Close" /></keybind>
+    <keybind key="W-Up"><action name="ToggleMaximize" /></keybind>
+    <keybind key="W-Down"><action name="Iconify" /></keybind>
+    <keybind key="W-Left"><action name="SnapToEdge" direction="left" /></keybind>
+    <keybind key="W-Right"><action name="SnapToEdge" direction="right" /></keybind>
+
+    <!-- App -->
+    <keybind key="W-e"><action name="Execute" command="pcmanfm-qt" /></keybind>
+    <keybind key="C-A-t"><action name="Execute" command="qterminal" /></keybind>
+    <keybind key="W-Return"><action name="Execute" command="qterminal" /></keybind>
+    <keybind key="Super_L" onRelease="yes"><action name="ShowMenu" menu="root-menu" /></keybind>
+
+    <!-- Cattura dello schermo -->
+    <keybind key="Print"><action name="Execute" command="@OS_ID@-cattura --subito" /></keybind>
+    <keybind key="S-Print"><action name="Execute" command="@OS_ID@-cattura" /></keybind>
+
+    <!-- Shell -->
+    <keybind key="W-a"><action name="Execute" command="@OS_ID@-ctl controllo" /></keybind>
+    <keybind key="W-n"><action name="Execute" command="@OS_ID@-ctl notifiche" /></keybind>
+    <keybind key="W-space"><action name="Execute" command="@OS_ID@-barra" /></keybind>
+    <keybind key="W-l"><action name="Execute" command="swaylock -f" /></keybind>
+    <keybind key="W-i"><action name="Execute" command="@OS_ID@-impostazioni" /></keybind>
+    <keybind key="W-t"><action name="Execute" command="@OS_ID@-linea-del-tempo" /></keybind>
+    <keybind key="C-S-Escape"><action name="Execute" command="@OS_ID@-monitor" /></keybind>
+    <keybind key="W-plus"><action name="ZoomIn" /></keybind>
+    <keybind key="W-minus"><action name="ZoomOut" /></keybind>
+
+    <!-- Tasti multimediali -->
+    <keybind key="XF86AudioRaiseVolume"><action name="Execute" command="@OS_ID@-ctl volume 5" /></keybind>
+    <keybind key="XF86AudioLowerVolume"><action name="Execute" command="@OS_ID@-ctl volume -5" /></keybind>
+    <keybind key="XF86AudioMute"><action name="Execute" command="@OS_ID@-ctl muto" /></keybind>
+    <keybind key="XF86MonBrightnessUp"><action name="Execute" command="@OS_ID@-ctl luminosita 5" /></keybind>
+    <keybind key="XF86MonBrightnessDown"><action name="Execute" command="@OS_ID@-ctl luminosita -5" /></keybind>
+  </keyboard>
+
+  <libinput>
+    <device category="touchpad">
+      <tap>yes</tap>
+      <naturalScroll>no</naturalScroll>
+      <disableWhileTyping>yes</disableWhileTyping>
+    </device>
+  </libinput>
+
+</labwc_config>

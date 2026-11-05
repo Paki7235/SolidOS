@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Action
+Name=Installa con @OS_NAME@
+Icon=system-software-install
+Profiles=programma;
+
+[X-Action-Profile programma]
+MimeTypes=application/vnd.debian.binary-package;application/x-rpm;application/vnd.appimage;application/x-iso9660-appimage;application/vnd.flatpak.ref;application/x-ms-dos-executable;application/x-msdownload;application/x-msi;
+Exec=@OS_ID@-installa %f

@@ -1,0 +1,28 @@
+# Avvio automatico della sessione @OS_NAME@ (eseguito da labwc con sh).
+
+# Rende visibile l'ambiente Wayland ai servizi avviati via D-Bus/systemd
+dbus-update-activation-environment --systemd \
+	WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE \
+	QT_QPA_PLATFORM QT_QPA_PLATFORMTHEME XCURSOR_THEME XCURSOR_SIZE GRAFICA_SICURA \
+	>/dev/null 2>&1
+
+# Sfondo (lo Spazio di vita attivo può sceglierne un altro)
+SFONDO="/usr/share/backgrounds/@OS_ID@/predefinito.png"
+[ -f "$HOME/.config/@OS_ID@/sfondo" ] && SFONDO=$(cat "$HOME/.config/@OS_ID@/sfondo")
+swaybg --mode fill --image "$SFONDO" >/dev/null 2>&1 &
+
+# Shell (notifiche, centro di controllo, OSD) e pannello
+@OS_ID@-shell >"${XDG_STATE_HOME:-$HOME/.local/state}/@OS_ID@/shell.log" 2>&1 &
+lxqt-panel >/dev/null 2>&1 &
+lxqt-policykit-agent >/dev/null 2>&1 &
+
+# Blocco automatico dopo 10 minuti e prima della sospensione
+swayidle -w timeout 600 'swaylock -f' before-sleep 'swaylock -f' >/dev/null 2>&1 &
+
+# Servizi utente: Condivisione Vicina, Spazi, registro privacy
+systemctl --user start @OS_ID@-condivisione.service @OS_ID@-privacy.service >/dev/null 2>&1 &
+
+xdg-user-dirs-update >/dev/null 2>&1
+/usr/libexec/@OS_ID@/avvisi-avvio >/dev/null 2>&1 &
+@OS_ID@-spazi ripristina >/dev/null 2>&1 &
+/usr/libexec/nucleo/primo-accesso >/dev/null 2>&1 &

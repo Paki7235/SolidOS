@@ -1,0 +1,12 @@
+#!/bin/sh
+# Mostra avvisi all'inizio della sessione in base alla voce di avvio scelta.
+sleep 2
+
+if grep -qw '@OS_ID@.modalita=salvataggio' /proc/cmdline; then
+	exec @OS_ID@-salvataggio
+fi
+
+if [ "${GRAFICA_SICURA:-0}" = 1 ]; then
+	notify-send --app-name="@OS_NAME@" --icon=@OS_ID@-logo --urgency=low \
+		"@T_AVVIO_GRAFICA_SICURA@" "@T_GRAFICA_SICURA_ATTIVA@"
+fi

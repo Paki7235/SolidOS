@@ -1,0 +1,27 @@
+# Fasi 6-10: stampa, accessibilità, ricerca, privacy, condivisione.
+
+# Stampa e scansione (stampanti moderne senza driver)
+cups
+cups-filters
+?ipp-usb
+sane-airscan
+?sane-utils
+?system-config-printer-common
+
+# Accessibilità
+orca
+wvkbd
+?speech-dispatcher-espeak-ng
+
+# Ricerca file per la Barra Unica, rete per il registro privacy
+plocate
+iproute2
+iw
+?avahi-daemon
+
+# Condivisione Vicina (AirDrop: librerie usate da OWL)
+?libpcap0.8t64
+?libev4t64
+?libnl-3-200
+?libnl-genl-3-200
+?bluez-tools

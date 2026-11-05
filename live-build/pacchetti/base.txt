@@ -1,0 +1,38 @@
+# Sistema di base della sessione live.
+# Una riga = un pacchetto. Prefisso "?" = facoltativo (saltato con un avviso se
+# non esiste nell'archivio). Gli altri sono obbligatori: se mancano la build si ferma.
+
+live-boot
+live-config
+live-config-systemd
+systemd-sysv
+sudo
+locales
+console-setup
+keyboard-configuration
+tzdata
+ca-certificates
+dbus-user-session
+polkitd
+?pkexec
+udisks2
+systemd-zram-generator
+procps
+psmisc
+less
+nano
+?bash-completion
+?curl
+network-manager
+wpasupplicant
+iw
+xdg-user-dirs
+xdg-utils
+shared-mime-info
+desktop-file-utils
+pipewire
+pipewire-pulse
+pipewire-alsa
+wireplumber
+?rtkit
+?alsa-utils

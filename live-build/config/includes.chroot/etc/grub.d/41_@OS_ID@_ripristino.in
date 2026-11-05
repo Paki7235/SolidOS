@@ -1,0 +1,51 @@
+#!/bin/sh
+# Voci di avvio della Linea del Tempo: «Torna a ieri» e altri punti di ripristino.
+# Ogni voce avvia uno snapshot Btrfs in sola lettura con uno strato temporaneo in
+# memoria (parametro @OS_ID@.snapshot=1): nulla viene modificato finché, dalla
+# Linea del Tempo, non si sceglie «Rendi permanente».
+set -e
+. /usr/share/grub/grub-mkconfig_lib
+
+[ -d /.snapshots ] || exit 0
+[ "$(stat -f -c %T /)" = "btrfs" ] || exit 0
+
+DISPOSITIVO=$(${grub_probe} --target=device /)
+UUID=$(${grub_probe} --target=fs_uuid /)
+PARAMETRI="${GRUB_CMDLINE_LINUX} ${GRUB_CMDLINE_LINUX_DEFAULT}"
+OGGI=$(date -u +%Y-%m-%d)
+
+voce() { # numero data descrizione titolo
+	dir="/.snapshots/$1/snapshot"
+	kernel=$(ls -1 "$dir"/boot/vmlinuz-* 2>/dev/null | sort -V | tail -n 1)
+	[ -n "$kernel" ] || return 0
+	versione=${kernel##*/vmlinuz-}
+	[ -f "$dir/boot/initrd.img-$versione" ] || return 0
+	echo "menuentry '$4' --class recovery {"
+	prepare_grub_to_access_device "$DISPOSITIVO" | sed 's/^/\t/'
+	echo "	linux /@snapshots/$1/snapshot/boot/vmlinuz-$versione root=UUID=$UUID rootflags=subvol=@snapshots/$1/snapshot ro $PARAMETRI @OS_ID@.snapshot=$1"
+	echo "	initrd /@snapshots/$1/snapshot/boot/initrd.img-$versione"
+	echo "}"
+}
+
+elenco=""
+for info in $(ls -1d /.snapshots/*/info.xml 2>/dev/null | sort -t/ -k3 -n -r); do
+	n=$(basename "$(dirname "$info")")
+	data=$(sed -n 's:.*<date>\(.*\)</date>.*:\1:p' "$info")
+	descr=$(sed -n 's:.*<description>\(.*\)</description>.*:\1:p' "$info" | tr -d "'")
+	elenco="$elenco$n|$data|$descr
+"
+done
+[ -n "$elenco" ] || exit 0
+
+# «Torna a ieri»: il punto più recente creato prima di oggi (altrimenti il più vecchio disponibile)
+ieri=$(printf '%s' "$elenco" | awk -F'|' -v oggi="$OGGI" '$2 < oggi { print; exit }')
+[ -n "$ieri" ] || ieri=$(printf '%s' "$elenco" | tail -n 1)
+n=$(echo "$ieri" | cut -d'|' -f1)
+d=$(echo "$ieri" | cut -d'|' -f2 | cut -c1-16)
+voce "$n" "$d" "" "Torna a ieri ($d)"
+
+echo "submenu 'Altri punti di ripristino' --class recovery {"
+printf '%s' "$elenco" | head -n 12 | while IFS='|' read -r n d descr; do
+	voce "$n" "$d" "$descr" "$(echo "$d" | cut -c1-16) — ${descr:-punto automatico}"
+done
+echo "}"

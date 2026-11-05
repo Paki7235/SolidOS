@@ -1,0 +1,356 @@
+#!/usr/bin/python3
+"""Helper privilegiato del sistema.
+
+Eseguito come root tramite pkexec (azione polkit org.<OS_ID>.helper). Ogni
+sottocomando valida rigorosamente gli argomenti: nessun comando arbitrario.
+
+Uso: helper <comando> [argomenti…]
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import re
+import shutil
+import stat
+import subprocess
+import sys
+from pathlib import Path
+
+RE_DISPOSITIVO = re.compile(r"^/dev/(sd[a-z]+\d*|nvme\d+n\d+(p\d+)?|mmcblk\d+(p\d+)?|vd[a-z]+\d*|xvd[a-z]+\d*)$")
+RE_PACCHETTO = re.compile(r"^[a-z0-9][a-z0-9+.-]{0,99}$")
+RE_NOME = re.compile(r"^[\w .-]{1,32}$")
+RE_UTENTE = re.compile(r"^[a-z_][a-z0-9_-]{0,31}$")
+RE_FLATPAK = re.compile(r"^[A-Za-z0-9_.-]{3,255}$")
+FS_CONSENTITI = {"exfat": ["mkfs.exfat", "-L"], "vfat": ["mkfs.vfat", "-F", "32", "-n"],
+                 "ntfs": ["mkfs.ntfs", "-f", "-L"], "ext4": ["mkfs.ext4", "-F", "-L"]}
+
+
+def errore(messaggio: str, codice: int = 1):
+    print(messaggio, file=sys.stderr)
+    sys.exit(codice)
+
+
+def esegui(cmd: list[str], **kw) -> int:
+    return subprocess.run(cmd, check=False, **kw).returncode
+
+
+def dispositivo(percorso: str, disco_intero: bool = False) -> str:
+    if not RE_DISPOSITIVO.match(percorso):
+        errore(f"dispositivo non valido: {percorso}")
+    if not stat.S_ISBLK(os.stat(percorso).st_mode):
+        errore(f"non è un dispositivo a blocchi: {percorso}")
+    if disco_intero:
+        tipo = subprocess.run(["lsblk", "-dno", "TYPE", percorso], capture_output=True, text=True).stdout.strip()
+        if tipo != "disk":
+            errore("serve un disco intero, non una partizione")
+    # Mai toccare il disco su cui gira il sistema
+    radice = subprocess.run(["findmnt", "-no", "SOURCE", "/"], capture_output=True, text=True).stdout.strip()
+    genitore = subprocess.run(["lsblk", "-no", "PKNAME", radice], capture_output=True, text=True).stdout.strip() if radice.startswith("/dev/") else ""
+    if radice and (percorso == radice or (genitore and percorso == f"/dev/{genitore}")):
+        errore("non è possibile modificare il disco di sistema in uso")
+    return percorso
+
+
+def utente_chiamante() -> str:
+    uid = os.environ.get("PKEXEC_UID")
+    if uid is None:
+        return "root"
+    import pwd
+
+    return pwd.getpwuid(int(uid)).pw_name
+
+
+# ── Dischi ────────────────────────────────────────────────────────────────────
+def cmd_smart(disco: str):
+    disco = dispositivo(disco)
+    r = subprocess.run(["smartctl", "-j", "-a", disco], capture_output=True, text=True)
+    print(r.stdout)
+
+
+def cmd_formatta(partizione: str, fs: str, etichetta: str):
+    partizione = dispositivo(partizione)
+    if fs not in FS_CONSENTITI or not RE_NOME.match(etichetta):
+        errore("file system o etichetta non validi")
+    esegui(["umount", partizione], stderr=subprocess.DEVNULL)
+    sys.exit(esegui([*FS_CONSENTITI[fs], etichetta[:11] if fs == "vfat" else etichetta, partizione]))
+
+
+def cmd_scrivi_immagine(immagine: str, disco: str):
+    disco = dispositivo(disco, disco_intero=True)
+    if not Path(immagine).is_file() or not immagine.endswith((".iso", ".img")):
+        errore("immagine non valida")
+    for p in subprocess.run(["lsblk", "-lno", "PATH", disco], capture_output=True, text=True).stdout.split():
+        esegui(["umount", p], stderr=subprocess.DEVNULL)
+    sys.exit(esegui(["dd", f"if={immagine}", f"of={disco}", "bs=4M", "conv=fsync", "status=none"]))
+
+
+# ── Pacchetti ─────────────────────────────────────────────────────────────────
+APT_ENV = dict(os.environ, DEBIAN_FRONTEND="noninteractive")
+
+
+def cmd_apt_installa(*pacchetti: str):
+    if not pacchetti or not all(RE_PACCHETTO.match(p) for p in pacchetti):
+        errore("nomi di pacchetto non validi")
+    snapshot_pre("Installazione: " + " ".join(pacchetti))
+    esegui(["apt-get", "update", "-qq"], env=APT_ENV)
+    sys.exit(esegui(["apt-get", "install", "-y", *pacchetti], env=APT_ENV))
+
+
+def cmd_apt_rimuovi(*pacchetti: str):
+    if not pacchetti or not all(RE_PACCHETTO.match(p) for p in pacchetti):
+        errore("nomi di pacchetto non validi")
+    snapshot_pre("Rimozione: " + " ".join(pacchetti))
+    sys.exit(esegui(["apt-get", "remove", "-y", *pacchetti], env=APT_ENV))
+
+
+def cmd_installa_deb(file: str):
+    percorso = Path(file)
+    if not percorso.is_file() or percorso.suffix != ".deb":
+        errore("file .deb non valido")
+    snapshot_pre(f"Installazione di {percorso.name}")
+    sys.exit(esegui(["apt-get", "install", "-y", str(percorso.resolve())], env=APT_ENV))
+
+
+def cmd_flatpak_sistema(azione: str, app: str):
+    if azione not in ("install", "uninstall") or not RE_FLATPAK.match(app):
+        errore("argomenti non validi")
+    extra = ["flathub"] if azione == "install" else []
+    sys.exit(esegui(["flatpak", azione, "--system", "-y", "--noninteractive", *extra, app]))
+
+
+# ── Snapshot (Linea del Tempo) ────────────────────────────────────────────────
+def snapshot_pre(descrizione: str):
+    if shutil.which("snapper") and Path("/etc/snapper/configs/root").exists():
+        esegui(["snapper", "-c", "root", "create", "-c", "number", "-d", descrizione[:60]],
+               stderr=subprocess.DEVNULL)
+
+
+def cmd_snapshot_crea(descrizione: str):
+    if not RE_NOME.match(descrizione[:32].replace("'", "")):
+        descrizione = "Manuale"
+    sys.exit(esegui(["snapper", "-c", "root", "create", "-c", "number", "-d", descrizione[:60]]))
+
+
+def cmd_snapshot_elimina(numero: str):
+    if not numero.isdigit():
+        errore("numero non valido")
+    sys.exit(esegui(["snapper", "-c", "root", "delete", numero]))
+
+
+def cmd_ripristina_file(configurazione: str, numero: str, percorso: str, destinazione: str):
+    """Copia un file/cartella da uno snapshot nella destinazione (proprietà all'utente)."""
+    if configurazione not in ("root", "home") or not numero.isdigit():
+        errore("argomenti non validi")
+    base = Path("/.snapshots" if configurazione == "root" else "/home/.snapshots") / numero / "snapshot"
+    rel = Path(percorso).relative_to("/home") if configurazione == "home" else Path(percorso).relative_to("/")
+    sorgente = (base / rel).resolve()
+    if not str(sorgente).startswith(str(base)) or not sorgente.exists():
+        errore("file non presente nello snapshot")
+    utente = utente_chiamante()
+    dest = Path(destinazione).resolve()
+    if utente != "root" and not str(dest).startswith(f"/home/{utente}/"):
+        errore("destinazione non consentita")
+    if dest.exists():
+        errore("la destinazione esiste già")
+    if sorgente.is_dir():
+        shutil.copytree(sorgente, dest, symlinks=True)
+    else:
+        shutil.copy2(sorgente, dest)
+    esegui(["chown", "-R", f"{utente}:{utente}", str(dest)])
+
+
+def cmd_ripristina_sistema(numero: str):
+    """Prepara il ritorno del sistema allo snapshot indicato (attivo al riavvio)."""
+    if not numero.isdigit():
+        errore("numero non valido")
+    sys.exit(esegui(["/usr/libexec/nucleo/ripristina-sistema", numero]))
+
+
+# ── Sistema ───────────────────────────────────────────────────────────────────
+def cmd_hostname(nome: str):
+    if not re.match(r"^[a-zA-Z0-9-]{1,63}$", nome):
+        errore("nome non valido")
+    sys.exit(esegui(["hostnamectl", "set-hostname", nome]))
+
+
+def cmd_firewall(azione: str, valore: str = ""):
+    if azione == "attiva":
+        sys.exit(esegui(["systemctl", "enable", "--now", "firewalld"]))
+    if azione == "disattiva":
+        sys.exit(esegui(["systemctl", "disable", "--now", "firewalld"]))
+    if azione == "zona" and valore in ("home", "public", "work", "trusted", "block"):
+        sys.exit(esegui(["firewall-cmd", f"--set-default-zone={valore}"]))
+    if azione in ("apri", "chiudi") and re.match(r"^\d{2,5}/(tcp|udp)$", valore):
+        op = "--add-port" if azione == "apri" else "--remove-port"
+        sys.exit(esegui(["firewall-cmd", f"{op}={valore}"]))
+    errore("azione firewall non valida")
+
+
+def cmd_utente_crea(nome_utente: str, nome_completo: str, amministratore: str):
+    if not RE_UTENTE.match(nome_utente) or len(nome_completo) > 64:
+        errore("nome utente non valido")
+    gruppi = "audio,video,plugdev,netdev,bluetooth,lpadmin,scanner"
+    if amministratore == "si":
+        gruppi += ",sudo"
+    codice = esegui(["useradd", "-m", "-s", "/bin/bash", "-c", nome_completo, "-G", gruppi, nome_utente],
+                    stderr=subprocess.DEVNULL)
+    if codice == 0:
+        esegui(["passwd", "-d", nome_utente])
+        esegui(["passwd", "-e", nome_utente])  # password da scegliere al primo accesso
+    sys.exit(codice)
+
+
+def cmd_utente_elimina(nome_utente: str):
+    if not RE_UTENTE.match(nome_utente) or nome_utente == utente_chiamante():
+        errore("utente non valido")
+    sys.exit(esegui(["userdel", "-r", nome_utente]))
+
+
+def cmd_utente_password(nome_utente: str):
+    """Legge la nuova password da stdin (mai sulla riga di comando)."""
+    if not RE_UTENTE.match(nome_utente):
+        errore("utente non valido")
+    password = sys.stdin.readline().rstrip("\n")
+    if len(password) < 4:
+        errore("password troppo corta")
+    sys.exit(esegui(["chpasswd"], input=f"{nome_utente}:{password}\n", text=True))
+
+
+def cmd_profilo_leggero(attivo: str):
+    from importlib import import_module
+
+    id_os = import_module("nucleo.branding").id_os()
+    file = Path(f"/etc/{id_os}/profilo-leggero")
+    normale = Path(f"/etc/{id_os}/profilo-normale")
+    file.parent.mkdir(parents=True, exist_ok=True)
+    if attivo == "si":
+        file.write_text("scelto dall'utente\n")
+        normale.unlink(missing_ok=True)
+    else:
+        file.unlink(missing_ok=True)
+        normale.write_text("scelto dall'utente\n")
+    esegui(["/usr/libexec/nucleo/profilo-prestazioni", "--applica"])
+
+
+def cmd_aggiorna_ora():
+    sys.exit(esegui(["systemctl", "start", "--no-block", "nucleo-aggiornamenti.service"]))
+
+
+def cmd_condivisione_porta(azione: str, porta: str, protocollo: str = "tcp"):
+    """Apre/chiude una porta solo per la sessione (non permanente)."""
+    if azione not in ("apri", "chiudi") or not porta.isdigit() or protocollo not in ("tcp", "udp"):
+        errore("argomenti non validi")
+    if esegui(["systemctl", "is-active", "--quiet", "firewalld"]) != 0:
+        return
+    op = "--add-port" if azione == "apri" else "--remove-port"
+    esegui(["firewall-cmd", f"{op}={porta}/{protocollo}"])
+
+
+def cmd_airdrop(azione: str, interfaccia: str = ""):
+    """Avvia/ferma il collegamento AWDL (OWL) su un'interfaccia Wi-Fi."""
+    if azione == "ferma":
+        sys.exit(esegui(["systemctl", "stop", "nucleo-owl.service"]))
+    if azione == "avvia" and re.match(r"^[a-z0-9]{2,15}$", interfaccia):
+        Path("/run/nucleo").mkdir(exist_ok=True)
+        Path("/run/nucleo/owl.env").write_text(f"OWL_INTERFACCIA={interfaccia}\n")
+        sys.exit(esegui(["systemctl", "restart", "nucleo-owl.service"]))
+    errore("azione non valida")
+
+
+def cmd_persistenza(disco: str):
+    """Aggiunge una partizione di persistenza nello spazio libero della chiavetta."""
+    disco = dispositivo(disco, disco_intero=True)
+    sys.exit(esegui(["/usr/libexec/nucleo/crea-persistenza", disco]))
+
+
+# ── Salvataggio ───────────────────────────────────────────────────────────────
+def cmd_clona(sorgente: str, destinazione: str):
+    """Clona un disco intero su un altro (ddrescue: salta i settori danneggiati)."""
+    sorgente = dispositivo(sorgente, disco_intero=True)
+    destinazione = dispositivo(destinazione, disco_intero=True)
+    if sorgente == destinazione:
+        errore("sorgente e destinazione coincidono")
+    for p in subprocess.run(["lsblk", "-lno", "PATH", destinazione], capture_output=True, text=True).stdout.split():
+        esegui(["umount", p], stderr=subprocess.DEVNULL)
+    mappa = "/run/nucleo-clonazione.map"
+    sys.exit(esegui(["ddrescue", "-f", "-n", sorgente, destinazione, mappa]))
+
+
+def _monta_windows_rw(partizione: str) -> Path:
+    partizione = partizione if partizione.startswith("/dev/mapper/") else dispositivo(partizione)
+    punto = Path("/run/nucleo-windows")
+    punto.mkdir(exist_ok=True)
+    esegui(["umount", partizione], stderr=subprocess.DEVNULL)
+    if esegui(["mount", "-t", "ntfs3", partizione, str(punto)]) != 0:
+        if esegui(["ntfs-3g", "-o", "remove_hiberfile", partizione, str(punto)]) != 0:
+            errore("impossibile aprire Windows in scrittura (ibernazione o disco cifrato)")
+    return punto
+
+
+def _sam(punto: Path) -> Path:
+    for candidato in ("Windows/System32/config/SAM", "WINDOWS/system32/config/SAM"):
+        if (punto / candidato).exists():
+            return punto / candidato
+    esegui(["umount", str(punto)])
+    errore("database degli account di Windows non trovato")
+
+
+def cmd_windows_utenti(partizione: str):
+    punto = _monta_windows_rw(partizione)
+    try:
+        r = subprocess.run(["chntpw", "-l", str(_sam(punto))], capture_output=True, text=True)
+        for riga in r.stdout.splitlines():
+            m = re.match(r"\|\s*[0-9a-fA-F]+\s*\|\s*(.+?)\s*\|", riga)
+            if m and m.group(1).lower() not in ("username", "guest", "defaultaccount", "wdagutilityaccount"):
+                print(m.group(1))
+    finally:
+        esegui(["umount", str(punto)])
+
+
+def cmd_windows_password(partizione: str, utente: str):
+    """Svuota la password di un account LOCALE di Windows (non funziona con gli account Microsoft)."""
+    if not re.match(r"^[\w .-]{1,64}$", utente):
+        errore("nome utente non valido")
+    punto = _monta_windows_rw(partizione)
+    try:
+        # 1 = cancella password, 2 = sblocca account, q = esci, y = salva
+        r = subprocess.run(["chntpw", "-u", utente, str(_sam(punto))], input="1\n2\nq\ny\n",
+                           capture_output=True, text=True)
+        if r.returncode != 0:
+            errore("chntpw non è riuscito a modificare l'account")
+        print(f"Password di «{utente}» rimossa: all'avvio di Windows l'accesso non chiederà la password.")
+    finally:
+        esegui(["umount", str(punto)])
+
+
+COMANDI = {
+    "clona": cmd_clona, "windows-utenti": cmd_windows_utenti, "windows-password": cmd_windows_password,
+    "smart": cmd_smart, "formatta": cmd_formatta, "scrivi-immagine": cmd_scrivi_immagine,
+    "apt-installa": cmd_apt_installa, "apt-rimuovi": cmd_apt_rimuovi, "installa-deb": cmd_installa_deb,
+    "flatpak-sistema": cmd_flatpak_sistema,
+    "snapshot-crea": cmd_snapshot_crea, "snapshot-elimina": cmd_snapshot_elimina,
+    "ripristina-file": cmd_ripristina_file, "ripristina-sistema": cmd_ripristina_sistema,
+    "hostname": cmd_hostname, "firewall": cmd_firewall,
+    "utente-crea": cmd_utente_crea, "utente-elimina": cmd_utente_elimina, "utente-password": cmd_utente_password,
+    "profilo-leggero": cmd_profilo_leggero, "aggiorna-ora": cmd_aggiorna_ora,
+    "condivisione-porta": cmd_condivisione_porta, "airdrop": cmd_airdrop, "persistenza": cmd_persistenza,
+}
+
+
+def main():
+    if os.geteuid() != 0:
+        errore("l'helper deve essere eseguito come root (pkexec)")
+    if len(sys.argv) < 2 or sys.argv[1] not in COMANDI:
+        errore("comando sconosciuto. Disponibili: " + ", ".join(sorted(COMANDI)))
+    try:
+        COMANDI[sys.argv[1]](*sys.argv[2:])
+    except TypeError:
+        errore("numero di argomenti errato")
+    except (OSError, ValueError) as e:
+        errore(str(e))
+
+
+if __name__ == "__main__":
+    main()

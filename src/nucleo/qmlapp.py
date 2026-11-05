@@ -1,0 +1,147 @@
+"""Avvio comune delle app QML: tema, traduzioni, ponte Python ↔ QML."""
+
+from __future__ import annotations
+
+import os
+import signal
+import sys
+from pathlib import Path
+
+from . import branding
+from .i18n import T
+
+CARTELLA_QML = Path(os.environ.get("NUCLEO_QML", "/usr/share/nucleo/qml"))
+if not CARTELLA_QML.is_dir():
+    CARTELLA_QML = Path(__file__).resolve().parents[1] / "qml"
+
+
+def prepara_ambiente(layer_shell: bool = False, software: bool | None = None) -> None:
+    os.environ.setdefault("QT_QUICK_CONTROLS_STYLE", "Basic")
+    if layer_shell:
+        os.environ["QT_WAYLAND_SHELL_INTEGRATION"] = "layer-shell"
+    if software is None:
+        software = os.environ.get("GRAFICA_SICURA") == "1" or _profilo_leggero()
+    if software:
+        os.environ["QT_QUICK_BACKEND"] = "software"
+
+
+def _profilo_leggero() -> bool:
+    return Path(f"/etc/{branding.id_os()}/profilo-leggero").exists()
+
+
+def crea_app(nome_app: str, argv: list[str] | None = None):
+    from PyQt6.QtGui import QFont, QGuiApplication, QIcon
+
+    app = QGuiApplication(argv if argv is not None else sys.argv)
+    app.setApplicationName(nome_app)
+    app.setOrganizationName(branding.nome())
+    app.setDesktopFileName(branding.comando(nome_app))
+    font = QFont(branding.get("FONT_UI", "Inter"))
+    font.setPointSize(int(branding.get("FONT_UI_DIMENSIONE", "10") or 10))
+    app.setFont(font)
+    app.setWindowIcon(QIcon.fromTheme(f"{branding.id_os()}-logo"))
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
+    return app
+
+
+class Traduttore:
+    """Oggetto «I18n» esposto al QML: I18n.t("testo")."""
+
+    def __new__(cls):
+        from PyQt6.QtCore import QObject, pyqtSlot
+
+        class _I18n(QObject):
+            @pyqtSlot(str, result=str)
+            def t(self, testo: str) -> str:
+                return T(testo)
+
+        return _I18n()
+
+
+def tema_effettivo() -> dict:
+    """Tema del branding con le preferenze dell'utente (chiaro/scuro, accento)."""
+    from .sistema import config_utente, leggi_json
+
+    base = branding.tema()
+    try:
+        pref = leggi_json(config_utente("aspetto.json"), {})
+    except OSError:   # es. schermata di accesso: utente di sistema senza home scrivibile
+        pref = {}
+    if pref.get("accento"):
+        base["accento"] = pref["accento"]
+    chiaro = pref.get("tema") == "chiaro"
+    if chiaro:
+        base.update({
+            "sfondo": base["sfondoChiaro"], "superficie": "#FFFFFF",
+            "superficieAlta": "#EEF2F8", "testo": base["testoScuro"],
+            "testoSecondario": "#55627A", "bordo": "#D5DCE8",
+        })
+    else:
+        base.update({"superficieAlta": "#1C2740", "testoSecondario": "#97A3BA", "bordo": "#2A3550"})
+    base["chiaro"] = chiaro
+    base["pericolo"] = "#E5484D"
+    base["successo"] = "#30A46C"
+    base["avviso"] = "#F5A524"
+    base["raggio"] = 10
+    base["animazioni"] = not _profilo_leggero()
+    return base
+
+
+def _provider_icone():
+    from PyQt6.QtCore import QSize
+    from PyQt6.QtGui import QIcon, QPixmap
+    from PyQt6.QtQuick import QQuickImageProvider
+
+    class ProviderIcone(QQuickImageProvider):
+        """image://icona/<nome-icona-del-tema> oppure image://icona/<percorso-assoluto>"""
+
+        def __init__(self):
+            super().__init__(QQuickImageProvider.ImageType.Pixmap)
+
+        def requestPixmap(self, ident, richiesta, *_):
+            lato = max(richiesta.width(), richiesta.height(), 0) or 48
+            nome = ident.split("?")[0]
+            icona = QIcon(nome) if nome.startswith("/") else QIcon.fromTheme(nome)
+            if icona.isNull():
+                icona = QIcon.fromTheme("application-x-executable")
+            pixmap = icona.pixmap(QSize(lato, lato))
+            if pixmap.isNull():
+                pixmap = QPixmap(lato, lato)
+                pixmap.fill()
+            return pixmap, pixmap.size()
+
+    return ProviderIcone()
+
+
+def carica(app, file_qml: str, contesto: dict | None = None):
+    """Crea il motore QML, espone Tema, I18n e gli oggetti del contesto, carica il file."""
+    from PyQt6.QtQml import QQmlApplicationEngine
+
+    motore = QQmlApplicationEngine()
+    motore.addImportPath(str(CARTELLA_QML))
+    motore.addImageProvider("icona", _provider_icone())
+    radice = motore.rootContext()
+    radice.setContextProperty("Tema", tema_effettivo())
+    i18n = Traduttore()
+    radice.setContextProperty("I18n", i18n)
+    motore._trattieni = [i18n]  # evita la raccolta del garbage collector
+    for nome, oggetto in (contesto or {}).items():
+        radice.setContextProperty(nome, oggetto)
+        motore._trattieni.append(oggetto)
+    percorso = CARTELLA_QML / file_qml
+    motore.load(str(percorso))
+    if not motore.rootObjects():
+        print(f"Impossibile caricare {percorso}", file=sys.stderr)
+        sys.exit(1)
+    return motore
+
+
+def esegui_app(nome_app: str, file_qml: str, contesto_fn=None, layer_shell: bool = False) -> int:
+    """Scorciatoia: prepara, crea l'app, costruisce il contesto e avvia il ciclo eventi."""
+    prepara_ambiente(layer_shell=layer_shell)
+    app = crea_app(nome_app)
+    contesto = contesto_fn(app) if contesto_fn else {}
+    motore = carica(app, file_qml, contesto)
+    codice = app.exec()
+    del motore
+    return codice

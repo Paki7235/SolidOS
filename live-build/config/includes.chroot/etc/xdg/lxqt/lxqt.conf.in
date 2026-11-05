@@ -1,0 +1,27 @@
+# Aspetto delle app Qt (letto da lxqt-qtplugin) — tema scuro di @OS_NAME@.
+[General]
+icon_theme=@TEMA_ICONE@
+icon_follow_color_scheme=true
+theme=@OS_ID@
+single_click_activate=false
+tool_button_style=ToolButtonTextBesideIcon
+
+[Qt]
+style=Fusion
+font="@FONT_UI@,@FONT_UI_DIMENSIONE@,-1,5,50,0,0,0,0,0"
+fixedFont="@FONT_MONO@,@FONT_UI_DIMENSIONE@,-1,5,50,0,0,0,0,0"
+doubleClickInterval=400
+wheelScrollLines=3
+
+[Palette]
+window_color=@COLORE_SUPERFICIE_SCURA@
+base_color=@COLORE_SFONDO_SCURO@
+alt_base_color=@COLORE_SUPERFICIE_SCURA@
+button_color=@COLORE_SUPERFICIE_SCURA@
+window_text_color=@COLORE_TESTO_CHIARO@
+text_color=@COLORE_TESTO_CHIARO@
+button_text_color=@COLORE_TESTO_CHIARO@
+highlight_color=@COLORE_ACCENTO@
+highlighted_text_color=#FFFFFF
+link_color=@COLORE_ACCENTO@
+link_visited_color=@COLORE_ACCENTO_SCURO@

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Action
+Name=Versioni precedenti (Linea del Tempo)
+Icon=document-open-recent
+Profiles=tutti;
+
+[X-Action-Profile tutti]
+MimeTypes=all/all;
+Exec=@OS_ID@-linea-del-tempo %f

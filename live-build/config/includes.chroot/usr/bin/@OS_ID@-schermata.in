@@ -1,0 +1,20 @@
+#!/bin/sh
+# Cattura dello schermo provvisoria (Fase 1). L'app «Cattura» arriva nella Fase 2.
+#   @OS_ID@-schermata          schermo intero
+#   @OS_ID@-schermata --area   area selezionata con il mouse
+set -e
+
+cartella=$(xdg-user-dir PICTURES 2>/dev/null || true)
+[ -n "$cartella" ] && [ "$cartella" != "$HOME" ] || cartella="$HOME/Immagini"
+mkdir -p "$cartella"
+file="$cartella/@T_SCHERMATA_PREFISSO@_$(date +%Y-%m-%d_%H-%M-%S).png"
+
+if [ "${1:-}" = "--area" ]; then
+	command -v slurp >/dev/null 2>&1 || exit 1
+	area=$(slurp) || exit 0
+	grim -g "$area" "$file"
+else
+	grim "$file"
+fi
+
+notify-send --app-name="@OS_NAME@" --icon="$file" "@T_SCHERMATA_SALVATA@" "$file" || true

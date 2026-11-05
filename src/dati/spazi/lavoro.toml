@@ -1,0 +1,17 @@
+nome = "Lavoro"
+icona = "applications-office"
+descrizione = "Documenti, posta e concentrazione"
+ordine = 10
+app = ["pcmanfm-qt.desktop", "firefox-esr.desktop", "libreoffice-writer.desktop", "libreoffice-calc.desktop", "org.mozilla.Thunderbird.desktop"]
+cartelle = ["~/Documenti/Lavoro"]
+energia = "balanced"
+
+[notifiche]
+non_disturbare = false
+# Vuoto = tutte le app. Esempio: ["Thunderbird", "Calendario"]
+consentite = []
+
+[rete]
+connessione = ""
+# Nome della VPN da attivare in questo Spazio (vuoto = nessuna)
+vpn = ""

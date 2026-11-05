@@ -1,0 +1,12 @@
+#!/bin/sh
+# Converte documenti e immagini in PDF accanto all'originale (usato dal menu del file manager e dalla Barra Unica).
+for f in "$@"; do
+	cartella=$(dirname "$f")
+	case "$(echo "$f" | tr 'A-Z' 'a-z')" in
+		*.jpg|*.jpeg|*.png|*.webp|*.heic|*.bmp|*.tif|*.tiff)
+			convert "$f" "${f%.*}.pdf" ;;
+		*)
+			soffice --headless --convert-to pdf --outdir "$cartella" "$f" >/dev/null 2>&1 ;;
+	esac
+done
+notify-send --icon=application-pdf "PDF pronto" "$(basename "${1%.*}").pdf" 2>/dev/null || true

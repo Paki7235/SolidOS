@@ -1,0 +1,23 @@
+#!/bin/sh
+# Aggiunge alla chiavetta (immagine ISO ibrida già scritta) una partizione ext4
+# «persistence» nello spazio libero: live-boot la usa con il parametro «persistence».
+set -eu
+DISCO=${1:?disco}
+[ -b "$DISCO" ] || { echo "dispositivo non valido" >&2; exit 1; }
+for p in $(lsblk -lno PATH "$DISCO" | tail -n +2); do umount "$p" 2>/dev/null || true; done
+partprobe "$DISCO" 2>/dev/null || true
+sleep 1
+# Nuova partizione Linux (83) in tutto lo spazio libero dopo l'ultima
+echo ',,83' | sfdisk --append --no-reread "$DISCO"
+partprobe "$DISCO" 2>/dev/null || true
+udevadm settle
+NUOVA=$(lsblk -lnpo PATH "$DISCO" | tail -n 1)
+[ "$NUOVA" != "$DISCO" ] || { echo "partizione non creata" >&2; exit 1; }
+mkfs.ext4 -F -L persistence "$NUOVA"
+PUNTO=$(mktemp -d)
+mount "$NUOVA" "$PUNTO"
+echo "/ union" >"$PUNTO/persistence.conf"
+umount "$PUNTO"
+rmdir "$PUNTO"
+sync
+echo "Chiavetta pronta: all'avvio scegli la voce con salvataggio dei dati."

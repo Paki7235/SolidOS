@@ -1,0 +1,1 @@
+"""Barra Unica (Super+Spazio)."""

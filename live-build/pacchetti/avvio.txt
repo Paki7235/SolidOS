@@ -1,0 +1,7 @@
+# Avvio grafico, test della memoria, Secure Boot.
+
+plymouth
+memtest86+
+# Binari firmati Debian: live-build li usa per l'avvio UEFI con Secure Boot
+?shim-signed
+?grub-efi-amd64-signed

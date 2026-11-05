@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Centro di controllo
+Comment=Wi-Fi, Bluetooth, volume, luminosità e altro
+Exec=@OS_ID@-ctl controllo
+Icon=preferences-system-notifications
+NoDisplay=true
+Categories=Settings;

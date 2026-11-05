@@ -1,0 +1,10 @@
+[Unit]
+Description=Registro privacy di @OS_NAME@
+
+[Service]
+ExecStart=/usr/bin/@OS_ID@-privacy
+Restart=on-failure
+RestartSec=30
+Nice=15
+IOSchedulingClass=idle
+MemoryMax=60M

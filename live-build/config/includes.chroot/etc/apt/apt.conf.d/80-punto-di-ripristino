@@ -1,0 +1,2 @@
+// Prima di ogni installazione/aggiornamento crea un punto di ripristino (Linea del Tempo).
+DPkg::Pre-Invoke { "if [ -x /usr/bin/snapper ] && [ -f /etc/snapper/configs/root ]; then snapper -c root create -c number -d 'Prima di apt' 2>/dev/null || true; fi"; };

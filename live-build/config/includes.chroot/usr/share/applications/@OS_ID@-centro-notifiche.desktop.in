@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Notifiche
+Comment=Centro notifiche
+Exec=@OS_ID@-ctl notifiche
+Icon=notifications
+NoDisplay=true
+Categories=Settings;

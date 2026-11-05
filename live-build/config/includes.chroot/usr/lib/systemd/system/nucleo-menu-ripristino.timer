@@ -1,0 +1,10 @@
+[Unit]
+Description=Aggiornamento giornaliero delle voci di ripristino nel menu di avvio
+
+[Timer]
+OnBootSec=10min
+OnCalendar=daily
+Persistent=true
+
+[Install]
+WantedBy=timers.target

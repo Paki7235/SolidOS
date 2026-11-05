@@ -1,0 +1,59 @@
+#!/bin/sh
+# Hook binario: sostituisce i menu di avvio generati da live-build con quelli
+# di @OS_NAME@ (GRUB per UEFI, ISOLINUX per BIOS) e aggiunge memtest86+.
+# Gira sull'host di build dopo la creazione dei bootloader e prima della ISO.
+set -e
+
+# live-build esegue gli hook binari dentro binary/: si cercano i percorsi in modo robusto.
+if [ -d ../config/avvio ]; then
+	BIN=.
+	CONF=../config
+elif [ -d config/avvio ]; then
+	BIN=binary
+	CONF=config
+else
+	echo "[@OS_ID@] ERRORE: cartella config/avvio non trovata" >&2
+	exit 1
+fi
+CHROOT="$CONF/../chroot"
+
+KERNEL=$(cd "$BIN/live" && ls vmlinuz* 2>/dev/null | head -n 1)
+INITRD=$(cd "$BIN/live" && ls initrd.img* 2>/dev/null | head -n 1)
+if [ -z "$KERNEL" ] || [ -z "$INITRD" ]; then
+	echo "[@OS_ID@] ERRORE: kernel o initrd non trovati in $BIN/live" >&2
+	exit 1
+fi
+echo "[@OS_ID@] Menu di avvio: kernel=$KERNEL initrd=$INITRD"
+
+sostituisci() { sed -e "s|%KERNEL%|$KERNEL|g" -e "s|%INITRD%|$INITRD|g" "$1"; }
+
+# ── memtest86+ (BIOS: .bin, UEFI: .efi) ──────────────────────────────────────
+mkdir -p "$BIN/boot/memtest"
+for est in bin efi; do
+	if [ -f "$CHROOT/boot/memtest86+x64.$est" ]; then
+		cp "$CHROOT/boot/memtest86+x64.$est" "$BIN/boot/memtest/memtest.$est"
+	else
+		echo "[@OS_ID@] ATTENZIONE: memtest86+x64.$est non trovato" >&2
+	fi
+done
+
+# ── GRUB (UEFI) ──────────────────────────────────────────────────────────────
+if [ -d "$BIN/boot/grub" ]; then
+	sostituisci "$CONF/avvio/grub.cfg" >"$BIN/boot/grub/grub.cfg"
+	if [ ! -f "$BIN/boot/grub/font.pf2" ] && [ -f /usr/share/grub/unicode.pf2 ]; then
+		cp /usr/share/grub/unicode.pf2 "$BIN/boot/grub/font.pf2"
+	fi
+fi
+
+# ── ISOLINUX (BIOS) ──────────────────────────────────────────────────────────
+if [ -d "$BIN/isolinux" ]; then
+	# ISOLINUX usa la codifica CP437: si convertono le lettere accentate.
+	sostituisci "$CONF/avvio/isolinux.cfg" | iconv -f UTF-8 -t CP437//TRANSLIT >"$BIN/isolinux/isolinux.cfg"
+	for modulo in vesamenu.c32 ldlinux.c32 libcom32.c32 libutil.c32 poweroff.c32; do
+		if [ ! -f "$BIN/isolinux/$modulo" ] && [ -f "/usr/lib/syslinux/modules/bios/$modulo" ]; then
+			cp "/usr/lib/syslinux/modules/bios/$modulo" "$BIN/isolinux/$modulo"
+		fi
+	done
+fi
+
+echo "[@OS_ID@] Menu di avvio installati"

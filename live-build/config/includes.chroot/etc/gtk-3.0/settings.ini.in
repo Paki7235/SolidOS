@@ -1,0 +1,7 @@
+[Settings]
+gtk-theme-name=Adwaita
+gtk-application-prefer-dark-theme=true
+gtk-icon-theme-name=@TEMA_ICONE@
+gtk-cursor-theme-name=@TEMA_CURSORE@
+gtk-cursor-theme-size=@DIMENSIONE_CURSORE@
+gtk-font-name=@FONT_UI@ @FONT_UI_DIMENSIONE@

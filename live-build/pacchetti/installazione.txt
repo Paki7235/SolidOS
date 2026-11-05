@@ -1,0 +1,20 @@
+# Fase 5: installer, snapshot, aggiornamenti sicuri.
+# Nota: calamares-settings-debian NON va installato (configurazione propria in /etc/calamares).
+
+calamares
+?calamares-extensions
+snapper
+btrfs-progs
+os-prober
+efibootmgr
+grub-pc-bin
+grub-efi-amd64-bin
+grub2-common
+?grub-efi-amd64-signed
+?shim-signed
+?mokutil
+cryptsetup
+?cryptsetup-initramfs
+rsync
+firewalld
+?python3-firewall

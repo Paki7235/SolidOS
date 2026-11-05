@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=@OS_NAME@
+Comment=@OS_TAGLINE@
+Exec=/usr/bin/@OS_ID@-sessione
+DesktopNames=labwc;wlroots

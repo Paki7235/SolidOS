@@ -1,0 +1,11 @@
+[Unit]
+Description=Aggiornamenti sicuri in background (con punto di ripristino)
+After=network-online.target
+Wants=network-online.target
+ConditionACPower=true
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/nucleo/aggiorna
+Nice=10
+IOSchedulingClass=idle

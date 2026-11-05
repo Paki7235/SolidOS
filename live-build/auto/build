@@ -1,0 +1,4 @@
+#!/bin/bash
+# Avvia la build e salva il registro completo in build.log.
+set -eo pipefail
+lb build noauto "${@}" 2>&1 | tee build.log
