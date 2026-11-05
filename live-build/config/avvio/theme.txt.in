@@ -1,0 +1,47 @@
+# Tema del menu GRUB di @OS_NAME@: nero, «S» bianca (nello sfondo), voci
+# centrate, voce scelta in una pillola bianca. Copiato da 9000-menu-avvio.
+title-text: ""
+desktop-image: "sfondo.png"
+desktop-color: "#000000"
+message-color: "#A1A1AA"
+terminal-font: "Unifont Regular 16"
+
++ boot_menu {
+	left = 50%-210
+	top = 38%
+	width = 420
+	height = 50%
+	item_font = "@FONT_UI@ Regular 16"
+	selected_item_font = "@FONT_UI@ Regular 16"
+	item_color = "#A1A1AA"
+	selected_item_color = "#000000"
+	item_height = 38
+	item_padding = 16
+	item_spacing = 2
+	icon_width = 0
+	icon_height = 0
+	item_icon_space = 0
+	selected_item_pixmap_style = "sel_*.png"
+	scrollbar = false
+}
+
++ label {
+	id = "__timeout__"
+	left = 0
+	top = 100%-64
+	width = 100%
+	align = "center"
+	color = "#6E6E73"
+	font = "@FONT_UI@ Regular 12"
+	text = "@T_AVVIO_AUTOMATICO_GRUB@"
+}
+
++ label {
+	left = 0
+	top = 100%-40
+	width = 100%
+	align = "center"
+	color = "#5C5C63"
+	font = "@FONT_UI@ Regular 12"
+	text = "@T_AVVIO_SUGGERIMENTO@"
+}

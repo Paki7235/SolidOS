@@ -1,28 +1,44 @@
-# Schermata di avvio di @OS_NAME@: logo al centro che "respira" lentamente.
+# Schermata di caricamento di @OS_NAME@: fondo nero, «S» bianca al centro e,
+# sotto, una barra sottile che si riempie con l'avanzamento dell'avvio.
 # Nessun testo (non servono font nell'initramfs).
 
-Window.SetBackgroundTopColor(@COLORE_SFONDO_SCURO_R@, @COLORE_SFONDO_SCURO_G@, @COLORE_SFONDO_SCURO_B@);
-Window.SetBackgroundBottomColor(@COLORE_SFONDO_SCURO_R@, @COLORE_SFONDO_SCURO_G@, @COLORE_SFONDO_SCURO_B@);
+Window.SetBackgroundTopColor(0, 0, 0);
+Window.SetBackgroundBottomColor(0, 0, 0);
+
+cx = Window.GetX() + Window.GetWidth() / 2;
+cy = Window.GetY() + Window.GetHeight() / 2;
 
 logo.image = Image("logo.png");
 logo.sprite = Sprite(logo.image);
-logo.sprite.SetX(Window.GetX() + Window.GetWidth() / 2 - logo.image.GetWidth() / 2);
-logo.sprite.SetY(Window.GetY() + Window.GetHeight() / 2 - logo.image.GetHeight() / 2 - 20);
+logo.sprite.SetX(cx - logo.image.GetWidth() / 2);
+logo.sprite.SetY(cy - logo.image.GetHeight() / 2 - 40);
 logo.sprite.SetZ(10);
 
-tempo = 0;
+vuota.image = Image("barra-vuota.png");
+vuota.sprite = Sprite(vuota.image);
+vuota.sprite.SetX(cx - vuota.image.GetWidth() / 2);
+vuota.sprite.SetY(cy + logo.image.GetHeight() / 2 + 36);
+vuota.sprite.SetZ(10);
 
-fun aggiorna() {
-	tempo++;
-	logo.sprite.SetOpacity(0.7 + 0.3 * Math.Sin(tempo / 18));
+piena.originale = Image("barra-piena.png");
+piena.sprite = Sprite();
+piena.sprite.SetX(vuota.sprite.GetX());
+piena.sprite.SetY(vuota.sprite.GetY());
+piena.sprite.SetZ(11);
+
+mostrato = 0;
+
+fun avanzamento(durata, progresso) {
+	# Avanza in modo regolare e non torna mai indietro
+	if (progresso > mostrato) mostrato = progresso;
+	larghezza = Math.Int(piena.originale.GetWidth() * mostrato);
+	if (larghezza < 5) larghezza = 5;
+	piena.sprite.SetImage(piena.originale.Scale(larghezza, piena.originale.GetHeight()));
 }
+Plymouth.SetBootProgressFunction(avanzamento);
 
-Plymouth.SetRefreshFunction(aggiorna);
-
-# Allo spegnimento il logo resta fermo e pieno
-fun spegnimento() {
-	logo.sprite.SetOpacity(1);
-}
-if (Plymouth.GetMode() == "shutdown") {
-	Plymouth.SetRefreshFunction(spegnimento);
+# Allo spegnimento: solo il logo, senza barra
+if (Plymouth.GetMode() == "shutdown" || Plymouth.GetMode() == "reboot") {
+	vuota.sprite.SetOpacity(0);
+	piena.sprite.SetOpacity(0);
 }

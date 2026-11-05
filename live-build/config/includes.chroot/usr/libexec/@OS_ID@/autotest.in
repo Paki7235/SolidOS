@@ -25,7 +25,10 @@ come_utente() { runuser -u "$UTENTE" -- env "${AMBIENTE[@]}" "$@"; }
 
 immagine() { # NOME
 	local f=/tmp/autotest-$1.jpg
-	come_utente grim -t jpeg -q 55 -s 0.6 "$f" 2>/dev/null || return
+	if ! come_utente grim -t jpeg -q 55 -s 0.6 "$f" 2>/tmp/autotest-grim.err; then
+		scrivi "AUTOTEST-LOG grim: $(head -c 300 /tmp/autotest-grim.err | tr '\n' ' ')"
+		return
+	fi
 	scrivi "AUTOTEST-IMG $1 $(base64 -w0 "$f")"
 	rm -f "$f"
 }
@@ -48,10 +51,12 @@ for f in "${ELENCO[@]}"; do
 	nome=$(basename "$f" .desktop)
 	cmd=$(grep -m1 '^Exec=' "$f" | cut -d= -f2- | sed 's/ %[a-zA-Z]//g')
 	log=/tmp/autotest-$nome.log
-	come_utente setsid sh -c "$cmd" >"$log" 2>&1 &
+	# setsid in testa: l'app e i suoi figli stanno in una sessione propria,
+	# chiusa alla fine senza toccare questo script
+	setsid runuser -u "$UTENTE" -- env "${AMBIENTE[@]}" sh -c "$cmd" >"$log" 2>&1 &
 	pid=$!
 	sleep 12
-	if kill -0 "$pid" 2>/dev/null || pgrep -u "$UTENTE" -f "$(echo "$cmd" | awk '{print $NF}')" >/dev/null; then
+	if kill -0 "$pid" 2>/dev/null || pgrep -u "$UTENTE" -f "$(echo "$cmd" | awk '{print $1}')" >/dev/null; then
 		stato=APERTA
 	else
 		wait "$pid"; stato="CHIUSA(codice $?)"
@@ -62,8 +67,8 @@ for f in "${ELENCO[@]}"; do
 		| sed "s/^/AUTOTEST-LOG $nome: /" >"$USCITA"
 	[ "$stato" = APERTA ] || tail -n 15 "$log" | sed "s/^/AUTOTEST-CODA $nome: /" >"$USCITA"
 	immagine "$nome"
-	pkill -s "$(ps -o sid= -p "$pid" 2>/dev/null | tr -d ' ')" 2>/dev/null
-	pkill -u "$UTENTE" -f "$(echo "$cmd" | awk '{print $NF}')" 2>/dev/null
+	pkill -KILL -s "$pid" 2>/dev/null
+	pkill -KILL -u "$UTENTE" -f "$(echo "$cmd" | awk '{print $1}')" 2>/dev/null
 	sleep 2
 done
 

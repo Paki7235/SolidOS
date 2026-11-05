@@ -73,11 +73,13 @@ def tema_effettivo() -> dict:
     if chiaro:
         base.update({
             "sfondo": base["sfondoChiaro"], "superficie": "#FFFFFF",
-            "superficieAlta": "#EEF2F8", "testo": base["testoScuro"],
-            "testoSecondario": "#55627A", "bordo": "#D5DCE8",
+            "superficieAlta": "#E9E9EE", "testo": base["testoScuro"],
+            "testoSecondario": "#6E6E73", "bordo": "#E5E5EA",
         })
+        if not pref.get("accento"):
+            base["accento"] = base["accentoScuro"]   # più contrasto su fondo chiaro
     else:
-        base.update({"superficieAlta": "#1C2740", "testoSecondario": "#97A3BA", "bordo": "#2A3550"})
+        base.update({"superficieAlta": "#2F3037", "testoSecondario": "#A1A1AA", "bordo": "#3A3B42"})
     base["chiaro"] = chiaro
     base["pericolo"] = "#E5484D"
     base["successo"] = "#30A46C"

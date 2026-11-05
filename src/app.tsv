@@ -6,7 +6,7 @@
 shell	nucleo.shell
 greeter	nucleo.greeter
 cattura	nucleo.apps.cattura	Cattura	applets-screenshooter	Utility;Graphics;	Schermate e registrazioni dello schermo	no
-monitor	nucleo.apps.monitor	Monitor di sistema	utilities-system-monitor	System;Monitor;	Processi, memoria, rete e dischi	no
+monitor	nucleo.apps.monitor	Gestore attività	utilities-system-monitor	System;Monitor;	Processi, memoria, disco e rete	no
 guida	nucleo.apps.guida	Guida	help-browser	Utility;Documentation;	Guida di @OS_NAME@	no
 dischi	nucleo.apps.dischi	Dischi	drive-harddisk	System;Utility;	Gestisci dischi e chiavette	no
 backup	nucleo.apps.backup	Backup	document-save	Utility;System;	Copie di sicurezza cifrate dei tuoi file	no

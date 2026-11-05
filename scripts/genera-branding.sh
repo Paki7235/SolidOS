@@ -61,6 +61,8 @@ rendi_png() { # sorgente.svg larghezza altezza destinazione.png
 
 installa_svg "$GRAFICA_TMP/logo.svg" "$CHROOT/usr/share/$OS_ID/logo.svg"
 installa_svg "$GRAFICA_TMP/logo.svg" "$CHROOT/usr/share/icons/hicolor/scalable/apps/$OS_ID-logo.svg"
+installa_svg "$GRAFICA_TMP/logo-chiaro.svg" "$CHROOT/usr/share/$OS_ID/logo-chiaro.svg"
+installa_svg "$GRAFICA_TMP/logo-chiaro.svg" "$CHROOT/usr/share/icons/hicolor/scalable/apps/$OS_ID-logo-chiaro.svg"
 installa_svg "$GRAFICA_TMP/sfondo.svg" "$CHROOT/usr/share/backgrounds/$OS_ID/predefinito.svg"
 installa_svg "$GRAFICA_TMP/logo.svg" "$CHROOT/etc/calamares/branding/$OS_ID/logo.svg"
 
@@ -68,8 +70,34 @@ if ((SENZA_IMMAGINI)); then
 	echo "  immagini PNG saltate (--senza-immagini)"
 else
 	command -v rsvg-convert >/dev/null || _errore_branding "serve rsvg-convert (pacchetto librsvg2-bin)"
-	rendi_png "$GRAFICA_TMP/logo.svg" 160 160 "$CHROOT/usr/share/plymouth/themes/$OS_ID/logo.png"
+	# Schermata di caricamento: «S» bianca su nero e barra di avanzamento
+	PLY="$CHROOT/usr/share/plymouth/themes/$OS_ID"
+	rendi_png "$GRAFICA_TMP/logo-chiaro.svg" 96 96 "$PLY/logo.png"
+	printf '<svg xmlns="http://www.w3.org/2000/svg" width="160" height="5"><rect width="160" height="5" rx="2.5" fill="#333333"/></svg>' >"$GRAFICA_TMP/barra-vuota.svg"
+	printf '<svg xmlns="http://www.w3.org/2000/svg" width="160" height="5"><rect width="160" height="5" rx="2.5" fill="#FFFFFF"/></svg>' >"$GRAFICA_TMP/barra-piena.svg"
+	rendi_png "$GRAFICA_TMP/barra-vuota.svg" 160 5 "$PLY/barra-vuota.png"
+	rendi_png "$GRAFICA_TMP/barra-piena.svg" 160 5 "$PLY/barra-piena.png"
 	rendi_png "$GRAFICA_TMP/logo.svg" 48 48 "$CHROOT/usr/share/icons/hicolor/48x48/apps/$OS_ID-logo.png"
+	rendi_png "$GRAFICA_TMP/logo-chiaro.svg" 48 48 "$CHROOT/usr/share/icons/hicolor/48x48/apps/$OS_ID-logo-chiaro.png"
+	# Tema del menu GRUB: voce scelta in una pillola bianca (immagini a 9 parti)
+	TEMA="$BINARY/boot/grub/$OS_ID"
+	mkdir -p "$TEMA"
+	r=10
+	angolo() { # nome trasformazione
+		# quarto di cerchio pieno nell'angolo in alto a sinistra, poi specchiato
+		printf '<svg xmlns="http://www.w3.org/2000/svg" width="%d" height="%d"><path d="M%d 0 A%d %d 0 0 0 0 %d L%d %d Z" fill="#FFFFFF" transform="%s"/></svg>' \
+			$r $r $r $r $r $r $r $r "$2" >"$GRAFICA_TMP/sel_$1.svg"
+		rendi_png "$GRAFICA_TMP/sel_$1.svg" $r $r "$TEMA/sel_$1.png"
+	}
+	angolo nw "" ; angolo ne "translate($r 0) scale(-1 1)"; angolo sw "translate(0 $r) scale(1 -1)"; angolo se "translate($r $r) scale(-1 -1)"
+	for parte in n s c; do
+		printf '<svg xmlns="http://www.w3.org/2000/svg" width="1" height="%d"><rect width="1" height="%d" fill="#FFFFFF"/></svg>' $r $r >"$GRAFICA_TMP/sel_$parte.svg"
+		rendi_png "$GRAFICA_TMP/sel_$parte.svg" 1 $r "$TEMA/sel_$parte.png"
+	done
+	for parte in e w; do
+		printf '<svg xmlns="http://www.w3.org/2000/svg" width="%d" height="1"><rect width="%d" height="1" fill="#FFFFFF"/></svg>' $r $r >"$GRAFICA_TMP/sel_$parte.svg"
+		rendi_png "$GRAFICA_TMP/sel_$parte.svg" $r 1 "$TEMA/sel_$parte.png"
+	done
 	rendi_png "$GRAFICA_TMP/sfondo.svg" 1920 1080 "$CHROOT/usr/share/backgrounds/$OS_ID/predefinito.png"
 	rendi_png "$GRAFICA_TMP/avvio-grub.svg" 1280 720 "$BINARY/boot/grub/$OS_ID/sfondo.png"
 	rendi_png "$GRAFICA_TMP/avvio-grub.svg" 1280 720 "$CHROOT/usr/share/$OS_ID/grub-sfondo.png"

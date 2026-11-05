@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Marchio di @OS_NAME@ in bianco, per fondi scuri (avvio, barra scura). -->
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 100 100">
+  <title>@OS_NAME@</title>
+  <path d="M71 27C63 16 31 15 27 32C23 49 75 47 75 66C75 86 36 88 26 73" fill="none" stroke="#FFFFFF" stroke-width="14"/>
+</svg>

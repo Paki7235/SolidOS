@@ -53,6 +53,12 @@ systemctl enable nucleo-profilo.service >/dev/null 2>&1 || true
 systemctl enable nucleo-autotest.service >/dev/null 2>&1 || true
 systemctl enable plocate-updatedb.timer >/dev/null 2>&1 || true
 systemctl disable cups-browsed.service >/dev/null 2>&1 || true
+# Leggerezza: servizi avviati solo quando servono, niente controlli inutili
+systemctl disable cups.service >/dev/null 2>&1 || true        # parte da cups.socket alla prima stampa
+systemctl enable cups.socket cups.path >/dev/null 2>&1 || true
+systemctl disable netavark-dhcp-proxy.service netavark-firewalld-reload.service >/dev/null 2>&1 || true
+systemctl disable xfs_scrub_all.timer e2scrub_all.timer >/dev/null 2>&1 || true
+systemctl enable earlyoom.service >/dev/null 2>&1 || true
 
 # ── Pulizia ───────────────────────────────────────────────────────────────────
 apt-get clean

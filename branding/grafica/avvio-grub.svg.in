@@ -1,20 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Sfondo del menu GRUB (UEFI). Reso a 1280x720; logo e nome in alto, il menu occupa il centro. -->
+<!-- Sfondo del menu GRUB: nero, «S» bianca in alto al centro. Il menu è disegnato dal tema (theme.txt). -->
 <svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
-  <defs>
-    <radialGradient id="luce" cx="0.5" cy="0.0" r="0.9">
-      <stop offset="0" stop-color="@COLORE_ACCENTO@" stop-opacity="0.35"/>
-      <stop offset="1" stop-color="@COLORE_ACCENTO@" stop-opacity="0"/>
-    </radialGradient>
-  </defs>
-  <rect width="1280" height="720" fill="@COLORE_SFONDO_SCURO@"/>
-  <rect width="1280" height="720" fill="url(#luce)"/>
-  <g transform="translate(560 18) scale(0.62)">
-    <path d="M128 132 L216 176 L128 220 L40 176 Z" fill="@COLORE_ACCENTO_SCURO@" opacity="0.55"/>
-    <path d="M128 92 L216 136 L128 180 L40 136 Z" fill="@COLORE_ACCENTO@" opacity="0.85"/>
-    <path d="M128 36 L216 80 L128 124 L40 80 Z" fill="#FFFFFF" opacity="0.92"/>
+  <rect width="1280" height="720" fill="#000000"/>
+  <g transform="translate(612 112) scale(0.56)">
+    <path d="M71 27C63 16 31 15 27 32C23 49 75 47 75 66C75 86 36 88 26 73" fill="none" stroke="#FFFFFF" stroke-width="14"/>
   </g>
-  <text x="640" y="190" text-anchor="middle" font-family="@FONT_UI@" font-size="40" font-weight="600" fill="@COLORE_TESTO_CHIARO@">@OS_NAME@ @OS_VERSION@</text>
-  <text x="640" y="222" text-anchor="middle" font-family="@FONT_UI@" font-size="18" fill="@COLORE_TESTO_CHIARO@" fill-opacity="0.65">@OS_TAGLINE@</text>
-  <text x="640" y="696" text-anchor="middle" font-family="@FONT_UI@" font-size="15" fill="@COLORE_TESTO_CHIARO@" fill-opacity="0.5">@T_AVVIO_SUGGERIMENTO@</text>
 </svg>

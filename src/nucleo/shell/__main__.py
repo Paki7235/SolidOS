@@ -2,7 +2,7 @@
 centro notifiche e OSD (finestre Wayland layer-shell).
 
 Servizio D-Bus org.<OS_ID>.Shell (sessione) usato da scorciatoie e altre app:
-    MostraControllo()  MostraNotifiche()  MostraBarra()  Nascondi()
+    MostraControllo()  MostraNotifiche()  MostraBarra()  MostraPrestazioni()  Nascondi()
     Volume(i passo)    Muto()             Luminosita(i passo)
     NonDisturbare(b)   FiltroApp(as app)  (usato dagli Spazi di vita)
 """
@@ -44,6 +44,40 @@ class BackendShell(Backend):
             "batteria": batt or {},
             "visibilita": self._visibilita(),
             "spazio": self._spazio(),
+        }
+
+    # ── Indicatore delle prestazioni (Super+P) ───────────────────────────────
+    def prestazioni(self) -> dict:
+        import time
+
+        import psutil
+
+        ora = time.monotonic()
+        disco, net = psutil.disk_io_counters(), psutil.net_io_counters()
+        prec = getattr(self, "_prec_prestazioni", None)
+        self._prec_prestazioni = (ora, disco, net)
+        dt = max(ora - prec[0], 0.5) if prec else 1.0
+        mb = 1048576
+        disco_s = ((disco.read_bytes + disco.write_bytes) - (prec[1].read_bytes + prec[1].write_bytes)) / dt / mb if prec and disco and prec[1] else 0
+        rete_s = ((net.bytes_recv + net.bytes_sent) - (prec[2].bytes_recv + prec[2].bytes_sent)) / dt / mb if prec else 0
+        temperatura = None
+        try:
+            for voci in (psutil.sensors_temperatures() or {}).values():
+                valori = [v.current for v in voci if v.current]
+                if valori:
+                    temperatura = max(temperatura or 0, max(valori))
+        except (AttributeError, OSError):
+            pass
+        mem = psutil.virtual_memory()
+        return {
+            "cpu": psutil.cpu_percent(),
+            "memoriaUsata": round((mem.total - mem.available) / 1073741824, 1),
+            "memoriaTotale": round(mem.total / 1073741824, 1),
+            "memoriaPercento": mem.percent,
+            "swap": round(psutil.swap_memory().used / 1048576),
+            "disco": round(max(disco_s, 0), 1),
+            "rete": round(max(rete_s, 0), 2),
+            "temperatura": round(temperatura) if temperatura else -1,
         }
 
     def _visibilita(self) -> str:
@@ -164,6 +198,10 @@ def crea_servizio_shell(bus, backend: BackendShell):
         @dbus.service.method(nome, in_signature="", out_signature="")
         def MostraBarra(self):
             backend.emetti("mostra", "barra")
+
+        @dbus.service.method(nome, in_signature="", out_signature="")
+        def MostraPrestazioni(self):
+            backend.emetti("prestazioni", None)
 
         @dbus.service.method(nome, in_signature="", out_signature="")
         def Nascondi(self):

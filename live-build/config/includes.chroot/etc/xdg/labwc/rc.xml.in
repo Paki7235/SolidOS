@@ -16,10 +16,10 @@
   <theme>
     <name>@OS_NAME@</name>
     <icon>@TEMA_ICONE@</icon>
-    <cornerRadius>8</cornerRadius>
+    <cornerRadius>12</cornerRadius>
     <dropShadows>yes</dropShadows>
     <titlebar>
-      <layout>icon:iconify,max,close</layout>
+      <layout>close,iconify,max:</layout>
       <showTitle>yes</showTitle>
     </titlebar>
     <font place="ActiveWindow"><name>@FONT_UI@</name><size>@FONT_UI_DIMENSIONE@</size><weight>bold</weight></font>
@@ -74,6 +74,7 @@
     <!-- Shell -->
     <keybind key="W-a"><action name="Execute" command="@OS_ID@-ctl controllo" /></keybind>
     <keybind key="W-n"><action name="Execute" command="@OS_ID@-ctl notifiche" /></keybind>
+    <keybind key="W-p"><action name="Execute" command="@OS_ID@-ctl prestazioni" /></keybind>
     <keybind key="W-space"><action name="Execute" command="@OS_ID@-barra" /></keybind>
     <keybind key="W-l"><action name="Execute" command="swaylock -f" /></keybind>
     <keybind key="W-i"><action name="Execute" command="@OS_ID@-impostazioni" /></keybind>

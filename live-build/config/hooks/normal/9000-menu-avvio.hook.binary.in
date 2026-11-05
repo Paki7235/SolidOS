@@ -43,6 +43,20 @@ if [ -d "$BIN/boot/grub" ]; then
 	if [ ! -f "$BIN/boot/grub/font.pf2" ] && [ -f /usr/share/grub/unicode.pf2 ]; then
 		cp /usr/share/grub/unicode.pf2 "$BIN/boot/grub/font.pf2"
 	fi
+	# Tema grafico: theme.txt + font @FONT_UI@ convertiti nel formato di GRUB
+	TEMA="$BIN/boot/grub/@OS_ID@"
+	mkdir -p "$TEMA"
+	cp "$CONF/avvio/theme.txt" "$TEMA/theme.txt"
+	FONT=$(find /usr/share/fonts -iname '@FONT_UI@-Regular.*' \( -name '*.ttf' -o -name '*.otf' \) 2>/dev/null | head -n 1)
+	[ -n "$FONT" ] || FONT=$(find /usr/share/fonts -iname '@FONT_UI@*.tt[fc]' 2>/dev/null | head -n 1)
+	if [ -n "$FONT" ] && command -v grub-mkfont >/dev/null 2>&1; then
+		for d in 12 16; do
+			grub-mkfont -s $d -n "@FONT_UI@" -o "$TEMA/font-$d.pf2" "$FONT" || true
+		done
+		echo "[@OS_ID@] Font del menu: $FONT"
+	else
+		echo "[@OS_ID@] ATTENZIONE: font @FONT_UI@ o grub-mkfont non trovati, menu con il font di base" >&2
+	fi
 fi
 
 # ── ISOLINUX (BIOS) ──────────────────────────────────────────────────────────

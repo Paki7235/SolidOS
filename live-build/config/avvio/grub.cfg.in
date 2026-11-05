@@ -18,10 +18,15 @@ if loadfont /boot/grub/font.pf2 ; then
 	terminal_output gfxterm
 fi
 
-if background_image -m stretch /boot/grub/@OS_ID@/sfondo.png ; then
+loadfont /boot/grub/@OS_ID@/font-12.pf2
+loadfont /boot/grub/@OS_ID@/font-16.pf2
+if [ -f /boot/grub/@OS_ID@/theme.txt ] && [ "$gfxmode" = "auto" ] ; then
+	set theme=/boot/grub/@OS_ID@/theme.txt
+	export theme
+elif background_image -m stretch /boot/grub/@OS_ID@/sfondo.png ; then
 	set color_normal=light-gray/black
 	set menu_color_normal=light-gray/black
-	set menu_color_highlight=white/blue
+	set menu_color_highlight=black/light-gray
 else
 	set menu_color_normal=white/black
 	set menu_color_highlight=black/light-gray

@@ -1,27 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Sfondo predefinito del desktop (nessun testo). Reso a 1920x1080. -->
-<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+<!-- Sfondo predefinito del desktop: colline stratificate blu notte (nessun testo). Reso a 1920x1080. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid slice">
   <defs>
-    <linearGradient id="base" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="@COLORE_SUPERFICIE_SCURA@"/>
-      <stop offset="1" stop-color="@COLORE_SFONDO_SCURO@"/>
-    </linearGradient>
-    <radialGradient id="luce1" cx="0.78" cy="0.22" r="0.55">
-      <stop offset="0" stop-color="@COLORE_ACCENTO@" stop-opacity="0.55"/>
-      <stop offset="1" stop-color="@COLORE_ACCENTO@" stop-opacity="0"/>
-    </radialGradient>
-    <radialGradient id="luce2" cx="0.12" cy="0.95" r="0.6">
-      <stop offset="0" stop-color="@COLORE_ACCENTO_SCURO@" stop-opacity="0.45"/>
-      <stop offset="1" stop-color="@COLORE_ACCENTO_SCURO@" stop-opacity="0"/>
-    </radialGradient>
+    <linearGradient id="cielo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0B0E18"/><stop offset="0.55" stop-color="#16203D"/><stop offset="1" stop-color="#0A0C14"/></linearGradient>
+    <radialGradient id="luce" cx="0.68" cy="0.42" r="0.5"><stop offset="0" stop-color="#5B7CFF" stop-opacity="0.55"/><stop offset="1" stop-color="#5B7CFF" stop-opacity="0"/></radialGradient>
+    <linearGradient id="d1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3A4D93"/><stop offset="1" stop-color="#141B36"/></linearGradient>
+    <linearGradient id="d2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#26346A"/><stop offset="1" stop-color="#0E1328"/></linearGradient>
+    <linearGradient id="d3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#18213F"/><stop offset="1" stop-color="#080A12"/></linearGradient>
   </defs>
-  <rect width="1920" height="1080" fill="url(#base)"/>
-  <rect width="1920" height="1080" fill="url(#luce1)"/>
-  <rect width="1920" height="1080" fill="url(#luce2)"/>
-  <!-- strati del logo, grandi e quasi trasparenti -->
-  <g transform="translate(1180 330) scale(3.2)" fill="#FFFFFF">
-    <path d="M128 132 L216 176 L128 220 L40 176 Z" opacity="0.025"/>
-    <path d="M128 92 L216 136 L128 180 L40 136 Z" opacity="0.04"/>
-    <path d="M128 36 L216 80 L128 124 L40 80 Z" opacity="0.06"/>
-  </g>
+  <rect width="1280" height="720" fill="url(#cielo)"/>
+  <rect width="1280" height="720" fill="url(#luce)"/>
+  <path d="M0 423 C 220 360 380 468 620 405 S 1020 297 1280 369 V720 H0Z" fill="url(#d1)"/>
+  <path d="M0 504 C 260 450 470 549 720 504 S 1080 423 1280 477 V720 H0Z" fill="url(#d2)"/>
+  <path d="M0 594 C 300 549 520 630 820 585 S 1140 540 1280 576 V720 H0Z" fill="url(#d3)"/>
 </svg>

@@ -1,48 +1,99 @@
-/* Tema provvisorio del pannello per @OS_NAME@ (Fase 1). */
+/* Tema del pannello di @OS_NAME@: barra dei menu in alto (panel «barra»)
+   e dock arrotondato in basso (panel «dock»). Grafite neutro, un solo accento. */
 
 LXQtPanel #BackgroundWidget {
-	background-color: #EB@COLORE_SFONDO_SCURO_HEX@;
-	border-top: 1px solid #22FFFFFF;
-}
-
-LXQtPanel QToolButton,
-LXQtPanel QLabel {
-	color: @COLORE_TESTO_CHIARO@;
-}
-
-LXQtPanel QToolButton {
+	background-color: transparent;
 	border: none;
-	border-radius: 6px;
-	padding: 3px;
+}
+
+/* ── Barra dei menu ─────────────────────────────────────────────────────── */
+LXQtPanel#barra #BackgroundWidget {
+	background-color: #8C0C0E14;
+	border-bottom: 1px solid #14FFFFFF;
+}
+
+LXQtPanel#barra QToolButton,
+LXQtPanel#barra QLabel {
+	color: #F5F5F7;
+	font-size: 10pt;
+	font-weight: 500;
+}
+
+LXQtPanel#barra QToolButton {
+	border: none;
+	border-radius: 5px;
+	padding: 2px 8px;
 	margin: 3px 1px;
 }
 
-LXQtPanel QToolButton:hover {
-	background-color: #26FFFFFF;
+LXQtPanel#barra QToolButton:hover,
+LXQtPanel#barra QToolButton:checked {
+	background-color: #33FFFFFF;
 }
 
-LXQtPanel QToolButton:pressed,
-LXQtPanel QToolButton:checked {
-	background-color: #59@COLORE_ACCENTO_HEX@;
+/* ── Dock ───────────────────────────────────────────────────────────────── */
+LXQtPanel#dock #BackgroundWidget {
+	background-color: #6B282A32;
+	border: 1px solid #24FFFFFF;
+	border-radius: 20px;
+	margin: 0 0 8px 0;
 }
 
-#TaskBar QToolButton:checked {
-	border-bottom: 2px solid @COLORE_ACCENTO@;
-}
-
-QMenu {
-	background-color: @COLORE_SUPERFICIE_SCURA@;
-	color: @COLORE_TESTO_CHIARO@;
-	border: 1px solid #2A3550;
+LXQtPanel#dock QToolButton {
+	border: none;
+	border-radius: 12px;
 	padding: 4px;
+	margin: 6px 2px;
+	color: transparent;
+}
+
+LXQtPanel#dock QToolButton:hover {
+	background-color: #1FFFFFFF;
+}
+
+LXQtPanel#dock QToolButton:pressed {
+	background-color: #33FFFFFF;
+}
+
+/* Le app aperte: puntino chiaro sotto l'icona */
+LXQtPanel#dock #TaskBar QToolButton {
+	border-bottom: 3px solid transparent;
+}
+LXQtPanel#dock #TaskBar QToolButton:checked,
+LXQtPanel#dock #TaskBar QToolButton[urgent="true"] {
+	background-color: transparent;
+	border-bottom: 3px solid #D4D4D8;
+}
+
+/* ── Menu ───────────────────────────────────────────────────────────────── */
+QMenu {
+	background-color: #F2202126;
+	color: #F5F5F7;
+	border: 1px solid #1FFFFFFF;
+	border-radius: 10px;
+	padding: 5px;
 }
 
 QMenu::item {
-	padding: 6px 24px 6px 12px;
-	border-radius: 4px;
+	padding: 5px 22px 5px 10px;
+	border-radius: 5px;
 }
 
 QMenu::item:selected {
 	background-color: @COLORE_ACCENTO@;
 	color: #FFFFFF;
+}
+
+QMenu::separator {
+	height: 1px;
+	background: #1FFFFFFF;
+	margin: 4px 8px;
+}
+
+QToolTip {
+	background-color: #F2202126;
+	color: #F5F5F7;
+	border: 1px solid #1FFFFFFF;
+	border-radius: 6px;
+	padding: 4px 8px;
 }

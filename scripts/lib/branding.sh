@@ -63,7 +63,8 @@ carica_branding() {
 	ISO_NOME_FILE="${OS_ID}-${OS_VERSION}-amd64"
 	# Parametri del kernel comuni a tutte le voci live
 	KERNEL_PARAMETRI_LIVE="boot=live components quiet splash"
-	export ISO_VOLUME ISO_NOME_FILE KERNEL_PARAMETRI_LIVE
+	TEMA_ICONE=${TEMA_ICONE:-$OS_ID}
+	export ISO_VOLUME ISO_NOME_FILE KERNEL_PARAMETRI_LIVE TEMA_ICONE
 	VARIABILI_BRANDING+=(OS_ID ISO_VOLUME ISO_NOME_FILE KERNEL_PARAMETRI_LIVE)
 
 	local v

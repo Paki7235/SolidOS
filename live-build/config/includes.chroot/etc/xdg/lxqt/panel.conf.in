@@ -1,44 +1,78 @@
-# Pannello provvisorio della Fase 1 (lxqt-panel in basso, stile Windows).
+# Barra dei menu in alto e dock in basso (lxqt-panel, stile del tema @OS_ID@).
 [General]
 __userfile__=true
+panels=barra, dock
 
-[panel1]
+[barra]
 alignment=-1
 animation-duration=0
 desktop=0
 hidable=false
-iconSize=24
+iconSize=16
 lineCount=1
 lockPanel=true
-panelSize=44
-plugins=mainmenu, quicklaunch, taskbar, statusnotifier, quicklaunch2, worldclock, showdesktop
+panelSize=28
+plugins=mainmenu, spacer, prestazioni, statusnotifier, quicklaunch2, worldclock
+position=Top
+reserve-space=true
+visible-margin=false
+width=100
+width-percent=true
+
+[dock]
+alignment=0
+animation-duration=0
+desktop=0
+hidable=false
+iconSize=48
+lineCount=1
+lockPanel=true
+panelSize=70
+plugins=quicklaunch, taskbar
 position=Bottom
 reserve-space=true
 visible-margin=true
-width=100
-width-percent=true
+width=760
+width-percent=false
 
 [mainmenu]
 type=mainmenu
 ownIcon=true
-icon=/usr/share/@OS_ID@/logo.svg
+icon=/usr/share/@OS_ID@/logo-chiaro.svg
 showText=false
 filterMenu=true
 filterShow=true
+
+[spacer]
+type=spacer
+expandable=true
+
+[prestazioni]
+type=cpuload
+showText=true
+barWidth=0
+updateInterval=2000
 
 [quicklaunch]
 type=quicklaunch
 apps\1\desktop=/usr/share/applications/pcmanfm-qt.desktop
 apps\2\desktop=/usr/share/applications/firefox-esr.desktop
-apps\3\desktop=/usr/share/applications/@OS_ID@-store.desktop
-apps\4\desktop=/usr/share/applications/@OS_ID@-impostazioni.desktop
-apps\size=4
+apps\3\desktop=/usr/share/applications/qterminal.desktop
+apps\4\desktop=/usr/share/applications/@OS_ID@-store.desktop
+apps\5\desktop=/usr/share/applications/@OS_ID@-linea-del-tempo.desktop
+apps\6\desktop=/usr/share/applications/@OS_ID@-condividi.desktop
+apps\7\desktop=/usr/share/applications/@OS_ID@-monitor.desktop
+apps\8\desktop=/usr/share/applications/@OS_ID@-impostazioni.desktop
+apps\size=8
 
 [taskbar]
 type=taskbar
 buttonStyle=Icon
+buttonWidth=58
 groupingEnabled=true
+showGroupOnHover=true
 showOnlyOneDesktopTasks=true
+iconByClass=true
 
 [statusnotifier]
 type=statusnotifier
@@ -46,13 +80,12 @@ type=statusnotifier
 [quicklaunch2]
 type=quicklaunch
 apps\1\desktop=/usr/share/applications/@OS_ID@-centro-controllo.desktop
-apps\2\desktop=/usr/share/applications/@OS_ID@-centro-notifiche.desktop
-apps\size=2
+apps\size=1
 
 [worldclock]
 type=worldclock
 timeZones\1\timeZone=local
 timeZones\size=1
-
-[showdesktop]
-type=showdesktop
+formatType=custom
+customFormat="ddd d MMM   HH:mm"
+showWeekNumber=false

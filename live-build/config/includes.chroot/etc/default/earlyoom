@@ -1,0 +1,3 @@
+# earlyoom: se la memoria (RAM + zram) sta per finire chiude il programma che
+# ne usa di più invece di bloccare il computer. Protegge la sessione grafica.
+EARLYOOM_ARGS="-r 0 -m 4 -s 8 -n --avoid '(^|/)(labwc|lxqt-panel|greetd|Xwayland|systemd|pipewire|wireplumber)$' --prefer '(^|/)(firefox-esr|Web Content|Isolated Web Co|WebExtensions)$'"
