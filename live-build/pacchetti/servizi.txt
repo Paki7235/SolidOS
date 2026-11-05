@@ -24,4 +24,5 @@ iw
 ?libev4t64
 ?libnl-3-200
 ?libnl-genl-3-200
+?libnl-route-3-200
 ?bluez-tools

@@ -13,25 +13,31 @@ apt-get install -y -qq --no-install-recommends wine32:i386 >/dev/null 2>&1 \
 	&& registro "wine32 installato" || registro "wine32 non disponibile (solo programmi a 64 bit)"
 
 # ── OWL (AWDL per AirDrop, GPL-3.0) compilato dai sorgenti ────────────────────
-DIPENDENZE="git cmake build-essential libpcap-dev libev-dev libnl-3-dev libnl-genl-3-dev pkg-config"
-if apt-get install -y -qq --no-install-recommends $DIPENDENZE >/dev/null 2>&1; then
+# Dipendenze verificate con il workflow «Prova OWL» su Debian 13.
+DIPENDENZE="ca-certificates git cmake build-essential pkg-config libpcap-dev libev-dev libnl-3-dev libnl-genl-3-dev libnl-route-3-dev"
+RUNTIME="libpcap0.8t64 libev4t64 libnl-3-200 libnl-genl-3-200 libnl-route-3-200"
+REGISTRO_OWL=/tmp/owl-build.log
+if apt-get install -y -qq --no-install-recommends $DIPENDENZE $RUNTIME >"$REGISTRO_OWL" 2>&1; then
 	rm -rf /tmp/owl
-	if git clone --depth 1 --recurse-submodules https://github.com/seemoo-lab/owl.git /tmp/owl >/dev/null 2>&1 \
-		&& cmake -S /tmp/owl -B /tmp/owl/build -DCMAKE_BUILD_TYPE=Release >/dev/null \
-		&& cmake --build /tmp/owl/build -j"$(nproc)" >/dev/null; then
-		BINARIO=$(find /tmp/owl/build -type f -name owl -perm -u+x | head -n 1)
-		[ -n "$BINARIO" ] && install -m 0755 "$BINARIO" /usr/local/bin/owl && registro "OWL installato"
-		mkdir -p /usr/share/doc/owl && cp /tmp/owl/LICENSE /usr/share/doc/owl/copyright 2>/dev/null || true
+	if git clone --depth 1 --recurse-submodules https://github.com/seemoo-lab/owl.git /tmp/owl >>"$REGISTRO_OWL" 2>&1 \
+		&& cmake -S /tmp/owl -B /tmp/owl/build -DCMAKE_BUILD_TYPE=Release -Wno-dev >>"$REGISTRO_OWL" 2>&1 \
+		&& cmake --build /tmp/owl/build --target owl -j"$(nproc)" >>"$REGISTRO_OWL" 2>&1 \
+		&& install -m 0755 /tmp/owl/build/daemon/owl /usr/local/bin/owl; then
+		registro "OWL installato ($(cd /tmp/owl && git log -1 --format=%h))"
+		mkdir -p /usr/share/doc/owl && cp /tmp/owl/COPYING /usr/share/doc/owl/copyright 2>/dev/null || true
 	else
-		registro "ATTENZIONE: compilazione di OWL non riuscita: AirDrop non sarà disponibile"
+		registro "ATTENZIONE: compilazione di OWL non riuscita: AirDrop non sarà disponibile. Ultime righe:"
+		tail -n 40 "$REGISTRO_OWL" | sed 's/^/    /'
 	fi
 	rm -rf /tmp/owl
-	apt-get install -y -qq --no-install-recommends libpcap0.8t64 libev4t64 libnl-3-200 libnl-genl-3-200 >/dev/null 2>&1 || true
-	apt-get purge -y -qq git cmake build-essential libpcap-dev libev-dev libnl-3-dev libnl-genl-3-dev >/dev/null 2>&1 || true
+	apt-mark manual $RUNTIME >/dev/null 2>&1 || true
+	apt-get purge -y -qq git cmake build-essential pkg-config libpcap-dev libev-dev libnl-3-dev libnl-genl-3-dev libnl-route-3-dev >/dev/null 2>&1 || true
 	apt-get autoremove -y -qq >/dev/null 2>&1 || true
 else
-	registro "ATTENZIONE: strumenti di compilazione non disponibili: AirDrop non sarà disponibile"
+	registro "ATTENZIONE: dipendenze di OWL non installabili: AirDrop non sarà disponibile. Ultime righe:"
+	tail -n 20 "$REGISTRO_OWL" | sed 's/^/    /'
 fi
+rm -f "$REGISTRO_OWL"
 
 # ── Firewall: Condivisione Vicina ammessa nelle reti di casa/lavoro e nell'hotspot ──
 if command -v firewall-offline-cmd >/dev/null; then
