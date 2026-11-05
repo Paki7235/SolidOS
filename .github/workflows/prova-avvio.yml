@@ -1,0 +1,92 @@
+# Avvia una ISO pubblicata in QEMU (KVM) e raccoglie schermate e registro di avvio.
+# Avvio manuale: gh workflow run prova-avvio.yml -f tag=build-3
+name: Prova avvio
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release da provare (es. build-3)"
+        required: true
+
+jobs:
+  avvio:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: KVM e strumenti
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends qemu-system-x86 ovmf xorriso imagemagick >/dev/null
+          ls -l /dev/kvm
+
+      - name: Scarica la ISO
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir iso && cd iso
+          gh release download "${{ inputs.tag }}" -R "${{ github.repository }}" -p '*.parte-*' -p '*.sha256'
+          ISO=$(ls *.parte-00 | sed 's/\.parte-00$//')
+          cat "$ISO".parte-* > "$ISO" && rm "$ISO".parte-*
+          sha256sum -c "$ISO.sha256"
+          echo "ISO=$PWD/$ISO" >> "$GITHUB_ENV"
+          xorriso -indev "$ISO" -osirrox on -extract /live/vmlinuz "$PWD/vmlinuz" -extract /live/initrd.img "$PWD/initrd.img" 2>/dev/null
+          ls -l
+
+      - name: Script di prova
+        run: |
+          mkdir -p risultati
+          cat > prova.sh <<'EOF'
+          #!/bin/bash
+          # prova.sh NOME SECONDI_SCHERMATE... -- argomenti qemu
+          nome=$1; shift
+          tempi=()
+          while [[ $1 != -- ]]; do tempi+=("$1"); shift; done; shift
+          sock=/tmp/$nome.sock
+          qemu-system-x86_64 -enable-kvm -m 4096 -smp 2 -device virtio-vga \
+            -monitor unix:$sock,server,nowait -display none \
+            -serial file:risultati/$nome-seriale.log "$@" &
+          pid=$!
+          inizio=$SECONDS
+          for t in "${tempi[@]}"; do
+            while (( SECONDS - inizio < t )); do sleep 1; done
+            python3 - "$sock" "/tmp/$nome-$t.ppm" <<'PY'
+          import socket, sys, time
+          s = socket.socket(socket.AF_UNIX); s.connect(sys.argv[1]); time.sleep(0.3)
+          s.sendall(f"screendump {sys.argv[2]}\n".encode()); time.sleep(1.5); s.close()
+          PY
+            convert "/tmp/$nome-$t.ppm" "risultati/$nome-$(printf %03d $t)s.png" || true
+          done
+          kill $pid; wait $pid 2>/dev/null; true
+          EOF
+          chmod +x prova.sh
+
+      - name: Avvio diretto con registro sulla seriale
+        run: |
+          ./prova.sh diretto 30 60 100 150 210 -- -cdrom "$ISO" -kernel iso/vmlinuz -initrd iso/initrd.img \
+            -append "boot=live components quiet splash console=tty0 console=ttyS0,115200 systemd.journald.forward_to_console=1 systemd.log_level=info"
+
+      - name: Avvio BIOS dal menu
+        run: ./prova.sh bios 4 90 150 -- -cdrom "$ISO" -boot d
+
+      - name: Avvio UEFI dal menu
+        run: |
+          cp /usr/share/OVMF/OVMF_VARS_4M.fd /tmp/vars.fd
+          ./prova.sh uefi 8 90 150 -- -cdrom "$ISO" -boot d \
+            -drive if=pflash,format=raw,readonly=on,file=/usr/share/OVMF/OVMF_CODE_4M.fd \
+            -drive if=pflash,format=raw,file=/tmp/vars.fd
+
+      - name: Riepilogo errori
+        if: always()
+        run: |
+          grep -aiE 'fail|error|errore|denied|not found|traceback|segfault|core dump' risultati/diretto-seriale.log | sed 's/\x1b\[[0-9;]*m//g' | head -200 || true
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: prova-avvio
+          path: risultati/
+          retention-days: 7
