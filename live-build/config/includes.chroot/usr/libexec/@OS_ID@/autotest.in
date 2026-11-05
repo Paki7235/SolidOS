@@ -1,0 +1,72 @@
+#!/bin/bash
+# Prova automatica delle app (solo con il parametro di avvio @OS_ID@.autotest).
+# Apre ogni app nella sessione grafica dell'utente live, controlla che resti
+# aperta, ne salva una schermata e scrive risultati e immagini sulla seconda
+# porta seriale (/dev/ttyS1), letta dalla macchina virtuale di prova.
+set -u
+USCITA=/dev/ttyS1
+UTENTE=@OS_ID@
+scrivi() { printf '%s\n' "$*" >"$USCITA"; }
+
+UID_U=$(id -u "$UTENTE") || exit 1
+RUN=/run/user/$UID_U
+for _ in $(seq 120); do
+	PID_LABWC=$(pgrep -u "$UTENTE" -x labwc | head -1)
+	[ -n "$PID_LABWC" ] && [ -S "$RUN/wayland-0" ] && break
+	sleep 2
+done
+[ -n "${PID_LABWC:-}" ] || { scrivi "AUTOTEST ERRORE labwc non avviato"; exit 1; }
+sleep 25 # lascia finire l'avvio della sessione
+
+AMBIENTE=()
+while IFS= read -r -d '' v; do AMBIENTE+=("$v"); done <"/proc/$PID_LABWC/environ"
+AMBIENTE+=(WAYLAND_DISPLAY=wayland-0 XDG_RUNTIME_DIR="$RUN" DBUS_SESSION_BUS_ADDRESS="unix:path=$RUN/bus")
+come_utente() { runuser -u "$UTENTE" -- env "${AMBIENTE[@]}" "$@"; }
+
+immagine() { # NOME
+	local f=/tmp/autotest-$1.jpg
+	come_utente grim -t jpeg -q 55 -s 0.6 "$f" 2>/dev/null || return
+	scrivi "AUTOTEST-IMG $1 $(base64 -w0 "$f")"
+	rm -f "$f"
+}
+
+scrivi "AUTOTEST INIZIO $(date -Is) RAM: $(free -m | awk '/^Mem/{print $3"MB usati su "$2}')"
+immagine 00-desktop
+
+# Elenco: app del sistema + app di base del menu
+ELENCO=()
+for f in /usr/share/applications/@OS_ID@-*.desktop /usr/share/applications/{pcmanfm-qt,firefox-esr,qterminal,featherpad}.desktop; do
+	[ -f "$f" ] || continue
+	case $f in *-riavvia.desktop|*-spegni.desktop|*-installa-sistema.desktop|*-benvenuto.desktop) continue ;; esac
+	ELENCO+=("$f")
+done
+
+# Chiude la finestra di benvenuto aperta all'avvio
+pkill -u "$UTENTE" -f 'nucleo.benvenuto' 2>/dev/null; sleep 2
+
+for f in "${ELENCO[@]}"; do
+	nome=$(basename "$f" .desktop)
+	cmd=$(grep -m1 '^Exec=' "$f" | cut -d= -f2- | sed 's/ %[a-zA-Z]//g')
+	log=/tmp/autotest-$nome.log
+	come_utente setsid sh -c "$cmd" >"$log" 2>&1 &
+	pid=$!
+	sleep 12
+	if kill -0 "$pid" 2>/dev/null || pgrep -u "$UTENTE" -f "$(echo "$cmd" | awk '{print $NF}')" >/dev/null; then
+		stato=APERTA
+	else
+		wait "$pid"; stato="CHIUSA(codice $?)"
+	fi
+	scrivi "AUTOTEST-APP $nome | $cmd | $stato"
+	grep -aiE 'error|errore|traceback|exception|is not a type|not installed|cannot|unable|failed|referenceerror|typeerror|module .* not' "$log" \
+		| grep -v 'qt.qpa.wayland: Wayland does not support QWindow::requestActivate' | head -25 \
+		| sed "s/^/AUTOTEST-LOG $nome: /" >"$USCITA"
+	[ "$stato" = APERTA ] || tail -n 15 "$log" | sed "s/^/AUTOTEST-CODA $nome: /" >"$USCITA"
+	immagine "$nome"
+	pkill -s "$(ps -o sid= -p "$pid" 2>/dev/null | tr -d ' ')" 2>/dev/null
+	pkill -u "$UTENTE" -f "$(echo "$cmd" | awk '{print $NF}')" 2>/dev/null
+	sleep 2
+done
+
+scrivi "AUTOTEST RAM finale: $(free -m | awk '/^Mem/{print $3"MB usati su "$2}')"
+ps -eo rss=,comm= --sort=-rss | head -15 | awk '{printf "AUTOTEST-MEM %d MB %s\n", $1/1024, $2}' >"$USCITA"
+scrivi "AUTOTEST FINE"

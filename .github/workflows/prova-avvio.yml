@@ -69,6 +69,22 @@ jobs:
           ./prova.sh diretto 30 60 100 150 210 -- -cdrom "$ISO" -kernel iso/vmlinuz -initrd iso/initrd.img \
             -append "boot=live components quiet splash console=tty0 console=ttyS0,115200 systemd.journald.forward_to_console=1 systemd.log_level=info"
 
+      - name: Prova di tutte le app
+        run: |
+          : > risultati/app.log
+          qemu-system-x86_64 -enable-kvm -m 4096 -smp 2 -device virtio-vga -display none \
+            -cdrom "$ISO" -kernel iso/vmlinuz -initrd iso/initrd.img \
+            -append "boot=live components quiet splash solidos.autotest" \
+            -serial null -serial file:risultati/app.log &
+          pid=$!
+          for i in $(seq 180); do grep -aq 'AUTOTEST FINE' risultati/app.log && break; sleep 5; done
+          kill $pid; wait $pid 2>/dev/null || true
+          mkdir -p risultati/app
+          grep -a '^AUTOTEST-IMG ' risultati/app.log | while read -r _ nome dati; do
+            echo "$dati" | base64 -d > "risultati/app/$nome.jpg" 2>/dev/null || true
+          done
+          grep -av '^AUTOTEST-IMG ' risultati/app.log | tee risultati/app-risultati.txt
+
       - name: Avvio BIOS dal menu
         run: ./prova.sh bios 4 90 150 -- -cdrom "$ISO" -boot d
 

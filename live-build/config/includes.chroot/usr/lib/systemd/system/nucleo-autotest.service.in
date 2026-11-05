@@ -1,0 +1,12 @@
+[Unit]
+Description=Prova automatica delle app di @OS_NAME@ (solo con @OS_ID@.autotest)
+ConditionKernelCommandLine=@OS_ID@.autotest
+After=greetd.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/@OS_ID@/autotest
+TimeoutStartSec=30min
+
+[Install]
+WantedBy=multi-user.target
