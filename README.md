@@ -69,6 +69,32 @@ Altre opzioni: `--ram 1024` (simula un PC vecchio), `--cpu 4`, `--disco` (disco 
 Su Mac Apple Silicon la VM è emulata: avvio in qualche minuto, desktop lento. Va bene per verificare avvio
 e RAM; per la fluidità usa un PC reale (scrivi la ISO su chiavetta con `dd` o balenaEtcher).
 
+## Provare in VirtualBox
+
+1. Scarica dalla pagina *Releases* del repository tutte le parti `…iso.parte-00`, `…parte-01`, … e il file `.sha256`.
+2. Ricomponi la ISO nella cartella dei download:
+
+```bash
+cat solidos-0.1-amd64.iso.parte-* > solidos-0.1-amd64.iso
+```
+
+```bash
+shasum -a 256 solidos-0.1-amd64.iso
+```
+
+   Il valore deve coincidere con quello nel file `.sha256`.
+3. In VirtualBox crea una nuova macchina: **Tipo** Linux, **Versione** Debian (64-bit), **RAM** 4096 MB (2048 per provare il profilo «PC vecchio»), **CPU** 2, **disco** 30 GB.
+4. Impostazioni → **Schermo**: controller grafico **VMSVGA**, memoria video 128 MB, accelerazione 3D **spenta**.
+5. Impostazioni → **Sistema**: «Abilita EFI» acceso per provare l'avvio UEFI, spento per il BIOS.
+6. Impostazioni → **Archiviazione**: collega la ISO al lettore ottico, poi avvia.
+
+In macchina virtuale la grafica usa automaticamente il rendering software. Quick Share e AirDrop
+non sono provabili in VirtualBox (servono Wi-Fi e Bluetooth reali); il codice QR e LocalSend
+funzionano se la rete della VM è in modalità **Scheda con bridge**.
+
+> Su Mac con processore Apple (M1–M5) VirtualBox può avviare solo sistemi ARM: questa ISO x86_64
+> va provata su un PC con processore Intel/AMD oppure con QEMU (`./test-vm.sh`, emulato e lento).
+
 ### Cosa controllare
 
 1. Menu di avvio con sfondo e voci in italiano: *Prova SolidOS*, *grafica sicura*, *Modalità Salvataggio*,
