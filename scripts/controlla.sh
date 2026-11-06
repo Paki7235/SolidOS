@@ -91,6 +91,12 @@ componenti = {p.stem for p in pathlib.Path("src/qml/SolidUI").glob("*.qml")}
 dichiarati = {r.split()[0] for r in open("src/qml/SolidUI/qmldir") if r[0].isupper()}
 if componenti != dichiarati:
     print(f"  ✗ qmldir di SolidUI non allineato: {componenti ^ dichiarati}"); errori += 1
+# Id QML duplicati nello stesso file: il file non si carica affatto
+for qml in sorted(pathlib.Path("src/qml").rglob("*.qml")):
+    ids = re.findall(r"(?:^|[{;])\s*id:\s*(\w+)", qml.read_text(encoding="utf-8"), re.M)
+    doppi = sorted({i for i in ids if ids.count(i) > 1})
+    if doppi:
+        print(f"  ✗ {qml}: id ripetuti {', '.join(doppi)}"); errori += 1
 print("  ✓ moduli, QML e qmldir coerenti" if not errori else "")
 sys.exit(1 if errori else 0)
 PY

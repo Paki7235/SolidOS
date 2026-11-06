@@ -64,6 +64,8 @@ class BackendMonitor(Backend):
         for p in psutil.process_iter(["pid", "name", "username", "memory_info", "num_threads", "cmdline", "cpu_times"]):
             try:
                 info = p.info
+                if not info["cmdline"] and info["username"] == "root":
+                    continue   # thread del kernel: non interessano all'utente
                 nome = self._nome(info)
                 if filtro and filtro not in nome.lower() and filtro not in (info["name"] or "").lower():
                     continue

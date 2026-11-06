@@ -155,7 +155,7 @@ QtObject {
         id: osd
         function mostra(d) {
             icona.nome = d.tipo === "volume" ? (d.muto ? "audio-volume-muted" : "audio-volume-high") : "display-brightness"
-            barra.value = d.muto ? 0 : Math.min(d.valore, 100) / 100
+            barraOsd.value = d.muto ? 0 : Math.min(d.valore, 100) / 100
             etichetta.text = d.muto ? I18n.t("Muto") : d.valore + "%"
             osd.visible = true
             timerOsd.restart()
@@ -180,7 +180,7 @@ QtObject {
                 anchors.centerIn: parent
                 spacing: 12
                 Icona { id: icona; lato: 24; anchors.verticalCenter: parent.verticalCenter }
-                BarraProgresso { id: barra; width: 160; anchors.verticalCenter: parent.verticalCenter }
+                BarraProgresso { id: barraOsd; width: 160; anchors.verticalCenter: parent.verticalCenter }
                 Testo { id: etichetta; width: 44; anchors.verticalCenter: parent.verticalCenter }
             }
         }
