@@ -235,7 +235,7 @@ class PannelloNotifiche(Pannello):
 
     def azione(self, voce, elemento, az, dati):
         if voce == "prova":
-            notifica(T("Notifica di prova"), T("Le notifiche funzionano correttamente."), icona=f"{branding.id_os()}-logo")
+            notifica(T("Notifica di prova"), T("Le notifiche funzionano correttamente."), icona=f"{branding.id_os()}-app-benvenuto")
             return esito(ricarica=False)
         return None
 

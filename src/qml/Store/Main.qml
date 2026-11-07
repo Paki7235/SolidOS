@@ -93,17 +93,16 @@ Finestra {
                                 Testo { text: modelData.nome; font.weight: Font.DemiBold; Layout.fillWidth: true; elide: Text.ElideRight; wrapMode: Text.NoWrap }
                                 Testo { text: modelData.origine === "flatpak" ? "Flathub" : (modelData.origine === "apt" ? "Debian" : "AppImage"); secondario: true; font.pointSize: Tema.fontDimensione - 2 }
                             }
+                            Pulsante {
+                                Layout.alignment: Qt.AlignVCenter
+                                enabled: finestra.occupata === ""
+                                principale: !modelData.installata && finestra.scheda === 0
+                                pericoloso: finestra.scheda === 1
+                                text: finestra.occupata === modelData.id ? I18n.t("Attendi…") : (finestra.scheda === 1 ? I18n.t("Rimuovi") : (modelData.installata ? I18n.t("Installata") : I18n.t("Installa")))
+                                onClicked: finestra.scheda === 1 ? finestra.rimuovi(modelData) : (!modelData.installata && finestra.installa(modelData))
+                            }
                         }
                         Testo { text: modelData.descrizione || ""; secondario: true; maximumLineCount: 2; elide: Text.ElideRight; Layout.fillWidth: true }
-                        Item { Layout.fillHeight: true }
-                        Pulsante {
-                            Layout.alignment: Qt.AlignRight
-                            enabled: finestra.occupata === ""
-                            principale: !modelData.installata && finestra.scheda === 0
-                            pericoloso: finestra.scheda === 1
-                            text: finestra.occupata === modelData.id ? I18n.t("Attendi…") : (finestra.scheda === 1 ? I18n.t("Rimuovi") : (modelData.installata ? I18n.t("Installata") : I18n.t("Installa")))
-                            onClicked: finestra.scheda === 1 ? finestra.rimuovi(modelData) : (!modelData.installata && finestra.installa(modelData))
-                        }
                     }
                 }
             }
