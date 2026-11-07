@@ -38,7 +38,9 @@ class Finestre:
 
         self.display = Display()
         self.display.connect()
-        registro = self.display.get_registry()
+        # Il registro va tenuto in vita: pywayland lo usa per ritrovare il display
+        # quando arrivano nuovi oggetti (le maniglie delle finestre).
+        self.registro = registro = self.display.get_registry()
         manager = []
 
         def globale(reg, nome, interfaccia, versione):
@@ -63,7 +65,10 @@ class Finestre:
 
     def _leggi(self, *_):
         try:
-            self.display.dispatch(block=True)
+            # Il socket ha dati: si leggono (senza attese) e si elaborano gli eventi in coda.
+            # Mai dispatch(block=True): un problema qui non deve bloccare la shell.
+            self.display.read()
+            self.display.dispatch(block=False)
             self.display.flush()
         except Exception as e:  # noqa: BLE001
             print(f"finestre: {e}", file=sys.stderr)

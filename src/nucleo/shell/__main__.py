@@ -254,9 +254,10 @@ def crea_servizio_shell(bus, backend: BackendShell):
         def MostraNotifiche(self):
             backend.emetti("mostra", "notifiche")
 
-        @dbus.service.method(nome, in_signature="", out_signature="")
+        @dbus.service.method(nome, in_signature="", out_signature="b")
         def MostraBarra(self):
             backend.emetti("mostra", "barra")
+            return True   # risposta esplicita: chi chiama sa che la shell ha mostrato la barra
 
         @dbus.service.method(nome, in_signature="", out_signature="")
         def MostraPrestazioni(self):
