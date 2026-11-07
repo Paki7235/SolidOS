@@ -19,7 +19,7 @@ Window {
         attiva = shell.chiama0("finestraAttiva")
     }
     function aggiornaStato() {
-        stato = shell.chiama0("stato")
+        stato = shell.chiama0("statoBarra")
         prestazioni = shell.chiama0("prestazioni")
     }
     function aggiornaOra() {

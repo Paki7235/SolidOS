@@ -12,7 +12,13 @@ QtObject {
     property var popup: []          // notifiche visibili in alto a destra
     property var storico: []
 
-    function aggiornaStato() { radice.stato = shell.chiama0("stato") }
+    // Lo stato completo (rete, Bluetooth, audio…) si legge in background:
+    // i pannelli si aprono subito con i valori precedenti e poi si aggiornano.
+    function aggiornaStato() { shell.avvia("stato", [], "stato") }
+    property Connections collegamentoStato: Connections {
+        target: shell
+        function onCompletato(id, r) { if (id === "stato") radice.stato = r }
+    }
     function aggiornaStorico() { radice.storico = shell.chiama0("storico") }
 
     function mostra(cosa) {

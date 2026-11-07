@@ -33,6 +33,7 @@ class BackendShell(Backend):
     def stato(self) -> dict:
         r = rete.stato_breve()
         vol = audio.volume()
+        self._muto = vol["muto"]
         luce = schermo.luminosita()
         batt = energia.batteria()
         return {
@@ -46,6 +47,24 @@ class BackendShell(Backend):
             "visibilita": self._visibilita(),
             "spazio": self._spazio(),
         }
+
+    # ── Stato leggero per la barra in alto (solo file di sistema, pochi ms) ──
+    def statoBarra(self) -> dict:
+        from pathlib import Path
+
+        connesso, tipo = False, ""
+        for iface in Path("/sys/class/net").iterdir():
+            if iface.name == "lo":
+                continue
+            try:
+                su = (iface / "operstate").read_text().strip() == "up"
+            except OSError:
+                continue
+            if su:
+                connesso = True
+                tipo = "wifi" if (iface / "wireless").exists() else (tipo or "ethernet")
+        return {"connesso": connesso, "reteTipo": tipo, "batteria": energia.batteria() or {},
+                "muto": getattr(self, "_muto", False)}
 
     # ── Indicatore delle prestazioni (Super+P) ───────────────────────────────
     def prestazioni(self) -> dict:
@@ -322,7 +341,18 @@ def main() -> int:
     schermo.ripristina_configurazione_schermi()
     from .finestre import Finestre
 
-    backend.finestre = Finestre(lambda _elenco: backend.emetti("finestre", None))
+    def al_cambio(elenco):
+        backend.emetti("finestre", None)
+        try:   # diagnosi: l'elenco delle finestre per la prova automatica
+            import json
+            from pathlib import Path
+
+            stato = Path.home() / ".local/state" / branding.id_os() / "finestre.json"
+            stato.write_text(json.dumps(elenco, ensure_ascii=False))
+        except OSError:
+            pass
+
+    backend.finestre = Finestre(al_cambio)
     motore = carica(app, "Shell/Shell.qml", {"shell": ponte})
     codice = app.exec()
     del motore, servizio
