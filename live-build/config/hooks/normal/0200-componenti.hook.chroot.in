@@ -32,7 +32,6 @@ if apt-get install -y -qq --no-install-recommends $DIPENDENZE $RUNTIME >"$REGIST
 	rm -rf /tmp/owl
 	apt-mark manual $RUNTIME >/dev/null 2>&1 || true
 	apt-get purge -y -qq git cmake build-essential pkg-config libpcap-dev libev-dev libnl-3-dev libnl-genl-3-dev libnl-route-3-dev >/dev/null 2>&1 || true
-	apt-get autoremove -y -qq >/dev/null 2>&1 || true
 else
 	registro "ATTENZIONE: dipendenze di OWL non installabili: AirDrop non sarà disponibile. Ultime righe:"
 	tail -n 20 "$REGISTRO_OWL" | sed 's/^/    /'
@@ -47,6 +46,60 @@ if command -v firewall-offline-cmd >/dev/null; then
 	done
 	registro "firewall configurato"
 fi
+
+# ── Tema di icone Colloid (GPL-3.0), versione fissata ──────────────────────────
+# Si copiano solo i file delle icone (dati): nessuno script del progetto viene eseguito.
+COLLOID_VERSIONE=2026-08-10
+D=/usr/share/icons/Colloid-Dark
+if apt-get install -y -qq --no-install-recommends git ca-certificates >/tmp/colloid.log 2>&1 \
+	&& git clone -q --depth 1 --branch "$COLLOID_VERSIONE" https://github.com/vinceliuice/Colloid-icon-theme.git /tmp/colloid >>/tmp/colloid.log 2>&1; then
+	rm -rf "$D" && mkdir -p "$D"
+	sed 's/Colloid/Colloid-Dark/g' /tmp/colloid/src/index.theme >"$D/index.theme"
+	for cartella in actions apps categories devices emblems mimetypes places status; do
+		cp -a "/tmp/colloid/src/$cartella" "$D/"
+		[ -d "/tmp/colloid/links/$cartella" ] && cp -a "/tmp/colloid/links/$cartella/." "$D/$cartella/"
+	done
+	cp -a /tmp/colloid/dark/*.svg "$D/places/scalable/" 2>/dev/null || true
+	# Variante scura: simboli chiari sulle barre scure
+	find "$D" -type f -name '*.svg' \( -path '*/symbolic/*' -o -path '*/16/*' -o -path '*/22/*' -o -path '*/24/*' -o -path '*/32/*' \) \
+		-exec sed -i 's/#363636/#dedede/g' {} +
+	install -m 0644 /tmp/colloid/COPYING "$D/COPYING" 2>/dev/null || install -m 0644 /tmp/colloid/LICENSE "$D/LICENSE" 2>/dev/null || true
+	gtk-update-icon-cache -q "$D" 2>/dev/null || true
+	registro "icone Colloid $COLLOID_VERSIONE: $(find "$D" -name '*.svg' | wc -l) file"
+else
+	registro "ATTENZIONE: icone Colloid non scaricate"; tail -n 20 /tmp/colloid.log
+fi
+rm -rf /tmp/colloid
+apt-get purge -y -qq git >/dev/null 2>&1 || true
+
+# ── Protocollo Wayland delle finestre (dock e barra della shell) ─────────────
+WL=/usr/lib/python3/dist-packages/nucleo/wl
+if apt-get install -y -qq --no-install-recommends libwayland-dev >/tmp/wl.log 2>&1; then
+	rm -rf "$WL" && mkdir -p "$WL"
+	if python3 -m pywayland.scanner -o "$WL" /usr/share/wayland/wayland.xml \
+		/usr/share/nucleo/protocolli/wlr-foreign-toplevel-management-unstable-v1.xml >>/tmp/wl.log 2>&1 \
+		|| pywayland-scanner -o "$WL" /usr/share/wayland/wayland.xml \
+		/usr/share/nucleo/protocolli/wlr-foreign-toplevel-management-unstable-v1.xml >>/tmp/wl.log 2>&1; then
+		touch "$WL/__init__.py"
+		python3 -c "import nucleo.wl.wlr_foreign_toplevel_management_unstable_v1 as m; print(m.ZwlrForeignToplevelManagerV1)" >>/tmp/wl.log 2>&1 \
+			&& registro "protocollo delle finestre generato" || { registro "ATTENZIONE: modulo delle finestre non importabile"; tail -n 20 /tmp/wl.log; }
+		python3 -m compileall -q "$WL" >/dev/null 2>&1 || true
+	else
+		registro "ATTENZIONE: pywayland-scanner non riuscito"; tail -n 20 /tmp/wl.log
+	fi
+	apt-get purge -y -qq libwayland-dev >/dev/null 2>&1 || true
+else
+	registro "ATTENZIONE: libwayland-dev non installabile"; tail -n 20 /tmp/wl.log
+fi
+
+# ── QML precompilato: le app si aprono senza compilare l'interfaccia ──────────
+if /usr/libexec/nucleo/precompila-qml >/tmp/qml.log 2>&1; then
+	registro "$(tail -n 1 /tmp/qml.log)"
+	chmod -R a+rX /var/cache/nucleo
+else
+	registro "ATTENZIONE: precompilazione QML non riuscita"; tail -n 15 /tmp/qml.log
+fi
+grep -q QML_DISK_CACHE_PATH /etc/environment 2>/dev/null || echo "QML_DISK_CACHE_PATH=/var/cache/nucleo/qml" >>/etc/environment
 
 # ── Servizi ───────────────────────────────────────────────────────────────────
 systemctl enable nucleo-profilo.service >/dev/null 2>&1 || true

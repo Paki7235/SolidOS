@@ -5,22 +5,22 @@
 # I testi possono usare i segnaposto del branding (@OS_NAME@ …).
 shell	nucleo.shell
 greeter	nucleo.greeter
-cattura	nucleo.apps.cattura	Cattura	@OS_ID@-app-cattura	Utility;Graphics;	Schermate e registrazioni dello schermo	no
-monitor	nucleo.apps.monitor	Gestore attività	utilities-system-monitor	System;Monitor;	Processi, memoria, disco e rete	no
-guida	nucleo.apps.guida	Guida	@OS_ID@-app-guida	Utility;Documentation;	Guida di @OS_NAME@	no
-dischi	nucleo.apps.dischi	Dischi	@OS_ID@-app-dischi	System;Utility;	Gestisci dischi e chiavette	no
-backup	nucleo.apps.backup	Backup	@OS_ID@-app-backup	Utility;System;	Copie di sicurezza cifrate dei tuoi file	no
-impostazioni	nucleo.impostazioni	Impostazioni	preferences-system	Settings;System;	Tutte le impostazioni di @OS_NAME@	no
-store	nucleo.store	@OS_NAME@ App	system-software-install	System;PackageManager;	Trova e installa app	no
-installa	nucleo.installa	Installa con @OS_NAME@	@OS_ID@-app-installa	System;	Installa programmi da qualsiasi formato	si	application/vnd.debian.binary-package;application/x-rpm;application/x-redhat-package-manager;application/vnd.appimage;application/x-iso9660-appimage;application/vnd.flatpak;application/vnd.flatpak.ref;application/x-ms-dos-executable;application/x-msdownload;application/x-msi;application/x-ms-installer;application/x-apple-diskimage;
-apri-con	nucleo.apricon	Apri con…	@OS_ID@-app-apri-con	Utility;	Apri file di tipo sconosciuto	si	application/octet-stream;
-linea-del-tempo	nucleo.lineadeltempo	Linea del Tempo	document-open-recent	System;Utility;	Torna indietro nel tempo su file e sistema	no
+cattura	nucleo.apps.cattura	Cattura	org.gnome.Screenshot	Utility;Graphics;	Schermate e registrazioni dello schermo	no
+monitor	nucleo.apps.monitor	Gestore attività	org.gnome.SystemMonitor	System;Monitor;	Processi, memoria, disco e rete	no
+guida	nucleo.apps.guida	Guida	org.gnome.Yelp	Utility;Documentation;	Guida di @OS_NAME@	no
+dischi	nucleo.apps.dischi	Dischi	org.gnome.DiskUtility	System;Utility;	Gestisci dischi e chiavette	no
+backup	nucleo.apps.backup	Backup	org.gnome.DejaDup	Utility;System;	Copie di sicurezza cifrate dei tuoi file	no
+impostazioni	nucleo.impostazioni	Impostazioni	org.gnome.Settings	Settings;System;	Tutte le impostazioni di @OS_NAME@	no
+store	nucleo.store	@OS_NAME@ App	org.gnome.Software	System;PackageManager;	Trova e installa app	no
+installa	nucleo.installa	Installa con @OS_NAME@	system-software-install	System;	Installa programmi da qualsiasi formato	si	application/vnd.debian.binary-package;application/x-rpm;application/x-redhat-package-manager;application/vnd.appimage;application/x-iso9660-appimage;application/vnd.flatpak;application/vnd.flatpak.ref;application/x-ms-dos-executable;application/x-msdownload;application/x-msi;application/x-ms-installer;application/x-apple-diskimage;
+apri-con	nucleo.apricon	Apri con…	applications-other	Utility;	Apri file di tipo sconosciuto	si	application/octet-stream;
+linea-del-tempo	nucleo.lineadeltempo	Linea del Tempo	timeshift	System;Utility;	Torna indietro nel tempo su file e sistema	no
 condivisione	nucleo.condivisione
-condividi	nucleo.condivisione.selettore	Condividi	document-send	Utility;Network;	Invia file a telefoni e computer vicini	no
+condividi	nucleo.condivisione.selettore	Condividi	localsend	Utility;Network;	Invia file a telefoni e computer vicini	no
 spazi	nucleo.spazi
-barra	nucleo.barra	Barra Unica	@OS_ID@-app-barra	Utility;	Cerca e agisci con una scorciatoia	si
-salvataggio	nucleo.salvataggio	Salvataggio	@OS_ID@-app-salvataggio	System;	Recupera file e ripara il computer	no
-migrazione	nucleo.migrazione	Migrazione da Windows	@OS_ID@-app-migrazione	System;	Importa file e impostazioni da Windows	no
-chiavetta	nucleo.chiavetta	Crea chiavetta @OS_NAME@	@OS_ID@-app-chiavetta	System;	Crea una chiavetta avviabile con salvataggio dei dati	no
-benvenuto	nucleo.benvenuto	Benvenuto	@OS_ID@-app-benvenuto	System;	Configurazione iniziale	si
+barra	nucleo.barra	Barra Unica	system-search	Utility;	Cerca e agisci con una scorciatoia	si
+salvataggio	nucleo.salvataggio	Salvataggio	system-help	System;	Recupera file e ripara il computer	no
+migrazione	nucleo.migrazione	Migrazione da Windows	org.x.Warpinator	System;	Importa file e impostazioni da Windows	no
+chiavetta	nucleo.chiavetta	Crea chiavetta @OS_NAME@	mintstick	System;	Crea una chiavetta avviabile con salvataggio dei dati	no
+benvenuto	nucleo.benvenuto	Benvenuto	org.gnome.Tour	System;	Configurazione iniziale	si
 privacy	nucleo.privacy

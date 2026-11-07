@@ -9,6 +9,7 @@ python3-dbus
 python3-dbus-next
 python3-gi
 python3-psutil
+python3-pywayland
 python3-aiohttp
 python3-qrcode
 python3-cryptography

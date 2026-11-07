@@ -27,6 +27,7 @@ from .notifiche import ServerNotifiche
 class BackendShell(Backend):
     def __init__(self):
         self.server: ServerNotifiche | None = None
+        self.finestre = None
 
     # ── Stato per il centro di controllo ────────────────────────────────────
     def stato(self) -> dict:
@@ -79,6 +80,64 @@ class BackendShell(Backend):
             "rete": round(max(rete_s, 0), 2),
             "temperatura": round(temperatura) if temperatura else -1,
         }
+
+    # ── Dock e finestre ──────────────────────────────────────────────────────
+    def dock(self) -> list:
+        from . import dock
+
+        return dock.voci(self.finestre.elenco() if self.finestre else [])
+
+    def dockApri(self, desktop: str) -> bool:
+        from ..sistema import avvia_desktop
+
+        return avvia_desktop(desktop)
+
+    def dockClic(self, desktop: str) -> str:
+        """Clic su un'icona: apre l'app, oppure attiva/riduce la sua finestra."""
+        from . import dock
+
+        voce = next((v for v in dock.voci(self.finestre.elenco() if self.finestre else []) if v["id"] == desktop), None)
+        if voce and voce["finestre"] and self.finestre:
+            finestre = voce["finestre"]
+            attiva = next((f for f in finestre if f["attiva"] and not f["minimizzata"]), None)
+            if attiva:
+                self.finestre.minimizza(attiva["id"])
+                return "ridotta"
+            self.finestre.attiva(finestre[-1]["id"])
+            return "attivata"
+        self.dockApri(desktop)
+        return "avviata"
+
+    def dockChiudi(self, desktop: str) -> None:
+        from . import dock
+
+        for v in dock.voci(self.finestre.elenco() if self.finestre else []):
+            if v["id"] == desktop:
+                for f in v["finestre"]:
+                    self.finestre.chiudi(f["id"])
+
+    def dockFissa(self, desktop: str, si: bool) -> None:
+        from . import dock
+
+        dock.fissa(desktop, bool(si))
+        self.emetti("finestre", None)
+
+    def finestraAttiva(self) -> dict:
+        """App in primo piano, per il nome nella barra in alto."""
+        from . import dock
+
+        if not self.finestre:
+            return {}
+        for f in self.finestre.elenco():
+            if f["attiva"] and not f["minimizzata"]:
+                d = dock.desktop_per_app_id(f["appId"])
+                dati = dock.info(d) if d else None
+                return {"nome": (dati or {}).get("nome") or f["titolo"], "titolo": f["titolo"], "id": f["id"]}
+        return {}
+
+    def chiudiFinestra(self, ident: int) -> None:
+        if self.finestre:
+            self.finestre.chiudi(int(ident))
 
     def _visibilita(self) -> str:
         valore = chiama(branding.nome_dbus("Condivisione1"), branding.percorso_dbus("Condivisione1"),
@@ -260,6 +319,9 @@ def main() -> int:
 
     automount = avvia_automount()  # noqa: F841 — deve restare vivo
     schermo.ripristina_configurazione_schermi()
+    from .finestre import Finestre
+
+    backend.finestre = Finestre(lambda _elenco: backend.emetti("finestre", None))
     motore = carica(app, "Shell/Shell.qml", {"shell": ponte})
     codice = app.exec()
     del motore, servizio

@@ -138,7 +138,7 @@ Finestra {
                                     return (typeof v === "number" ? v.toLocaleString(Qt.locale(), "f", modelData.k === "thread" ? 0 : 1) : v) + modelData.u
                                 }
                                 color: riga.scelta ? "#FFFFFF" : Tema.testo
-                                font.family: Tema.font; font.pixelSize: 13; font.features: { "tnum": 1 }
+                                font.family: Tema.font; font.pixelSize: 13; font.features: ({ "tnum": 1 })
                                 horizontalAlignment: Text.AlignRight; Layout.preferredWidth: 110
                             }
                         }

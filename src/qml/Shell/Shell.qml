@@ -94,9 +94,9 @@ QtObject {
         MouseArea { anchors.fill: parent; onClicked: controllo.visible = false }
         CentroControllo {
             anchors.right: parent.right
-            anchors.bottom: parent.bottom
-            anchors.margins: 12
-            anchors.bottomMargin: 56
+            anchors.top: parent.top
+            anchors.margins: 10
+            anchors.topMargin: 34
             stato: radice.stato
             onChiudi: controllo.visible = false
             onAggiorna: radice.aggiornaStato()
@@ -119,9 +119,10 @@ QtObject {
             anchors.right: parent.right
             anchors.top: parent.top
             anchors.bottom: parent.bottom
-            anchors.margins: 12
-            anchors.bottomMargin: 56
-            width: 400
+            anchors.margins: 10
+            anchors.topMargin: 34
+            anchors.bottomMargin: 84
+            width: 380
             storico: radice.storico
             nonDisturbare: radice.stato.nonDisturbare === true
             onAggiorna: radice.aggiornaStorico()
@@ -283,6 +284,91 @@ QtObject {
                     }
                 }
             }
+        }
+    }
+
+    // ── Barra in alto e dock ────────────────────────────────────────────────
+    property Connections collegamentoFinestre: Connections {
+        target: shell
+        function onEvento(nome, dati) {
+            if (nome === "finestre") { dock.aggiorna(); barraSuperiore.aggiorna() }
+        }
+    }
+    property Window barraSuperiore: BarraSuperiore {
+        id: barraSuperiore
+        onMenuSistema: menuSistema.visible = !menuSistema.visible
+        onControllo: radice.mostra("controllo")
+        onNotifiche: radice.mostra("notifiche")
+    }
+    property Window dock: Dock {
+        id: dock
+        onMenu: function (voce, centroX) { menuDock.apri(voce, centroX) }
+    }
+
+    // Menu del logo in alto a sinistra
+    property Window menuSistema: Window {
+        id: menuSistema
+        LayerShell.Window.scope: "menu-sistema"
+        LayerShell.Window.layer: LayerShell.Window.LayerOverlay
+        LayerShell.Window.anchors: LayerShell.Window.AnchorTop | LayerShell.Window.AnchorBottom | LayerShell.Window.AnchorLeft | LayerShell.Window.AnchorRight
+        LayerShell.Window.exclusionZone: -1
+        LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityOnDemand
+        color: "transparent"
+        visible: false
+        MouseArea { anchors.fill: parent; onClicked: menuSistema.visible = false }
+        Shortcut { sequence: "Escape"; onActivated: menuSistema.visible = false }
+        MenuPopup {
+            x: 6; y: 30
+            voci: [
+                { t: I18n.t("Informazioni su questo computer"), f: function () { shell.chiama("apri", ["impostazioni", "informazioni"]) } },
+                { sep: true },
+                { t: I18n.t("Impostazioni…"), f: function () { shell.chiama("apri", ["impostazioni"]) } },
+                { t: Tema.nomeSistema + " App…", f: function () { shell.chiama("apri", ["store"]) } },
+                { t: I18n.t("Gestore attività"), f: function () { shell.chiama("apri", ["monitor"]) } },
+                { sep: true },
+                { t: I18n.t("Blocca schermo"), f: function () { shell.chiama("sessione", ["blocca"]) } },
+                { t: I18n.t("Sospendi"), f: function () { shell.chiama("sessione", ["sospendi"]) } },
+                { t: I18n.t("Riavvia…"), f: function () { shell.chiama("sessione", ["riavvia"]) } },
+                { t: I18n.t("Spegni…"), f: function () { shell.chiama("sessione", ["spegni"]) } },
+                { sep: true },
+                { t: I18n.t("Esci"), f: function () { shell.chiama("sessione", ["esci"]) } }
+            ]
+            onScelto: menuSistema.visible = false
+        }
+    }
+
+    // Menu del tasto destro sul dock
+    property Window menuDock: Window {
+        id: menuDock
+        property var voce: ({})
+        property real centroX: 0
+        function apri(v, cx) { voce = v; centroX = cx; visible = true }
+        LayerShell.Window.scope: "menu-dock"
+        LayerShell.Window.layer: LayerShell.Window.LayerOverlay
+        LayerShell.Window.anchors: LayerShell.Window.AnchorTop | LayerShell.Window.AnchorBottom | LayerShell.Window.AnchorLeft | LayerShell.Window.AnchorRight
+        LayerShell.Window.exclusionZone: -1
+        LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityOnDemand
+        color: "transparent"
+        visible: false
+        MouseArea { anchors.fill: parent; onClicked: menuDock.visible = false }
+        Shortcut { sequence: "Escape"; onActivated: menuDock.visible = false }
+        MenuPopup {
+            id: popupDock
+            x: Math.max(6, Math.min(menuDock.width - width - 6, (menuDock.width - dock.width) / 2 + menuDock.centroX - width / 2))
+            y: menuDock.height - 84 - height
+            voci: {
+                var v = menuDock.voce, out = [{ titolo: v.nome || "" }]
+                var finestre = v.finestre || []
+                for (var i = 0; i < finestre.length; i++) {
+                    (function (f) { out.push({ t: f.titolo || v.nome, f: function () { shell.chiama("dockClic", [v.id]) } }) })(finestre[i])
+                }
+                if (finestre.length) out.push({ sep: true })
+                out.push({ t: I18n.t("Nuova finestra"), f: function () { shell.chiama("dockApri", [v.id]) } })
+                out.push({ t: v.fissata ? I18n.t("Togli dal Dock") : I18n.t("Mantieni nel Dock"), f: function () { shell.chiama("dockFissa", [v.id, !v.fissata]) } })
+                if (finestre.length) { out.push({ sep: true }); out.push({ t: finestre.length > 1 ? I18n.t("Chiudi tutte") : I18n.t("Chiudi"), f: function () { shell.chiama("dockChiudi", [v.id]) } }) }
+                return out
+            }
+            onScelto: menuDock.visible = false
         }
     }
 

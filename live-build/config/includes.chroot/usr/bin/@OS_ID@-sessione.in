@@ -12,6 +12,8 @@ export QT_QPA_PLATFORM=wayland
 export QT_QPA_PLATFORMTHEME=lxqt
 export GDK_BACKEND=wayland,x11
 export MOZ_ENABLE_WAYLAND=1
+# Interfacce QML già compilate durante la build (avvio delle app più rapido)
+[ -d /var/cache/nucleo/qml ] && export QML_DISK_CACHE_PATH=/var/cache/nucleo/qml
 export XCURSOR_THEME=@TEMA_CURSORE@
 export XCURSOR_SIZE=@DIMENSIONE_CURSORE@
 

@@ -1,0 +1,34 @@
+#!/usr/bin/python3
+"""Precompila tutti i file QML del sistema nella cache condivisa (usata in sola lettura
+dalle app tramite QML_DISK_CACHE_PATH): le app si aprono senza compilare il QML.
+Si esegue durante la build, senza schermo (piattaforma «offscreen»)."""
+
+import os
+import sys
+from pathlib import Path
+
+CACHE = "/var/cache/nucleo/qml"
+RADICE = Path("/usr/share/nucleo/qml")
+
+os.environ["QML_DISK_CACHE_PATH"] = CACHE
+os.environ["QT_QPA_PLATFORM"] = "offscreen"
+os.environ.setdefault("QT_QUICK_CONTROLS_STYLE", "Basic")
+Path(CACHE).mkdir(parents=True, exist_ok=True)
+
+from PyQt6.QtCore import QUrl  # noqa: E402
+from PyQt6.QtGui import QGuiApplication  # noqa: E402
+from PyQt6.QtQml import QQmlComponent, QQmlEngine  # noqa: E402
+
+app = QGuiApplication(sys.argv[:1])
+motore = QQmlEngine()
+motore.addImportPath(str(RADICE))
+compilati = falliti = 0
+for qml in sorted(RADICE.rglob("*.qml")):
+    componente = QQmlComponent(motore, QUrl.fromLocalFile(str(qml)), QQmlComponent.CompilationMode.PreferSynchronous)
+    if componente.isError():
+        falliti += 1
+        for e in componente.errors()[:2]:
+            print(f"  {qml.relative_to(RADICE)}: {e.toString()}", file=sys.stderr)
+    else:
+        compilati += 1
+print(f"QML precompilati: {compilati}, con errori: {falliti}")

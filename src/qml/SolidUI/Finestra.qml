@@ -1,6 +1,7 @@
 // Finestra principale delle app: sfondo, colori e font del tema.
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Window
 
 ApplicationWindow {
     id: finestra
@@ -21,6 +22,16 @@ ApplicationWindow {
     palette.highlight: Tema.accento
     palette.highlightedText: "#FFFFFF"
     palette.placeholderText: Tema.testoSecondario
+
+    // La finestra non deve mai superare lo spazio utile (barra in alto 28 px, dock 74 px):
+    // altrimenti la barra del titolo con i pulsanti finirebbe fuori dallo schermo.
+    Component.onCompleted: {
+        var maxL = Screen.width - 48, maxA = Screen.height - 28 - 74 - 40
+        if (maxL > 300 && width > maxL) width = maxL
+        if (maxA > 240 && height > maxA) height = maxA
+        if (minimumWidth > width) minimumWidth = width
+        if (minimumHeight > height) minimumHeight = height
+    }
 
     // Messaggio temporaneo in basso: finestra.avviso("Fatto")
     function avviso(testo) { toast.mostra(testo) }
