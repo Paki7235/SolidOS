@@ -21,7 +21,7 @@ Item {
             Layout.fillWidth: true
             spacing: 2
             Text { text: riga.titolo; color: Tema.testo; font.family: Tema.font; font.pixelSize: 13; wrapMode: Text.Wrap; Layout.fillWidth: true }
-            Text { text: riga.descrizione; color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 11.5; wrapMode: Text.Wrap; visible: text !== ""; Layout.fillWidth: true; lineHeight: 1.1 }
+            Text { text: riga.descrizione; color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 11; wrapMode: Text.Wrap; visible: text !== ""; Layout.fillWidth: true; lineHeight: 1.1 }
         }
         Item {
             id: contenitore

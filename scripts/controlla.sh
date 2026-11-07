@@ -97,6 +97,9 @@ for qml in sorted(pathlib.Path("src/qml").rglob("*.qml")):
     doppi = sorted({i for i in ids if ids.count(i) > 1})
     if doppi:
         print(f"  ✗ {qml}: id ripetuti {', '.join(doppi)}"); errori += 1
+    for n, riga in enumerate(qml.read_text(encoding="utf-8").splitlines(), 1):
+        if re.search(r"pixelSize:\s*\d+\.\d", riga):
+            print(f"  ✗ {qml}:{n}: font.pixelSize deve essere un numero intero"); errori += 1
 print("  ✓ moduli, QML e qmldir coerenti" if not errori else "")
 sys.exit(1 if errori else 0)
 PY

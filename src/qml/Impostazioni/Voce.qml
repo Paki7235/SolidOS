@@ -182,7 +182,7 @@ Item {
                             Layout.fillWidth: true
                             spacing: 1
                             Text { text: modelData.titolo; color: Tema.testo; font.family: Tema.font; font.pixelSize: 13; font.weight: modelData.attivo ? Font.DemiBold : Font.Normal; elide: Text.ElideRight; Layout.fillWidth: true }
-                            Text { text: modelData.sottotitolo || ""; visible: text !== ""; color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 11.5; elide: Text.ElideRight; Layout.fillWidth: true }
+                            Text { text: modelData.sottotitolo || ""; visible: text !== ""; color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 11; elide: Text.ElideRight; Layout.fillWidth: true }
                         }
                         Repeater {
                             model: modelData.azioni || []
