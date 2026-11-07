@@ -91,7 +91,16 @@
   </keyboard>
 
   <libinput>
+    <!-- Tasto sinistro = clic principale su ogni dispositivo (i mancini lo cambiano nelle Impostazioni) -->
+    <device category="default">
+      <leftHanded>no</leftHanded>
+    </device>
+    <device category="non-touch">
+      <leftHanded>no</leftHanded>
+    </device>
     <device category="touchpad">
+      <leftHanded>no</leftHanded>
+      <tapButtonMap>lrm</tapButtonMap>
       <tap>yes</tap>
       <naturalScroll>no</naturalScroll>
       <disableWhileTyping>yes</disableWhileTyping>

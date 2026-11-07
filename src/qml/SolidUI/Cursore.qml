@@ -1,3 +1,4 @@
+// Cursore con binario sottile e manopola bianca.
 import QtQuick
 import QtQuick.Controls
 
@@ -7,16 +8,16 @@ Slider {
         x: cursore.leftPadding
         y: cursore.topPadding + cursore.availableHeight / 2 - height / 2
         implicitWidth: 200
-        implicitHeight: 6
+        implicitHeight: 4
         width: cursore.availableWidth
         height: implicitHeight
-        radius: 3
-        color: Tema.bordo
+        radius: 2
+        color: Tema.chiaro ? "#E5E5EA" : "#48484F"
         Rectangle {
             width: cursore.visualPosition * parent.width
             height: parent.height
             color: Tema.accento
-            radius: 3
+            radius: 2
         }
     }
     handle: Rectangle {
@@ -25,8 +26,8 @@ Slider {
         implicitWidth: 20
         implicitHeight: 20
         radius: 10
-        color: "#FFFFFF"
-        border.color: Tema.accento
-        border.width: 2
+        color: cursore.pressed ? "#F2F2F7" : "#FFFFFF"
+        border.color: "#26000000"
+        border.width: 0.5
     }
 }

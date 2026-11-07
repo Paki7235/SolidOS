@@ -52,16 +52,23 @@ def _nodo(radice: ET.Element, percorso: str, attributi: dict | None = None) -> E
 
 
 def leggi(percorso: str, attributi: dict | None = None, predefinito: str = "") -> str:
+    """Legge «a/b/c»; gli attributi si riferiscono al penultimo nodo (es. <device category="touchpad">),
+    come in imposta()."""
     radice = _albero().getroot()
-    nodo = radice
-    for parte in percorso.split("/")[:-1]:
-        nodo = nodo.find(parte) if nodo is not None else None
-    if nodo is None:
-        return predefinito
-    ultimo = percorso.split("/")[-1]
-    for c in nodo.findall(ultimo):
-        if not attributi or all(c.get(k) == v for k, v in attributi.items()):
-            return (c.text or "").strip()
+    parti = percorso.split("/")
+    nodi = [radice]
+    for k, parte in enumerate(parti[:-1]):
+        successivi = []
+        for n in nodi:
+            for c in n.findall(parte):
+                if k == len(parti) - 2 and attributi and not all(c.get(a) == v for a, v in attributi.items()):
+                    continue
+                successivi.append(c)
+        nodi = successivi
+    for n in nodi:
+        foglia = n.find(parti[-1])
+        if foglia is not None and (foglia.text or "").strip():
+            return foglia.text.strip()
     return predefinito
 
 

@@ -1,3 +1,4 @@
+// Pulsante compatto: normale (grigio), principale (accento) o pericoloso (rosso).
 import QtQuick
 import QtQuick.Controls
 
@@ -7,37 +8,34 @@ Button {
     property bool pericoloso: false
     property string icona: ""
     font.family: Tema.font
-    font.pointSize: Tema.fontDimensione
-    leftPadding: 16
-    rightPadding: 16
-    topPadding: 8
-    bottomPadding: 8
-    icon.name: icona
-    icon.width: 18
-    icon.height: 18
-    icon.color: "transparent"
+    font.pixelSize: 13
+    font.weight: Font.Medium
+    leftPadding: 14
+    rightPadding: 14
+    topPadding: 5
+    bottomPadding: 5
     hoverEnabled: true
 
     contentItem: Row {
-        spacing: 8
-        Icona { nome: pulsante.icona; lato: 18; visible: pulsante.icona !== ""; anchors.verticalCenter: parent.verticalCenter }
+        spacing: 6
+        Icona { nome: pulsante.icona; lato: 16; visible: pulsante.icona !== ""; anchors.verticalCenter: parent.verticalCenter }
         Text {
             text: pulsante.text
             font: pulsante.font
             color: (pulsante.principale || pulsante.pericoloso) ? "#FFFFFF" : Tema.testo
-            opacity: pulsante.enabled ? 1 : 0.5
             anchors.verticalCenter: parent.verticalCenter
         }
     }
     background: Rectangle {
-        implicitHeight: 36
-        radius: 8
-        color: pulsante.pericoloso ? Tema.pericolo
+        implicitHeight: 28
+        implicitWidth: 64
+        radius: 7
+        color: pulsante.pericoloso ? (pulsante.down ? Qt.darker(Tema.pericolo, 1.15) : Tema.pericolo)
              : pulsante.principale ? (pulsante.down ? Tema.accentoScuro : Tema.accento)
-             : (pulsante.down ? Tema.bordo : (pulsante.hovered ? Tema.superficieAlta : Tema.superficie))
-        border.color: (pulsante.principale || pulsante.pericoloso) ? "transparent" : Tema.bordo
-        border.width: 1
-        opacity: pulsante.enabled ? 1 : 0.6
+             : (pulsante.down ? Qt.darker(Tema.superficieAlta, Tema.chiaro ? 1.08 : 0.85) : (pulsante.hovered ? Qt.lighter(Tema.superficieAlta, Tema.chiaro ? 1.0 : 1.12) : Tema.superficieAlta))
+        border.color: (pulsante.principale || pulsante.pericoloso) ? "transparent" : (Tema.chiaro ? "#D1D1D6" : "#00000000")
+        border.width: Tema.chiaro ? 0.5 : 0
+        opacity: pulsante.enabled ? 1 : 0.45
         Behavior on color { enabled: Tema.animazioni; ColorAnimation { duration: 120 } }
     }
 }

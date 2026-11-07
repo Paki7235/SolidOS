@@ -1,4 +1,5 @@
-// Disegna una voce di impostazione in base al suo tipo.
+// Una riga di un gruppo di impostazioni, disegnata in base al suo tipo.
+// Le righe dopo la prima hanno una sottile linea di separazione in alto.
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -9,6 +10,7 @@ Item {
     property var voce: ({})
     property string filtro: ""
     property bool evidenziata: false
+    property bool primaRiga: true
     signal cambia(var valore)
     signal esegui(string elemento, string azione, var dati)
     signal chiediDati(string elemento, string azione, var campi)
@@ -19,8 +21,9 @@ Item {
         var t = ((voce.titolo || "") + " " + (voce.descrizione || "") + " " + (voce.chiavi || "")).toLowerCase()
         return t.indexOf(filtro.toLowerCase()) >= 0
     }
-    visible: voce.tipo === "intestazione" ? !filtro : corrisponde()
+    visible: corrisponde()
     implicitHeight: visible ? caricatore.implicitHeight : 0
+    height: implicitHeight
 
     function avviaAzione(elemento, azione, campi, file) {
         if (file) chiediFile(elemento, azione)
@@ -29,8 +32,16 @@ Item {
     }
 
     Rectangle {
+        visible: !radice.primaRiga
+        anchors.top: parent.top
+        x: 14
+        width: parent.width - 28
+        height: 1
+        color: Tema.chiaro ? "#E5E5EA" : "#14FFFFFF"
+    }
+    Rectangle {
         anchors.fill: parent
-        anchors.margins: -4
+        anchors.margins: 2
         radius: 8
         color: "transparent"
         border.color: Tema.accento
@@ -43,7 +54,6 @@ Item {
         width: parent.width
         sourceComponent: {
             switch (radice.voce.tipo) {
-            case "intestazione": return compIntestazione
             case "interruttore": return compInterruttore
             case "scelta": return compScelta
             case "cursore": return compCursore
@@ -56,16 +66,12 @@ Item {
     }
 
     Component {
-        id: compIntestazione
-        Titolo { text: radice.voce.titolo; livello: 3; topPadding: 16; bottomPadding: 2 }
-    }
-    Component {
         id: compInterruttore
         RigaImpostazione {
             titolo: radice.voce.titolo
             descrizione: radice.voce.descrizione || ""
             Interruttore {
-                checked: radice.voce.valore
+                checked: radice.voce.valore === true
                 enabled: radice.voce.abilitata !== false
                 onToggled: radice.cambia(checked)
             }
@@ -87,15 +93,26 @@ Item {
         id: compCursore
         RigaImpostazione {
             titolo: radice.voce.titolo
-            descrizione: Math.round(cursore.value) + (radice.voce.unita || "")
-            Cursore {
-                id: cursore
-                width: 240
-                from: radice.voce.minimo
-                to: radice.voce.massimo
-                stepSize: radice.voce.passo
-                value: radice.voce.valore
-                onPressedChanged: if (!pressed) radice.cambia(Math.round(value))
+            descrizione: radice.voce.descrizione || ""
+            Row {
+                spacing: 10
+                Cursore {
+                    id: cursore
+                    width: 200
+                    anchors.verticalCenter: parent.verticalCenter
+                    from: radice.voce.minimo
+                    to: radice.voce.massimo
+                    stepSize: radice.voce.passo
+                    value: radice.voce.valore
+                    onPressedChanged: if (!pressed) radice.cambia(Math.round(value))
+                }
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 44
+                    text: Math.round(cursore.value) + (radice.voce.unita || "")
+                    color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 12
+                    horizontalAlignment: Text.AlignRight
+                }
             }
         }
     }
@@ -105,7 +122,7 @@ Item {
             titolo: radice.voce.titolo
             descrizione: radice.voce.descrizione || ""
             CampoTesto {
-                width: 280
+                width: 240
                 text: radice.voce.valore
                 echoMode: radice.voce.segreto ? TextInput.Password : TextInput.Normal
                 onEditingFinished: if (text !== radice.voce.valore) radice.cambia(text)
@@ -117,10 +134,11 @@ Item {
         RigaImpostazione {
             titolo: radice.voce.titolo
             descrizione: radice.voce.descrizione || ""
-            Testo {
-                text: radice.voce.valore || ""
-                secondario: true
-                width: Math.min(implicitWidth, 420)
+            Text {
+                text: radice.voce.valore === undefined || radice.voce.valore === null ? "" : String(radice.voce.valore)
+                color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 13
+                width: Math.min(implicitWidth, 360)
+                elide: Text.ElideRight
                 horizontalAlignment: Text.AlignRight
             }
         }
@@ -139,45 +157,43 @@ Item {
     }
     Component {
         id: compElenco
-        ColumnLayout {
-            spacing: 4
-            Testo { text: radice.voce.titolo; secondario: true; topPadding: 6 }
-            Scheda {
-                Layout.fillWidth: true
-                margine: 6
-                ColumnLayout {
-                    width: parent.width
-                    spacing: 2
-                    Testo {
-                        visible: (radice.voce.elementi || []).length === 0
-                        text: radice.voce.vuoto
-                        secondario: true
-                        padding: 10
-                    }
-                    Repeater {
-                        model: radice.voce.elementi
-                        RowLayout {
+        Column {
+            width: radice.width
+            Text {
+                visible: (radice.voce.elementi || []).length === 0
+                text: radice.voce.vuoto || ""
+                color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 13
+                leftPadding: 14; topPadding: 13; bottomPadding: 13
+            }
+            Repeater {
+                model: radice.voce.elementi
+                Item {
+                    width: radice.width
+                    height: Math.max(44, riga.implicitHeight + 14)
+                    Rectangle { visible: index > 0; x: 14; width: parent.width - 28; height: 1; color: Tema.chiaro ? "#E5E5EA" : "#14FFFFFF" }
+                    RowLayout {
+                        id: riga
+                        anchors.fill: parent
+                        anchors.leftMargin: 14
+                        anchors.rightMargin: 14
+                        spacing: 10
+                        Icona { nome: modelData.icona || ""; lato: 22; visible: !!modelData.icona }
+                        ColumnLayout {
                             Layout.fillWidth: true
-                            spacing: 10
-                            Icona { nome: modelData.icona || ""; lato: 24; Layout.leftMargin: 8; visible: !!modelData.icona }
-                            ColumnLayout {
-                                Layout.fillWidth: true
-                                Layout.topMargin: 6
-                                Layout.bottomMargin: 6
-                                spacing: 0
-                                Testo { text: modelData.titolo; font.weight: modelData.attivo ? Font.DemiBold : Font.Normal; Layout.fillWidth: true; elide: Text.ElideRight; wrapMode: Text.NoWrap }
-                                Testo { text: modelData.sottotitolo || ""; secondario: true; visible: text !== ""; font.pointSize: Tema.fontDimensione - 1; Layout.fillWidth: true; elide: Text.ElideRight; wrapMode: Text.NoWrap }
-                            }
-                            Repeater {
-                                model: modelData.azioni || []
-                                Pulsante {
-                                    text: modelData.testo
-                                    pericoloso: modelData.pericolosa === true
-                                    onClicked: radice.avviaAzione(elementoId.text, modelData.id, modelData.richiede, false)
-                                }
-                            }
-                            Text { id: elementoId; text: modelData.id; visible: false }
+                            spacing: 1
+                            Text { text: modelData.titolo; color: Tema.testo; font.family: Tema.font; font.pixelSize: 13; font.weight: modelData.attivo ? Font.DemiBold : Font.Normal; elide: Text.ElideRight; Layout.fillWidth: true }
+                            Text { text: modelData.sottotitolo || ""; visible: text !== ""; color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 11.5; elide: Text.ElideRight; Layout.fillWidth: true }
                         }
+                        Repeater {
+                            model: modelData.azioni || []
+                            Pulsante {
+                                property string elemento: ""
+                                text: modelData.testo
+                                pericoloso: modelData.pericolosa === true
+                                onClicked: radice.avviaAzione(elementoId.text, modelData.id, modelData.richiede, false)
+                            }
+                        }
+                        Text { id: elementoId; text: modelData.id; visible: false }
                     }
                 }
             }

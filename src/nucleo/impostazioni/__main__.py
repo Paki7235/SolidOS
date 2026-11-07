@@ -36,6 +36,14 @@ class BackendImpostazioni(Backend):
         return [{"id": p.id, "titolo": p.titolo, "icona": p.icona, "gruppo": p.gruppo}
                 for p in self._pannelli.values()]
 
+    def utente(self) -> dict:
+        import os
+        import pwd
+
+        voce = pwd.getpwuid(os.getuid())
+        completo = (voce.pw_gecos or "").split(",")[0].strip()
+        return {"nome": completo or voce.pw_name, "login": voce.pw_name}
+
     def iniziale(self) -> str:
         argomenti = [a for a in sys.argv[1:] if not a.startswith("-")]
         return argomenti[0] if argomenti and argomenti[0] in self._pannelli else "rete"

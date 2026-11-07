@@ -1,4 +1,4 @@
-// Riga di impostazione: titolo, descrizione e controllo a destra (slot «controllo»).
+// Riga di un gruppo di impostazioni: titolo, descrizione e controllo a destra (slot «controllo»).
 import QtQuick
 import QtQuick.Layouts
 
@@ -8,20 +8,20 @@ Item {
     property string descrizione: ""
     property string icona: ""
     default property alias controllo: contenitore.data
-    implicitHeight: Math.max(testi.implicitHeight, contenitore.childrenRect.height) + 20
+    implicitHeight: Math.max(44, Math.max(testi.implicitHeight, contenitore.childrenRect.height) + 16)
     width: parent ? parent.width : 400
     RowLayout {
         anchors.fill: parent
-        anchors.leftMargin: 4
-        anchors.rightMargin: 4
+        anchors.leftMargin: 14
+        anchors.rightMargin: 14
         spacing: 12
         Icona { nome: riga.icona; lato: 22; visible: riga.icona !== "" }
         ColumnLayout {
             id: testi
             Layout.fillWidth: true
             spacing: 2
-            Testo { text: riga.titolo; Layout.fillWidth: true }
-            Testo { text: riga.descrizione; secondario: true; visible: text !== ""; Layout.fillWidth: true; font.pointSize: Tema.fontDimensione - 1 }
+            Text { text: riga.titolo; color: Tema.testo; font.family: Tema.font; font.pixelSize: 13; wrapMode: Text.Wrap; Layout.fillWidth: true }
+            Text { text: riga.descrizione; color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 11.5; wrapMode: Text.Wrap; visible: text !== ""; Layout.fillWidth: true; lineHeight: 1.1 }
         }
         Item {
             id: contenitore
