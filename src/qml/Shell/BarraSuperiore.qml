@@ -96,7 +96,7 @@ Window {
             }
         }
         Pulsantino {
-            visible: barra.stato.batteria && barra.stato.batteria.percentuale !== undefined
+            visible: !!(barra.stato.batteria && barra.stato.batteria.percentuale !== undefined)
             onPremuto: barra.controllo()
             contenuto: Row {
                 y: 4; spacing: 5

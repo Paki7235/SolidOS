@@ -76,6 +76,8 @@ for f in "${ELENCO[@]}"; do
 		| sed "s/^/AUTOTEST-LOG $nome: /" >"$USCITA"
 	[ "$stato" = APERTA ] || tail -n 15 "$log" | sed "s/^/AUTOTEST-CODA $nome: /" >"$USCITA"
 	immagine "$nome"
+	# I pannelli della shell si aprono e chiudono con lo stesso comando
+	case $cmd in *-ctl\ *) come_utente sh -c "$cmd" >/dev/null 2>&1 ;; esac
 	pkill -KILL -s "$pid" 2>/dev/null
 	pkill -KILL -u "$UTENTE" -f "$(echo "$cmd" | awk '{print $1}')" 2>/dev/null
 	sleep 2

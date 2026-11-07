@@ -61,8 +61,8 @@ Finestra {
             Row {
                 spacing: 8
                 Pulsante { text: I18n.t("Salute del disco"); icona: "dialog-information"; onClicked: finestra.lavora("salute", [finestra.disco.percorso], I18n.t("Lettura SMART…")) }
-                Pulsante { text: I18n.t("Espelli"); icona: "media-eject"; visible: finestra.disco && finestra.disco.rimovibile; onClicked: finestra.lavora("espelli", [finestra.disco.percorso], I18n.t("Espulsione…")) }
-                Pulsante { text: I18n.t("Scrivi immagine…"); icona: "media-write"; visible: finestra.disco && finestra.disco.rimovibile; onClicked: sceltaImmagine.open() }
+                Pulsante { text: I18n.t("Espelli"); icona: "media-eject"; visible: !!(finestra.disco && finestra.disco.rimovibile); onClicked: finestra.lavora("espelli", [finestra.disco.percorso], I18n.t("Espulsione…")) }
+                Pulsante { text: I18n.t("Scrivi immagine…"); icona: "media-write"; visible: !!(finestra.disco && finestra.disco.rimovibile); onClicked: sceltaImmagine.open() }
             }
             BarraProgresso { indeterminate: true; visible: finestra.occupato !== ""; Layout.fillWidth: true }
             Testo { text: finestra.occupato; visible: text !== "" }

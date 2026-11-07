@@ -76,9 +76,7 @@ apt-get purge -y -qq git >/dev/null 2>&1 || true
 WL=/usr/lib/python3/dist-packages/nucleo/wl
 if apt-get install -y -qq --no-install-recommends libwayland-dev >/tmp/wl.log 2>&1; then
 	rm -rf "$WL" && mkdir -p "$WL"
-	if python3 -m pywayland.scanner -o "$WL" /usr/share/wayland/wayland.xml \
-		/usr/share/nucleo/protocolli/wlr-foreign-toplevel-management-unstable-v1.xml >>/tmp/wl.log 2>&1 \
-		|| pywayland-scanner -o "$WL" /usr/share/wayland/wayland.xml \
+	if python3 -m pywayland.scanner -o "$WL" -i /usr/share/wayland/wayland.xml \
 		/usr/share/nucleo/protocolli/wlr-foreign-toplevel-management-unstable-v1.xml >>/tmp/wl.log 2>&1; then
 		touch "$WL/__init__.py"
 		python3 -c "import nucleo.wl.wlr_foreign_toplevel_management_unstable_v1 as m; print(m.ZwlrForeignToplevelManagerV1)" >>/tmp/wl.log 2>&1 \
