@@ -10,6 +10,7 @@ scrivi() { printf '%s\n' "$*" >"$USCITA"; }
 
 UID_U=$(id -u "$UTENTE") || exit 1
 RUN=/run/user/$UID_U
+STATO=/home/$UTENTE/.local/state/@OS_ID@
 for _ in $(seq 120); do
 	PID_LABWC=$(pgrep -u "$UTENTE" -x labwc | head -1)
 	[ -n "$PID_LABWC" ] && [ -S "$RUN/wayland-0" ] && break
@@ -49,7 +50,6 @@ pkill -u "$UTENTE" -f 'nucleo.impostazioni' 2>/dev/null; sleep 2
 come_utente @OS_ID@-ctl start; sleep 3; immagine 01-start; come_utente @OS_ID@-ctl start; sleep 1
 
 # Stato della shell e dei servizi utente (per i pulsanti del pannello)
-STATO=/home/$UTENTE/.local/state/@OS_ID@
 come_utente busctl --user list --no-pager 2>&1 | grep -i '@OS_ID@' | sed 's/^/AUTOTEST-BUS /' >"$USCITA"
 for f in shell.log sessione.log; do
 	[ -f "$STATO/$f" ] && tail -n 25 "$STATO/$f" | sed "s/^/AUTOTEST-$f: /" >"$USCITA"
