@@ -25,6 +25,8 @@ QtObject {
         controllo.visible = (cosa === "controllo") ? !controllo.visible : false
         centroNotifiche.visible = (cosa === "notifiche") ? !centroNotifiche.visible : false
         barra.visible = (cosa === "barra") ? !barra.visible : false
+        finestraStart.visible = (cosa === "start") ? !finestraStart.visible : false
+        menuSistema.visible = false
         if (controllo.visible) aggiornaStato()
         if (centroNotifiche.visible) aggiornaStorico()
     }
@@ -312,7 +314,7 @@ QtObject {
     }
     property Window barraSuperiore: BarraSuperiore {
         id: barraSuperiore
-        onMenuSistema: menuSistema.visible = !menuSistema.visible
+        onMenuSistema: radice.mostra("start")
         onMenuApp: { menuApp.quale = "app"; menuApp.visible = true }
         onMenuVoce: function (q) { menuApp.quale = q; menuApp.visible = true }
         onControllo: radice.mostra("controllo")
@@ -352,6 +354,24 @@ QtObject {
                 { t: I18n.t("Esci"), f: function () { shell.chiama("sessione", ["esci"]) } }
             ]
             onScelto: menuSistema.visible = false
+        }
+    }
+
+    // Menu Start (logo in alto a sinistra o tasto Super)
+    property Window finestraStart: Window {
+        id: finestraStart
+        LayerShell.Window.scope: "start"
+        LayerShell.Window.layer: LayerShell.Window.LayerOverlay
+        LayerShell.Window.anchors: LayerShell.Window.AnchorTop | LayerShell.Window.AnchorBottom | LayerShell.Window.AnchorLeft | LayerShell.Window.AnchorRight
+        LayerShell.Window.exclusionZone: -1
+        LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityExclusive
+        color: "transparent"
+        visible: false
+        MouseArea { anchors.fill: parent; onClicked: finestraStart.visible = false }
+        Loader {
+            x: 8; y: 34
+            active: finestraStart.visible
+            sourceComponent: Start { onChiudi: finestraStart.visible = false }
         }
     }
 

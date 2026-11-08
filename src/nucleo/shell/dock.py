@@ -94,3 +94,30 @@ def voci(finestre: list[dict]) -> list[dict]:
         r["aperta"] = len(r["finestre"]) > 0
         r["attiva"] = any(f.get("attiva") for f in r["finestre"])
     return risultato
+
+
+def tutte_le_app() -> list[dict]:
+    """Tutte le app installate (per il menu Start), in ordine alfabetico."""
+    viste, app = set(), []
+    for cartella in CARTELLE:
+        if not cartella.is_dir():
+            continue
+        for f in sorted(cartella.glob("*.desktop")):
+            if f.stem in viste:
+                continue
+            viste.add(f.stem)
+            c = configparser.RawConfigParser(strict=False, interpolation=None)
+            try:
+                c.read(f, encoding="utf-8")
+                v = c["Desktop Entry"]
+            except (configparser.Error, KeyError, UnicodeDecodeError):
+                continue
+            if v.get("Type", "Application") != "Application" or v.get("NoDisplay", "").lower() == "true" \
+                    or v.get("Hidden", "").lower() == "true" or "OnlyShowIn" in v:
+                continue
+            app.append({"id": f.stem, "nome": v.get("Name[it]") or v.get("Name", f.stem),
+                        "icona": v.get("Icon", "application-x-executable"),
+                        "descrizione": v.get("Comment[it]") or v.get("Comment", ""),
+                        "chiavi": (v.get("Keywords[it]") or v.get("Keywords", "")) + " " + v.get("GenericName", "")})
+    app.sort(key=lambda a: a["nome"].lower())
+    return app

@@ -1,12 +1,12 @@
-# Tema delle finestre di @OS_NAME@ per labwc: grafite neutro, pulsanti a
-# pallino colorati a sinistra (immagini *-active.svg in questa cartella).
+# Tema delle finestre di @OS_NAME@ per labwc: grafite neutro; pulsanti chiari
+# a destra come su Windows: riduci, ingrandisci, chiudi (rosso al passaggio).
 
 border.width: 0
 padding.height: 8
 padding.width: 6
-window.button.width: 22
-window.button.spacing: 0
-window.label.text.justify: center
+window.button.width: 34
+window.button.spacing: 2
+window.label.text.justify: left
 window.active.shadow.size: 36
 window.inactive.shadow.size: 20
 window.active.shadow.color: #00000080

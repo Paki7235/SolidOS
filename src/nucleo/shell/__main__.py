@@ -106,6 +106,11 @@ class BackendShell(Backend):
 
         return dock.voci(self.finestre.elenco() if self.finestre else [])
 
+    def tutteLeApp(self) -> list:
+        from . import dock
+
+        return dock.tutte_le_app()
+
     def dockApri(self, desktop: str) -> bool:
         from ..sistema import avvia_desktop
 
@@ -314,6 +319,10 @@ def crea_servizio_shell(bus, backend: BackendShell):
         @dbus.service.method(nome, in_signature="s", out_signature="b")
         def AppAttiva(self, azione):
             return bool(backend.appAttiva(str(azione)))
+
+        @dbus.service.method(nome, in_signature="", out_signature="")
+        def MostraStart(self):
+            backend.emetti("mostra", "start")
 
         @dbus.service.method(nome, in_signature="", out_signature="")
         def MostraPrestazioni(self):

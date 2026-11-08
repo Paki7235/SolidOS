@@ -1,6 +1,6 @@
 #!/bin/sh
 # Comandi rapidi verso la shell di @OS_NAME@ (scorciatoie da tastiera, pannello).
-#   @OS_ID@-ctl controllo | notifiche | prestazioni | nascondi
+#   @OS_ID@-ctl start | controllo | notifiche | prestazioni | nascondi
 #   @OS_ID@-ctl app nascondi|ingrandisci|chiudi|esci
 #   @OS_ID@-ctl volume <passo> | muto | luminosita <passo>
 #   @OS_ID@-ctl non-disturbare si|no
@@ -11,6 +11,7 @@ case "$1" in
 	controllo) chiama MostraControllo ;;
 	notifiche) chiama MostraNotifiche ;;
 	prestazioni) chiama MostraPrestazioni ;;
+	start) chiama MostraStart ;;
 	app) chiama AppAttiva s "${2:-chiudi}" ;;
 	nascondi) chiama Nascondi ;;
 	volume) chiama Volume i "${2:-5}" || wpctl set-volume -l 1.0 @@DEFAULT_AUDIO_SINK@@ "${2#-}%$( [ "${2#-}" = "$2" ] && echo + || echo -)" ;;
