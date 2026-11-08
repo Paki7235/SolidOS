@@ -332,6 +332,11 @@ def crea_servizio_shell(bus, backend: BackendShell):
         def AppAttiva(self, azione):
             return bool(backend.appAttiva(str(azione)))
 
+        @dbus.service.method(nome, in_signature="s", out_signature="b")
+        def ApriApp(self, desktop):
+            """Apre un'app come farebbe un clic sul dock (usato anche dalla prova automatica)."""
+            return bool(backend.dockApri(str(desktop)))
+
         @dbus.service.method(nome, in_signature="", out_signature="")
         def MostraStart(self):
             backend.emetti("mostra", "start")

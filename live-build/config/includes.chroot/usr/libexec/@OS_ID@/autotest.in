@@ -35,6 +35,16 @@ immagine() { # NOME
 
 scrivi "AUTOTEST INIZIO $(date -Is) RAM: $(free -m | awk '/^Mem/{print $3"MB usati su "$2}')"
 immagine 00-desktop
+# App aperta dal dock (tramite la shell): deve essere una finestra normale,
+# con titolo e pulsanti, non un pannello di sistema a tutto schermo
+come_utente @OS_ID@-ctl apri @OS_ID@-impostazioni; sleep 10
+if grep -q '"appId": "@OS_ID@-impostazioni"' "$STATO/finestre.json" 2>/dev/null; then
+	scrivi "AUTOTEST-DOCK finestra normale: OK"
+else
+	scrivi "AUTOTEST-DOCK ERRORE: l'app aperta dal dock non è una finestra normale"
+fi
+immagine 02-dal-dock
+pkill -u "$UTENTE" -f 'nucleo.impostazioni' 2>/dev/null; sleep 2
 # Menu Start (logo o tasto Super)
 come_utente @OS_ID@-ctl start; sleep 3; immagine 01-start; come_utente @OS_ID@-ctl start; sleep 1
 

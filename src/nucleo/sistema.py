@@ -54,9 +54,10 @@ def esiste(programma: str) -> bool:
 
 def avvia(comando: list[str]) -> None:
     """Avvia un programma staccato dal processo corrente."""
+    ambiente = {k: v for k, v in os.environ.items() if k != "QT_WAYLAND_SHELL_INTEGRATION"}
     try:
         subprocess.Popen(comando, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                         stdin=subprocess.DEVNULL, start_new_session=True)
+                         stdin=subprocess.DEVNULL, start_new_session=True, env=ambiente)
     except FileNotFoundError:
         pass
 

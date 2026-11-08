@@ -33,6 +33,10 @@ def crea_app(nome_app: str, argv: list[str] | None = None):
     from PyQt6.QtGui import QFont, QGuiApplication, QIcon
 
     app = QGuiApplication(argv if argv is not None else sys.argv)
+    # Qt ha già letto l'integrazione Wayland: la variabile non deve passare ai programmi
+    # avviati da qui (dock, Start, Barra Unica), altrimenti si aprirebbero come pannelli
+    # di sistema senza barra del titolo, a tutto schermo e impossibili da chiudere.
+    os.environ.pop("QT_WAYLAND_SHELL_INTEGRATION", None)
     app.setApplicationName(nome_app)
     app.setOrganizationName(branding.nome())
     app.setDesktopFileName(branding.comando(nome_app))

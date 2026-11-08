@@ -11,3 +11,4 @@ pref("toolkit.telemetry.enabled", false);
 pref("datareporting.healthreport.uploadEnabled", false);
 pref("datareporting.policy.dataSubmissionEnabled", false);
 pref("app.shield.optoutstudies.enabled", false);
+pref("browser.tabs.inTitlebar", 0);   // barra del titolo del sistema, pulsanti come nelle altre finestre

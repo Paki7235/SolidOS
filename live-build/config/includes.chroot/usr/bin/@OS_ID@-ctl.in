@@ -12,6 +12,7 @@ case "$1" in
 	notifiche) chiama MostraNotifiche ;;
 	prestazioni) chiama MostraPrestazioni ;;
 	start) chiama MostraStart ;;
+	apri) chiama ApriApp s "$2" ;;
 	app) chiama AppAttiva s "${2:-chiudi}" ;;
 	nascondi) chiama Nascondi ;;
 	volume) chiama Volume i "${2:-5}" || wpctl set-volume -l 1.0 @@DEFAULT_AUDIO_SINK@@ "${2#-}%$( [ "${2#-}" = "$2" ] && echo + || echo -)" ;;
