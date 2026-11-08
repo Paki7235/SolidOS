@@ -69,6 +69,11 @@ jobs:
           ./prova.sh diretto 4 7 10 13 30 60 100 -- -cdrom "$ISO" -kernel iso/vmlinuz -initrd iso/initrd.img \
             -append "boot=live components quiet splash console=tty0 console=ttyS0,115200 systemd.journald.forward_to_console=1 systemd.log_level=info"
 
+      - name: Animazione di avvio (senza messaggi a schermo)
+        run: |
+          ./prova.sh animazione 3 5 6 7 8 9 10 12 14 -- -cdrom "$ISO" -kernel iso/vmlinuz -initrd iso/initrd.img \
+            -append "boot=live components quiet splash loglevel=0"
+
       - name: Prova di tutte le app
         run: |
           : > risultati/app.log
