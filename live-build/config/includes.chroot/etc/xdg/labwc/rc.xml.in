@@ -74,6 +74,16 @@
     <keybind key="W-a"><action name="Execute" command="@OS_ID@-ctl controllo" /></keybind>
     <keybind key="W-n"><action name="Execute" command="@OS_ID@-ctl notifiche" /></keybind>
     <keybind key="W-p"><action name="Execute" command="@OS_ID@-ctl prestazioni" /></keybind>
+    <!-- Come sul Mac, con Super al posto di Cmd -->
+    <keybind key="W-q"><action name="Execute" command="@OS_ID@-ctl app esci" /></keybind>
+    <keybind key="W-w"><action name="Close" /></keybind>
+    <keybind key="W-m"><action name="Iconify" /></keybind>
+    <keybind key="W-h"><action name="Iconify" /></keybind>
+    <keybind key="W-Tab"><action name="NextWindow" /></keybind>
+    <keybind key="W-S-Tab"><action name="PreviousWindow" /></keybind>
+    <keybind key="C-W-f"><action name="ToggleFullscreen" /></keybind>
+    <keybind key="W-comma"><action name="Execute" command="@OS_ID@-impostazioni" /></keybind>
+    <keybind key="C-W-q"><action name="Execute" command="swaylock -f" /></keybind>
     <keybind key="W-space"><action name="Execute" command="@OS_ID@-barra" /></keybind>
     <keybind key="W-l"><action name="Execute" command="swaylock -f" /></keybind>
     <keybind key="W-i"><action name="Execute" command="@OS_ID@-impostazioni" /></keybind>

@@ -148,6 +148,14 @@ class Finestre:
     def minimizza(self, ident: int) -> bool:
         return self._esegui(ident, lambda m: m.set_minimized())
 
+    def massimizza(self, ident: int) -> bool:
+        """Ingrandisce la finestra, o la riporta alla dimensione normale se è già ingrandita."""
+        f = self.finestre.get(int(ident), {})
+        return self._esegui(ident, lambda m: m.unset_maximized() if f.get("massimizzata") else m.set_maximized())
+
+    def attiva_corrente(self) -> dict | None:
+        return next((f for f in self.finestre.values() if f["attiva"] and not f["minimizzata"]), None)
+
     def chiudi(self, ident: int) -> bool:
         return self._esegui(ident, lambda m: m.close())
 

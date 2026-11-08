@@ -151,14 +151,47 @@ class BackendShell(Backend):
             if f["attiva"] and not f["minimizzata"]:
                 d = dock.desktop_per_app_id(f["appId"])
                 dati = dock.info(d) if d else None
-                return {"nome": (dati or {}).get("nome") or f["titolo"], "titolo": f["titolo"], "id": f["id"]}
+                return {"nome": (dati or {}).get("nome") or f["titolo"], "titolo": f["titolo"], "id": f["id"],
+                        "massimizzata": f.get("massimizzata", False)}
         return {}
+
+    def appAttiva(self, azione: str) -> bool:
+        """Comandi del menu dell'app (barra in alto) e delle scorciatoie tipo Mac:
+        nascondi · ingrandisci · chiudi (finestra) · esci (tutte le finestre dell'app)."""
+        if not self.finestre:
+            return False
+        f = self.finestre.attiva_corrente()
+        if not f:
+            return False
+        if azione == "nascondi":
+            return self.finestre.minimizza(f["id"])
+        if azione == "ingrandisci":
+            return self.finestre.massimizza(f["id"])
+        if azione == "chiudi":
+            return self.finestre.chiudi(f["id"])
+        if azione == "esci":
+            for altra in self.finestre.elenco():
+                if altra["appId"] == f["appId"]:
+                    self.finestre.chiudi(altra["id"])
+            return True
+        if azione == "nascondiAltre":
+            for altra in self.finestre.elenco():
+                if altra["appId"] != f["appId"] and not altra["minimizzata"]:
+                    self.finestre.minimizza(altra["id"])
+            return True
+        return False
 
     def chiudiFinestra(self, ident: int) -> None:
         if self.finestre:
             self.finestre.chiudi(int(ident))
 
     def _visibilita(self) -> str:
+        # Se il servizio non è in esecuzione non lo si avvia solo per leggerne lo stato
+        try:
+            if not dbus.SessionBus().name_has_owner(branding.nome_dbus("Condivisione1")):
+                return "nessuno"
+        except dbus.exceptions.DBusException:
+            return "nessuno"
         valore = chiama(branding.nome_dbus("Condivisione1"), branding.percorso_dbus("Condivisione1"),
                         "org.freedesktop.DBus.Properties", "Get",
                         branding.nome_dbus("Condivisione1"), "Visibilita", timeout=1)
@@ -277,6 +310,10 @@ def crea_servizio_shell(bus, backend: BackendShell):
         def MostraBarra(self):
             backend.emetti("mostra", "barra")
             return True   # risposta esplicita: chi chiama sa che la shell ha mostrato la barra
+
+        @dbus.service.method(nome, in_signature="s", out_signature="b")
+        def AppAttiva(self, azione):
+            return bool(backend.appAttiva(str(azione)))
 
         @dbus.service.method(nome, in_signature="", out_signature="")
         def MostraPrestazioni(self):

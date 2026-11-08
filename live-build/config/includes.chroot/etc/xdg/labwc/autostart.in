@@ -20,7 +20,13 @@ lxqt-policykit-agent >/dev/null 2>&1 &
 swayidle -w timeout 600 'swaylock -f' before-sleep 'swaylock -f' >/dev/null 2>&1 &
 
 # Servizi utente: Condivisione Vicina, Spazi, registro privacy
-systemctl --user start @OS_ID@-condivisione.service @OS_ID@-privacy.service >/dev/null 2>&1 &
+systemctl --user start @OS_ID@-privacy.service >/dev/null 2>&1 &
+# Condivisione Vicina: all'accesso solo se è visibile ad altri; altrimenti parte
+# da sola alla prima richiesta (attivazione D-Bus), così non occupa memoria.
+CONF_CONDIVISIONE="${XDG_CONFIG_HOME:-$HOME/.config}/@OS_ID@/condivisione.json"
+if [ -f "$CONF_CONDIVISIONE" ] && ! grep -q '"visibilita": *"nessuno"' "$CONF_CONDIVISIONE" && grep -q '"visibilita"' "$CONF_CONDIVISIONE"; then
+	systemctl --user start @OS_ID@-condivisione.service >/dev/null 2>&1 &
+fi
 
 xdg-user-dirs-update >/dev/null 2>&1
 /usr/libexec/@OS_ID@/avvisi-avvio >/dev/null 2>&1 &

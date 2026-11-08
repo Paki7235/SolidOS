@@ -98,14 +98,18 @@ QtObject {
         color: "transparent"
         visible: false
         MouseArea { anchors.fill: parent; onClicked: controllo.visible = false }
-        CentroControllo {
+        // Contenuto creato solo mentre il pannello è aperto (meno memoria)
+        Loader {
             anchors.right: parent.right
             anchors.top: parent.top
             anchors.margins: 10
             anchors.topMargin: 34
-            stato: radice.stato
-            onChiudi: controllo.visible = false
-            onAggiorna: radice.aggiornaStato()
+            active: controllo.visible
+            sourceComponent: CentroControllo {
+                stato: radice.stato
+                onChiudi: controllo.visible = false
+                onAggiorna: radice.aggiornaStato()
+            }
         }
         Shortcut { sequence: "Escape"; onActivated: controllo.visible = false }
     }
@@ -121,7 +125,7 @@ QtObject {
         color: "transparent"
         visible: false
         MouseArea { anchors.fill: parent; onClicked: centroNotifiche.visible = false }
-        CentroNotifiche {
+        Loader {
             anchors.right: parent.right
             anchors.top: parent.top
             anchors.bottom: parent.bottom
@@ -129,10 +133,13 @@ QtObject {
             anchors.topMargin: 34
             anchors.bottomMargin: 84
             width: 380
-            storico: radice.storico
-            nonDisturbare: radice.stato.nonDisturbare === true
-            onAggiorna: radice.aggiornaStorico()
-            onCambiaNonDisturbare: function (v) { shell.chiama("nonDisturbare", [v]); radice.aggiornaStato() }
+            active: centroNotifiche.visible
+            sourceComponent: CentroNotifiche {
+                storico: radice.storico
+                nonDisturbare: radice.stato.nonDisturbare === true
+                onAggiorna: radice.aggiornaStorico()
+                onCambiaNonDisturbare: function (v) { shell.chiama("nonDisturbare", [v]); radice.aggiornaStato() }
+            }
         }
         Shortcut { sequence: "Escape"; onActivated: centroNotifiche.visible = false }
     }
@@ -148,12 +155,15 @@ QtObject {
         color: "#66000000"
         visible: false
         MouseArea { anchors.fill: parent; onClicked: barra.visible = false }
-        BarraUnica {
+        Loader {
             anchors.horizontalCenter: parent.horizontalCenter
             y: parent.height * 0.18
             width: Math.min(680, parent.width - 40)
-            attiva: barra.visible
-            onChiudi: barra.visible = false
+            active: barra.visible
+            sourceComponent: BarraUnica {
+                attiva: barra.visible
+                onChiudi: barra.visible = false
+            }
         }
     }
 
@@ -303,6 +313,8 @@ QtObject {
     property Window barraSuperiore: BarraSuperiore {
         id: barraSuperiore
         onMenuSistema: menuSistema.visible = !menuSistema.visible
+        onMenuApp: { menuApp.quale = "app"; menuApp.visible = true }
+        onMenuVoce: function (q) { menuApp.quale = q; menuApp.visible = true }
         onControllo: radice.mostra("controllo")
         onNotifiche: radice.mostra("notifiche")
     }
@@ -340,6 +352,49 @@ QtObject {
                 { t: I18n.t("Esci"), f: function () { shell.chiama("sessione", ["esci"]) } }
             ]
             onScelto: menuSistema.visible = false
+        }
+    }
+
+    // Menu dell'app in primo piano (clic sul suo nome nella barra in alto)
+    property Window menuApp: Window {
+        id: menuApp
+        property string quale: "app"
+        LayerShell.Window.scope: "menu-app"
+        LayerShell.Window.layer: LayerShell.Window.LayerOverlay
+        LayerShell.Window.anchors: LayerShell.Window.AnchorTop | LayerShell.Window.AnchorBottom | LayerShell.Window.AnchorLeft | LayerShell.Window.AnchorRight
+        LayerShell.Window.exclusionZone: -1
+        LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityOnDemand
+        color: "transparent"
+        visible: false
+        MouseArea { anchors.fill: parent; onClicked: menuApp.visible = false }
+        Shortcut { sequence: "Escape"; onActivated: menuApp.visible = false }
+        MenuPopup {
+            x: menuApp.quale === "app" ? 34 : (menuApp.quale === "finestra" ? 34 + 60 : 34 + 130)
+            y: 30
+            voci: {
+                var nome = barraSuperiore.attiva.nome || ""
+                var ingrandita = barraSuperiore.attiva.massimizzata === true
+                function a(x) { return function () { shell.chiama("appAttiva", [x]) } }
+                if (menuApp.quale === "finestra") return [
+                    { t: I18n.t("Riduci nel Dock") + "    Super+M", f: a("nascondi") },
+                    { t: (ingrandita ? I18n.t("Ripristina dimensioni") : I18n.t("Ingrandisci")) + "    Super+↑", f: a("ingrandisci") },
+                    { sep: true },
+                    { t: I18n.t("Chiudi finestra") + "    Super+W", f: a("chiudi") }
+                ]
+                if (menuApp.quale === "aiuto") return [
+                    { t: I18n.t("Guida di") + " " + Tema.nomeSistema, f: function () { shell.chiama("apri", ["guida"]) } },
+                    { t: I18n.t("Scorciatoie da tastiera"), f: function () { shell.chiama("apri", ["guida", "scorciatoie"]) } }
+                ]
+                return [
+                    { titolo: nome },
+                    { t: I18n.t("Nascondi") + " " + nome + "    Super+H", f: a("nascondi") },
+                    { t: I18n.t("Nascondi le altre"), f: a("nascondiAltre") },
+                    { sep: true },
+                    { t: I18n.t("Chiudi finestra") + "    Super+W", f: a("chiudi") },
+                    { t: I18n.t("Esci da") + " " + nome + "    Super+Q", f: a("esci") }
+                ]
+            }
+            onScelto: menuApp.visible = false
         }
     }
 

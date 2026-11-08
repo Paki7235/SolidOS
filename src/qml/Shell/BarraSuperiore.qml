@@ -12,6 +12,8 @@ Window {
     property var prestazioni: ({})
     property string ora: ""
     signal menuSistema()
+    signal menuApp()
+    signal menuVoce(string quale)
     signal controllo()
     signal notifiche()
 
@@ -68,12 +70,26 @@ Window {
                 source: "file:///usr/share/" + Tema.idSistema + "/logo-chiaro.svg"
             }
         }
-        Text {
-            anchors.verticalCenter: parent.verticalCenter
-            text: barra.attiva.nome || ""
-            color: "#F5F5F7"
-            font.family: Tema.font; font.pixelSize: 13; font.weight: Font.DemiBold
-            leftPadding: 4
+        // Nome dell'app in primo piano: un clic apre il suo menu (Nascondi, Chiudi, Esci…)
+        Pulsantino {
+            visible: !!barra.attiva.nome
+            onPremuto: barra.menuApp()
+            contenuto: Text {
+                y: 3
+                text: barra.attiva.nome || ""
+                color: "#F5F5F7"
+                font.family: Tema.font; font.pixelSize: 13; font.weight: Font.DemiBold
+            }
+        }
+        Repeater {
+            model: barra.attiva.nome ? [
+                { t: I18n.t("Finestra"), m: "finestra" },
+                { t: I18n.t("Aiuto"), m: "aiuto" }
+            ] : []
+            Pulsantino {
+                onPremuto: barra.menuVoce(modelData.m)
+                contenuto: Text { y: 3; text: modelData.t; color: "#E4E4E7"; font.family: Tema.font; font.pixelSize: 13 }
+            }
         }
     }
 

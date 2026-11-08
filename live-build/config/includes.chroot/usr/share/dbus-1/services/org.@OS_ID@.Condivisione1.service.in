@@ -1,0 +1,5 @@
+# Avvio su richiesta della Condivisione Vicina (prima chiamata D-Bus).
+[D-BUS Service]
+Name=org.@OS_ID@.Condivisione1
+Exec=/usr/bin/@OS_ID@-condivisione
+SystemdService=@OS_ID@-condivisione.service
