@@ -77,6 +77,16 @@ else
 	printf '<svg xmlns="http://www.w3.org/2000/svg" width="160" height="5"><rect width="160" height="5" rx="2.5" fill="#FFFFFF"/></svg>' >"$GRAFICA_TMP/barra-piena.svg"
 	rendi_png "$GRAFICA_TMP/barra-vuota.svg" 160 5 "$PLY/barra-vuota.png"
 	rendi_png "$GRAFICA_TMP/barra-piena.svg" 160 5 "$PLY/barra-piena.png"
+	# Animazione «SolidOS» → «S» (branding/avvio/solidos-boot.html), se c'è il font
+	FONT_AVVIO=$(find /usr/share/fonts -iname 'LeagueSpartan-Bold.*' 2>/dev/null | head -n 1)
+	if [[ -n $FONT_AVVIO ]] && python3 -c 'import fontTools' 2>/dev/null; then
+		while read -r sorgente destinazione larghezza altezza; do
+			rendi_png "$sorgente" "$larghezza" "$altezza" "$destinazione"
+		done < <(python3 "$RADICE/scripts/genera-avvio.py" "$FONT_AVVIO" "$OS_NAME" "$GRAFICA_TMP/avvio" "$PLY" "$OS_ID")
+		echo "  animazione di avvio creata ($(ls "$PLY"/comparsa-*.png "$PLY"/coda-*.png | wc -l) fotogrammi)"
+	else
+		echo "  animazione di avvio saltata (servono fonts-league-spartan e python3-fonttools)"
+	fi
 	rendi_png "$GRAFICA_TMP/logo.svg" 48 48 "$CHROOT/usr/share/icons/hicolor/48x48/apps/$OS_ID-logo.png"
 	rendi_png "$GRAFICA_TMP/logo-chiaro.svg" 48 48 "$CHROOT/usr/share/icons/hicolor/48x48/apps/$OS_ID-logo-chiaro.png"
 	# Tema del menu GRUB: voce scelta in una pillola bianca (immagini a 9 parti)

@@ -85,7 +85,7 @@ prepara_host_debian() {
 		live-build debootstrap squashfs-tools xorriso cpio zstd \
 		isolinux syslinux-common syslinux-utils \
 		grub-common grub-efi-amd64-bin grub-pc-bin mtools dosfstools \
-		librsvg2-bin fonts-inter perl ca-certificates file >/dev/null
+		librsvg2-bin fonts-inter fonts-league-spartan python3-fonttools perl ca-certificates file >/dev/null
 	info "live-build $(dpkg-query -W -f='${Version}' live-build)"
 }
 

@@ -66,7 +66,7 @@ jobs:
 
       - name: Avvio diretto con registro sulla seriale
         run: |
-          ./prova.sh diretto 30 60 100 150 210 -- -cdrom "$ISO" -kernel iso/vmlinuz -initrd iso/initrd.img \
+          ./prova.sh diretto 4 7 10 13 30 60 100 -- -cdrom "$ISO" -kernel iso/vmlinuz -initrd iso/initrd.img \
             -append "boot=live components quiet splash console=tty0 console=ttyS0,115200 systemd.journald.forward_to_console=1 systemd.log_level=info"
 
       - name: Prova di tutte le app
