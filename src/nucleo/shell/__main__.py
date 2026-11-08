@@ -166,7 +166,7 @@ class BackendShell(Backend):
         if not self.finestre:
             return False
         f = self.finestre.attiva_corrente()
-        if not f:
+        if not f and azione != "scrivania":
             return False
         if azione == "nascondi":
             return self.finestre.minimizza(f["id"])
@@ -178,6 +178,18 @@ class BackendShell(Backend):
             for altra in self.finestre.elenco():
                 if altra["appId"] == f["appId"]:
                     self.finestre.chiudi(altra["id"])
+            return True
+        if azione == "scrivania":
+            # Super+D come su Windows: riduce tutto; la seconda volta rimette com'era
+            aperte = [x for x in self.finestre.elenco() if not x["minimizzata"]]
+            if aperte:
+                self._scrivania = [x["id"] for x in aperte]
+                for x in aperte:
+                    self.finestre.minimizza(x["id"])
+            else:
+                for ident in getattr(self, "_scrivania", []):
+                    self.finestre.attiva(ident)
+                self._scrivania = []
             return True
         if azione == "nascondiAltre":
             for altra in self.finestre.elenco():

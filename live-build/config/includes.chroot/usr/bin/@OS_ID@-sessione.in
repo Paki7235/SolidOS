@@ -14,6 +14,8 @@ export GDK_BACKEND=wayland,x11
 export MOZ_ENABLE_WAYLAND=1
 # Interfacce QML già compilate durante la build (avvio delle app più rapido)
 [ -d /var/cache/nucleo/qml ] && export QML_DISK_CACHE_PATH=/var/cache/nucleo/qml
+# Meno memoria sprecata dai programmi con più thread (Python, Qt): 2 aree di allocazione
+export MALLOC_ARENA_MAX=2
 export XCURSOR_THEME=@TEMA_CURSORE@
 export XCURSOR_SIZE=@DIMENSIONE_CURSORE@
 

@@ -35,6 +35,8 @@ immagine() { # NOME
 
 scrivi "AUTOTEST INIZIO $(date -Is) RAM: $(free -m | awk '/^Mem/{print $3"MB usati su "$2}')"
 immagine 00-desktop
+# Menu Start (logo o tasto Super)
+come_utente @OS_ID@-ctl start; sleep 3; immagine 01-start; come_utente @OS_ID@-ctl start; sleep 1
 
 # Stato della shell e dei servizi utente (per i pulsanti del pannello)
 STATO=/home/$UTENTE/.local/state/@OS_ID@
