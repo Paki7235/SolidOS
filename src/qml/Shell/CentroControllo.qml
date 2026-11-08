@@ -121,7 +121,7 @@ Rectangle {
                 Pulsante {
                     text: modelData.nome
                     icona: modelData.icona || ""
-                    principale: centro.stato.spazio && centro.stato.spazio.id === modelData.id
+                    principale: !!(centro.stato.spazio && centro.stato.spazio.id === modelData.id)
                     onClicked: { shell.chiama("attivaSpazio", [modelData.id]); centro.chiudi() }
                 }
             }
