@@ -2,7 +2,7 @@ nome = "Lavoro"
 icona = "applications-office"
 descrizione = "Documenti, posta e concentrazione"
 ordine = 10
-app = ["pcmanfm-qt.desktop", "firefox-esr.desktop", "libreoffice-writer.desktop", "libreoffice-calc.desktop", "org.mozilla.Thunderbird.desktop"]
+app = ["pcmanfm-qt.desktop", "firefox-esr.desktop", "@ID@-testo.desktop", "@ID@-documenti.desktop", "org.mozilla.Thunderbird.desktop"]
 cartelle = ["~/Documenti/Lavoro"]
 energia = "balanced"
 

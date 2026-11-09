@@ -29,3 +29,8 @@ qml6-module-qt-labs-platform
 qml6-module-qt-labs-folderlistmodel
 ?qml6-module-qtquick-effects
 qml6-module-org-kde-layershell
+# App proprie: Lettore (video e musica), Documenti (PDF), Archivi (7z, rar)
+qml6-module-qtmultimedia
+libqt6multimedia6
+?qml6-module-qtquick-pdf
+?7zip

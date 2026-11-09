@@ -32,7 +32,6 @@ libheif-plugin-libde265
 ?webp-pixbuf-loader
 ?libraw-bin
 poppler-utils
-imagemagick
 
 # Archivi
 unar

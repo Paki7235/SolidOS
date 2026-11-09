@@ -5,7 +5,7 @@
     <item label="@T_MENU_FILE@"><action name="Execute" command="pcmanfm-qt" /></item>
     <item label="@T_MENU_BROWSER@"><action name="Execute" command="firefox-esr" /></item>
     <item label="@T_MENU_TERMINALE@"><action name="Execute" command="qterminal" /></item>
-    <item label="@T_MENU_EDITOR@"><action name="Execute" command="featherpad" /></item>
+    <item label="@T_MENU_EDITOR@"><action name="Execute" command="@OS_ID@-testo" /></item>
     <separator />
     <item label="@T_MENU_ESCI@"><action name="Exit" /></item>
     <item label="@T_MENU_RIAVVIA@"><action name="Execute" command="systemctl reboot" /></item>

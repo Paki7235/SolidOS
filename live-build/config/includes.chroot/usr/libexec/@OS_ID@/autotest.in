@@ -59,7 +59,7 @@ pgrep -u "$UTENTE" -af 'nucleo|lxqt|swaybg|swayidle' | sed 's/^/AUTOTEST-PROC /'
 
 # Elenco: app del sistema + app di base del menu
 ELENCO=()
-for f in /usr/share/applications/@OS_ID@-*.desktop /usr/share/applications/{pcmanfm-qt,firefox-esr,qterminal,featherpad}.desktop; do
+for f in /usr/share/applications/@OS_ID@-*.desktop /usr/share/applications/{pcmanfm-qt,firefox-esr,qterminal}.desktop; do
 	[ -f "$f" ] || continue
 	case $f in *-riavvia.desktop|*-spegni.desktop|*-installa-sistema.desktop|*-benvenuto.desktop) continue ;; esac
 	ELENCO+=("$f")

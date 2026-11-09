@@ -19,13 +19,11 @@ lxqt-menu-data
 layer-shell-qt
 qt6-wayland
 qt6-svg-plugins
-?nm-tray
 
 # App di base
 pcmanfm-qt
 ?gvfs-daemons
 qterminal
-featherpad
 firefox-esr
 
 # Aspetto

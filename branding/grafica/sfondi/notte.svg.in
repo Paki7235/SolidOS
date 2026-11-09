@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Sfondo predefinito del desktop: colline stratificate blu notte (nessun testo). Reso a 1920x1080. -->
+<!-- Sfondo «Notte» di @OS_NAME@ (generato: colline stratificate). Reso a 1920x1080. -->
 <svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid slice">
   <defs>
     <linearGradient id="cielo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0B0E18"/><stop offset="0.55" stop-color="#16203D"/><stop offset="1" stop-color="#0A0C14"/></linearGradient>

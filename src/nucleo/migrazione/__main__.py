@@ -117,11 +117,9 @@ class BackendMigrazione(Backend):
                 dest = Path.home() / ".local/share/backgrounds" / "sfondo-windows.jpg"
                 dest.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy(v["percorso"], dest)
-                config_utente("sfondo").write_text(str(dest))
-                esegui(["pkill", "-x", "swaybg"])
-                import subprocess
+                from ..sistema import imposta_sfondo
 
-                subprocess.Popen(["swaybg", "--mode", "fill", "--image", str(dest)], start_new_session=True)
+                imposta_sfondo(str(dest))
                 riepilogo.append(T("Sfondo importato"))
             elif v["tipo"] == "preferiti":
                 riepilogo.append(self._importa_preferiti(Path(v["percorso"])))

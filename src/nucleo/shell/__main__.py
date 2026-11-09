@@ -106,6 +106,47 @@ class BackendShell(Backend):
 
         return dock.voci(self.finestre.elenco() if self.finestre else [])
 
+    # ── Scrivania e sfondo ──────────────────────────────────────────────────
+    def sfondo(self) -> str:
+        from ..sistema import sfondo_attuale
+
+        return "file://" + sfondo_attuale()
+
+    def scrivania(self) -> list:
+        from . import scrivania
+
+        return scrivania.elementi()
+
+    def scrivaniaCartella(self) -> str:
+        from . import scrivania
+
+        return str(scrivania.cartella())
+
+    def scrivaniaApri(self, percorso: str) -> None:
+        from . import scrivania
+
+        scrivania.apri(percorso)
+
+    def scrivaniaNuova(self, tipo: str) -> str:
+        from . import scrivania
+
+        return scrivania.nuova_cartella() if tipo == "cartella" else scrivania.nuovo_testo()
+
+    def scrivaniaRinomina(self, percorso: str, nuovo: str) -> bool:
+        from . import scrivania
+
+        return scrivania.rinomina(percorso, nuovo)
+
+    def scrivaniaCestino(self, percorso: str) -> bool:
+        from . import scrivania
+
+        return scrivania.cestino(percorso)
+
+    def scrivaniaCopia(self, indirizzi) -> int:
+        from . import scrivania
+
+        return scrivania.copia_qui([str(i) for i in indirizzi])
+
     def tutteLeApp(self) -> list:
         from . import dock
 
@@ -338,6 +379,10 @@ def crea_servizio_shell(bus, backend: BackendShell):
             return bool(backend.dockApri(str(desktop)))
 
         @dbus.service.method(nome, in_signature="", out_signature="")
+        def AggiornaSfondo(self):
+            backend.emetti("sfondo", None)
+
+        @dbus.service.method(nome, in_signature="", out_signature="")
         def MostraStart(self):
             backend.emetti("mostra", "start")
 
@@ -416,6 +461,15 @@ def main() -> int:
             pass
 
     backend.finestre = Finestre(al_cambio)
+
+    # La scrivania si aggiorna quando cambia il contenuto della cartella
+    from PyQt6.QtCore import QFileSystemWatcher
+
+    from . import scrivania
+
+    osservatore = QFileSystemWatcher([str(scrivania.cartella())])
+    osservatore.directoryChanged.connect(lambda _p: backend.emetti("scrivania", None))
+    backend._osservatore = osservatore
     motore = carica(app, "Shell/Shell.qml", {"shell": ponte})
     codice = app.exec()
     del motore, servizio

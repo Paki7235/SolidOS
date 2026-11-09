@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from . import branding
+
 # Formati installabili → backend di «Installa con …»
 INSTALLABILI = {
     ".deb": "deb", ".rpm": "rpm", ".appimage": "appimage", ".flatpakref": "flatpakref",
@@ -36,16 +38,18 @@ SUGGERIMENTI = {
     ".gpx": [("org.gnome.Maps", "Mappe")],
     ".sqlite": [("org.sqlitebrowser.sqlitebrowser", "DB Browser for SQLite")],
     ".db": [("org.sqlitebrowser.sqlitebrowser", "DB Browser for SQLite")],
-    ".pptx": [("libreoffice-impress", "LibreOffice Impress")],
-    ".pub": [("libreoffice-draw", "LibreOffice Draw")],
-    ".vsdx": [("libreoffice-draw", "LibreOffice Draw")],
+    # Documenti d'ufficio: nessuna suite preinstallata, si propone di installarne una
+    **{est: [("org.onlyoffice.desktopeditors", "ONLYOFFICE"), ("org.libreoffice.LibreOffice", "LibreOffice")]
+       for est in (".doc", ".docx", ".odt", ".rtf", ".xls", ".xlsx", ".ods", ".csv", ".ppt", ".pptx", ".odp")},
+    ".pub": [("org.libreoffice.LibreOffice", "LibreOffice")],
+    ".vsdx": [("org.libreoffice.LibreOffice", "LibreOffice")],
     ".mpp": [("net.sourceforge.projectlibre", "ProjectLibre")],
     ".eml": [("org.mozilla.Thunderbird", "Thunderbird")],
     ".msg": [("org.mozilla.Thunderbird", "Thunderbird")],
     ".ttf": [("org.gnome.font-viewer", "Caratteri")],
     ".otf": [("org.gnome.font-viewer", "Caratteri")],
     ".nes": [("org.libretro.RetroArch", "RetroArch")],
-    ".iso": [("lxqt-archiver", "Gestore archivi")],
+    ".iso": [(f"{branding.id_os()}-archivi", "Archivi")],
 }
 
 ARCHIVI = {".zip", ".rar", ".7z", ".tar", ".gz", ".xz", ".bz2", ".zst", ".tgz", ".iso", ".cab", ".lzh"}

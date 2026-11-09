@@ -62,7 +62,9 @@ class PannelloAspetto(Pannello):
         temi_icone = sorted({p.name for p in Path("/usr/share/icons").iterdir()
                              if (p / "index.theme").exists() and not p.name.startswith(("hicolor", "default"))}) \
             if Path("/usr/share/icons").is_dir() else []
-        sfondo_attuale = (config_utente("sfondo").read_text().strip() if config_utente("sfondo").exists() else "")
+        from ..sistema import sfondo_attuale as _sfondo
+
+        sfondo_attuale = _sfondo()
         return [
             scelta("tema", T("Tema"), pref.get("tema", "scuro"), [("scuro", T("Scuro")), ("chiaro", T("Chiaro"))]),
             scelta("accento", T("Colore d'accento"), pref.get("accento", branding.get("COLORE_ACCENTO")), ACCENTI),
@@ -140,9 +142,9 @@ class PannelloAspetto(Pannello):
         return None
 
     def _imposta_sfondo(self, percorso: str):
-        config_utente("sfondo").write_text(percorso)
-        esegui(["pkill", "-x", "swaybg"])
-        avvia(["swaybg", "--mode", "fill", "--image", percorso])
+        from ..sistema import imposta_sfondo
+
+        imposta_sfondo(percorso)
 
     def azione(self, voce, elemento, az, dati):
         if voce == "sfondi" and az == "usa":

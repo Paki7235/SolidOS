@@ -1,5 +1,5 @@
 # Blocco schermo di @OS_NAME@ (swaylock)
-image=/usr/share/backgrounds/@OS_ID@/predefinito.png
+image=/usr/share/@OS_ID@/sfondo-predefinito.png
 scaling=fill
 show-failed-attempts
 indicator-radius=90

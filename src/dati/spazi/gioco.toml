@@ -2,7 +2,7 @@ nome = "Gioco"
 icona = "applications-games"
 descrizione = "Massime prestazioni"
 ordine = 30
-app = ["com.valvesoftware.Steam.desktop", "firefox-esr.desktop", "com.discordapp.Discord.desktop", "vlc.desktop"]
+app = ["com.valvesoftware.Steam.desktop", "firefox-esr.desktop", "com.discordapp.Discord.desktop", "@ID@-lettore.desktop"]
 cartelle = []
 energia = "performance"
 

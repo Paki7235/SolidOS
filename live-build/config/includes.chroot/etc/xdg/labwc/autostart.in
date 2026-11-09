@@ -6,10 +6,7 @@ dbus-update-activation-environment --systemd \
 	QT_QPA_PLATFORM QT_QPA_PLATFORMTHEME XCURSOR_THEME XCURSOR_SIZE GRAFICA_SICURA \
 	>/dev/null 2>&1
 
-# Sfondo (lo Spazio di vita attivo può sceglierne un altro)
-SFONDO="/usr/share/backgrounds/@OS_ID@/predefinito.png"
-[ -f "$HOME/.config/@OS_ID@/sfondo" ] && SFONDO=$(cat "$HOME/.config/@OS_ID@/sfondo")
-swaybg --mode fill --image "$SFONDO" >/dev/null 2>&1 &
+# Sfondo e icone della scrivania: li disegna la shell (finestra di sfondo)
 
 # Shell (notifiche, centro di controllo, OSD) e pannello
 @OS_ID@-shell >"${XDG_STATE_HOME:-$HOME/.local/state}/@OS_ID@/shell.log" 2>&1 &

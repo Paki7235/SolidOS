@@ -312,6 +312,8 @@ QtObject {
             if (nome === "finestre") { dock.aggiorna(); barraSuperiore.aggiorna() }
         }
     }
+    // Sfondo e icone della scrivania (sotto tutte le finestre)
+    property Window scrivania: Scrivania { id: scrivania }
     property Window barraSuperiore: BarraSuperiore {
         id: barraSuperiore
         onMenuSistema: radice.mostra("start")

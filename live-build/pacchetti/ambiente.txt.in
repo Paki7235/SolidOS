@@ -18,16 +18,7 @@ xdg-desktop-portal-wlr
 ?xdg-desktop-portal-lxqt
 
 # App di base
-qimgv
-qpdfview
-vlc
-?vlc-plugin-pipewire
-qalculate-qt
-lxqt-archiver
 7zip
 restic
 smartmontools
-libreoffice-qt6
-?libreoffice-l10n-@LINGUA@
-?libreoffice-help-@LINGUA@
 ?hunspell-@LINGUA@

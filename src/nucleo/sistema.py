@@ -173,3 +173,28 @@ def avvia_desktop(desktop: str, file: list[str] | None = None) -> bool:
         avvia(argomenti)
         return True
     return False
+
+
+SFONDO_INIZIALE = "/usr/share/backgrounds/{id}/notte.png"
+
+
+def sfondo_attuale() -> str:
+    """Percorso dello sfondo scelto dall'utente (o quello iniziale)."""
+    from . import branding
+
+    f = config_utente("sfondo")
+    if f.exists():
+        percorso = f.read_text().strip()
+        if percorso and Path(percorso).exists():
+            return percorso
+    return SFONDO_INIZIALE.format(id=branding.id_os())
+
+
+def imposta_sfondo(percorso: str) -> None:
+    """Salva lo sfondo e lo applica subito: lo disegna la scrivania della shell."""
+    from . import branding
+    from .dbusutil import chiama
+
+    config_utente("sfondo").write_text(str(percorso))
+    nome = branding.nome_dbus("Shell")
+    chiama(nome, branding.percorso_dbus("Shell"), nome, "AggiornaSfondo", timeout=2)

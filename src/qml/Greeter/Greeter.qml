@@ -34,7 +34,7 @@ Window {
 
     Image {
         anchors.fill: parent
-        source: "file:///usr/share/backgrounds/" + Tema.idSistema + "/predefinito.png"
+        source: "file:///usr/share/" + Tema.idSistema + "/sfondo-predefinito.png"
         fillMode: Image.PreserveAspectCrop
         Rectangle { anchors.fill: parent; color: "#66000000" }
     }

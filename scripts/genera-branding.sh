@@ -63,7 +63,6 @@ installa_svg "$GRAFICA_TMP/logo.svg" "$CHROOT/usr/share/$OS_ID/logo.svg"
 installa_svg "$GRAFICA_TMP/logo.svg" "$CHROOT/usr/share/icons/hicolor/scalable/apps/$OS_ID-logo.svg"
 installa_svg "$GRAFICA_TMP/logo-chiaro.svg" "$CHROOT/usr/share/$OS_ID/logo-chiaro.svg"
 installa_svg "$GRAFICA_TMP/logo-chiaro.svg" "$CHROOT/usr/share/icons/hicolor/scalable/apps/$OS_ID-logo-chiaro.svg"
-installa_svg "$GRAFICA_TMP/sfondo.svg" "$CHROOT/usr/share/backgrounds/$OS_ID/predefinito.svg"
 installa_svg "$GRAFICA_TMP/logo.svg" "$CHROOT/etc/calamares/branding/$OS_ID/logo.svg"
 
 if ((SENZA_IMMAGINI)); then
@@ -108,7 +107,13 @@ else
 		printf '<svg xmlns="http://www.w3.org/2000/svg" width="%d" height="1"><rect width="%d" height="1" fill="#FFFFFF"/></svg>' $r $r >"$GRAFICA_TMP/sel_$parte.svg"
 		rendi_png "$GRAFICA_TMP/sel_$parte.svg" $r 1 "$TEMA/sel_$parte.png"
 	done
-	rendi_png "$GRAFICA_TMP/sfondo.svg" 1920 1080 "$CHROOT/usr/share/backgrounds/$OS_ID/predefinito.png"
+	# Sfondi predefiniti (branding/grafica/sfondi/): «Notte» è quello iniziale
+	for svg in "$RADICE"/branding/grafica/sfondi/*.svg.in; do
+		base=$(basename "$svg" .svg.in)
+		applica_modello "$svg" "$GRAFICA_TMP/sfondo-$base.svg"
+		rendi_png "$GRAFICA_TMP/sfondo-$base.svg" 1920 1080 "$CHROOT/usr/share/backgrounds/$OS_ID/$base.png"
+	done
+	cp "$CHROOT/usr/share/backgrounds/$OS_ID/notte.png" "$CHROOT/usr/share/$OS_ID/sfondo-predefinito.png"
 	rendi_png "$GRAFICA_TMP/avvio-grub.svg" 1280 720 "$BINARY/boot/grub/$OS_ID/sfondo.png"
 	rendi_png "$GRAFICA_TMP/avvio-grub.svg" 1280 720 "$CHROOT/usr/share/$OS_ID/grub-sfondo.png"
 	rendi_png "$GRAFICA_TMP/avvio-bios.svg" 640 480 "$BINARY/isolinux/splash.png"

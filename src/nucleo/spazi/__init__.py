@@ -34,7 +34,8 @@ def file_spazio(ident: str) -> Path:
 
 def leggi(ident: str) -> dict:
     try:
-        dati = tomllib.loads(file_spazio(ident).read_text(encoding="utf-8"))
+        # «@ID@» nei file degli Spazi = identificativo del sistema (app proprie, es. <id>-foto.desktop)
+        dati = tomllib.loads(file_spazio(ident).read_text(encoding="utf-8").replace("@ID@", branding.id_os()))
     except (OSError, tomllib.TOMLDecodeError):
         return {}
     dati["id"] = ident
@@ -73,13 +74,11 @@ def crea(nome: str) -> str:
 
 # ── Applicazione ─────────────────────────────────────────────────────────────
 def _sfondo(percorso: str):
-    if percorso and Path(percorso).exists():
-        config_utente("sfondo").write_text(percorso)
-    else:
-        config_utente("sfondo").unlink(missing_ok=True)
-        percorso = f"/usr/share/backgrounds/{branding.id_os()}/predefinito.png"
-    esegui(["pkill", "-x", "swaybg"])
-    avvia(["swaybg", "--mode", "fill", "--image", percorso])
+    from ..sistema import SFONDO_INIZIALE, imposta_sfondo
+
+    if not (percorso and Path(percorso).exists()):
+        percorso = SFONDO_INIZIALE.format(id=branding.id_os())
+    imposta_sfondo(percorso)
 
 
 def _app_pannello(app: list[str]):

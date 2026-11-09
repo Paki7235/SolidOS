@@ -24,3 +24,9 @@ migrazione	nucleo.migrazione	Migrazione da Windows	org.x.Warpinator	System;	Impo
 chiavetta	nucleo.chiavetta	Crea chiavetta @OS_NAME@	mintstick	System;	Crea una chiavetta avviabile con salvataggio dei dati	no
 benvenuto	nucleo.benvenuto	Benvenuto	org.gnome.Tour	System;	Configurazione iniziale	si
 privacy	nucleo.privacy
+testo	nucleo.apps.testo	Testo	org.gnome.TextEditor	Utility;TextEditor;	Scrivi e modifica testi	no	text/plain;text/markdown;text/x-log;text/csv;application/x-shellscript;text/x-python;application/json;application/xml;text/xml;application/x-yaml;text/x-ini;
+foto	nucleo.apps.foto	Foto	org.gnome.Loupe	Graphics;Viewer;	Guarda le tue immagini	no	image/jpeg;image/png;image/gif;image/webp;image/bmp;image/svg+xml;image/tiff;image/avif;image/heic;image/heif;
+lettore	nucleo.apps.lettore	Lettore	org.gnome.Showtime	AudioVideo;Player;	Guarda video e ascolta musica	no	video/mp4;video/x-matroska;video/webm;video/x-msvideo;video/quicktime;video/mpeg;video/x-ms-wmv;video/ogg;audio/mpeg;audio/flac;audio/ogg;audio/opus;audio/x-wav;audio/wav;audio/mp4;audio/aac;audio/x-ms-wma;
+documenti	nucleo.apps.documenti	Documenti PDF	org.gnome.Papers	Office;Viewer;	Leggi e stampa i PDF	no	application/pdf;
+calcolatrice	nucleo.apps.calcolatrice	Calcolatrice	org.gnome.Calculator	Utility;Calculator;	Calcoli semplici e scientifici	no	
+archivi	nucleo.apps.archivi	Archivi	org.gnome.FileRoller	Utility;Archiving;	Apri, estrai e crea archivi zip	no	application/zip;application/x-tar;application/x-compressed-tar;application/x-bzip-compressed-tar;application/x-xz-compressed-tar;application/x-7z-compressed;application/vnd.rar;application/x-rar;application/gzip;
