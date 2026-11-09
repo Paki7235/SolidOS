@@ -28,6 +28,9 @@ def profili() -> dict:
     nulla = {"disponibile": False, "attivo": "", "elenco": []}
     for nome, percorso in (("org.freedesktop.UPower.PowerProfiles", "/org/freedesktop/UPower/PowerProfiles"),
                            ("net.hadess.PowerProfiles", "/net/hadess/PowerProfiles")):
+        if not chiama("org.freedesktop.DBus", "/org/freedesktop/DBus", "org.freedesktop.DBus", "NameHasOwner",
+                      nome, sistema=True, timeout=1):
+            continue            # servizio non avviato: niente attese
         attivo = chiama(nome, percorso, "org.freedesktop.DBus.Properties", "Get", nome, "ActiveProfile",
                         sistema=True, timeout=2)
         if attivo is None:

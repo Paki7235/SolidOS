@@ -22,7 +22,7 @@ def chiama(nome: str, percorso: str, interfaccia: str, metodo: str, *argomenti,
 
     try:
         bus = dbus.SystemBus() if sistema else dbus.SessionBus()
-        oggetto = bus.get_object(nome, percorso)
+        oggetto = bus.get_object(nome, percorso, introspect=False)  # niente introspezione: rispetta il timeout
         return oggetto.get_dbus_method(metodo, interfaccia)(*argomenti, timeout=timeout)
     except dbus.exceptions.DBusException:
         return None
