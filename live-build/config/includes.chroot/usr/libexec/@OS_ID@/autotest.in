@@ -90,7 +90,7 @@ for f in "${ELENCO[@]}"; do
 	immagine "$nome"
 	[ -f "$STATO/finestre.json" ] && scrivi "AUTOTEST-FINESTRE $nome: $(head -c 600 "$STATO/finestre.json")"
 	# I pannelli della shell si aprono e chiudono con lo stesso comando
-	case $cmd in *-ctl\ *) come_utente sh -c "$cmd" >/dev/null 2>&1 ;; esac
+	case $cmd in *-ctl\ *|*-barra) come_utente sh -c "$cmd" >/dev/null 2>&1 ;; esac
 	pkill -KILL -s "$pid" 2>/dev/null
 	pkill -KILL -u "$UTENTE" -f "$(echo "$cmd" | awk '{print $1}')" 2>/dev/null
 	sleep 2
