@@ -123,10 +123,9 @@ rinomina() { # file nome
 	[ -f "$A/$1" ] || return 0
 	sed -i -e "/^Name\[it\]=/d" -e "0,/^Name=.*/s//Name=$2/" "$A/$1"
 }
-rinomina pcmanfm-qt.desktop "File"
 rinomina firefox-esr.desktop "Firefox"
 rinomina qterminal.desktop "Terminale"
-for voce in calamares.desktop install-debian.desktop wine.desktop wine-*.desktop debian-xterm.desktop debian-uxterm.desktop \
+for voce in pcmanfm-qt.desktop calamares.desktop install-debian.desktop wine.desktop wine-*.desktop debian-xterm.desktop debian-uxterm.desktop \
 	xterm.desktop uxterm.desktop pcmanfm-qt-desktop-pref.desktop qterminal-drop.desktop avahi-discover.desktop bssh.desktop \
 	bvnc.desktop lxqt-*.desktop org.kde.*.desktop nm-applet.desktop display-im*.desktop; do
 	for f in $A/$voce; do

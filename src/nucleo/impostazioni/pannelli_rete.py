@@ -178,7 +178,7 @@ class PannelloCondivisione(Pannello):
         voci = [
             scelta("visibilita", T("Chi può vedere questo computer"), visibilita, [
                 ("nessuno", T("Nessuno")), ("associati", T("Solo dispositivi associati")),
-                ("tutti10", T("Tutti per 10 minuti"))]),
+                ("tutti10", T("Tutti per 10 minuti")), ("tutti", T("Tutti (sempre)"))]),
             campo("nome", T("Nome del dispositivo"), conf.get("nome", ""),
                   T("Come appare sui telefoni. Vuoto = nome predefinito")),
             info("cartella", T("Cartella dei file ricevuti"),

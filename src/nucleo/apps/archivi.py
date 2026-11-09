@@ -119,7 +119,7 @@ class BackendArchivi(Backend):
     def mostra(self, percorso: str) -> None:
         from ..sistema import avvia
 
-        avvia(["pcmanfm-qt", percorso])
+        avvia(["xdg-open", percorso])
 
 
 def _riga_di_comando(argomenti: list[str]) -> int | None:

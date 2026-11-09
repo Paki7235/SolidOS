@@ -30,3 +30,4 @@ lettore	nucleo.apps.lettore	Lettore	org.gnome.Showtime	AudioVideo;Player;	Guarda
 documenti	nucleo.apps.documenti	Documenti PDF	org.gnome.Papers	Office;Viewer;	Leggi e stampa i PDF	no	application/pdf;
 calcolatrice	nucleo.apps.calcolatrice	Calcolatrice	org.gnome.Calculator	Utility;Calculator;	Calcoli semplici e scientifici	no	
 archivi	nucleo.apps.archivi	Archivi	org.gnome.FileRoller	Utility;Archiving;	Apri, estrai e crea archivi zip	no	application/zip;application/x-tar;application/x-compressed-tar;application/x-bzip-compressed-tar;application/x-xz-compressed-tar;application/x-7z-compressed;application/vnd.rar;application/x-rar;application/gzip;
+file	nucleo.apps.file	File	system-file-manager	System;FileManager;Utility;	Sfoglia file, cartelle, rete e dispositivi	no	inode/directory;

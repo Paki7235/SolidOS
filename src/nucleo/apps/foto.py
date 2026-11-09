@@ -42,7 +42,7 @@ class BackendFoto(Backend):
     def mostraNellaCartella(self, percorso: str) -> None:
         from ..sistema import avvia
 
-        avvia(["pcmanfm-qt", str(Path(percorso.replace("file://", "")).parent)])
+        avvia(["xdg-open", str(Path(percorso.replace("file://", "")).parent)])
 
 
 def main() -> int:

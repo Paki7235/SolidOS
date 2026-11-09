@@ -46,6 +46,28 @@ else
 fi
 immagine 02-dal-dock
 pkill -u "$UTENTE" -f 'nucleo.impostazioni' 2>/dev/null; sleep 2
+# Impostazioni: ogni pannello deve leggere le sue voci senza errori (e ne salva una foto)
+come_utente python3 - >"$USCITA" 2>&1 <<'PY'
+import time, traceback
+from nucleo.impostazioni import PANNELLI
+for cls in PANNELLI:
+    inizio = time.monotonic()
+    try:
+        voci = cls().voci()
+        errori = [v for v in voci if v.get("id") == "errore" or "Impossibile" in str(v.get("titolo", ""))]
+        stato = "ERRORE " + str(errori[0].get("valore")) if errori else "OK"
+        print(f"AUTOTEST-IMPOSTAZIONI {cls.id}: {stato} ({len(voci)} voci, {time.monotonic() - inizio:.1f} s)")
+    except Exception as e:
+        print(f"AUTOTEST-IMPOSTAZIONI {cls.id}: ECCEZIONE {type(e).__name__}: {e}")
+        print("AUTOTEST-IMPOSTAZIONI-TRACCIA " + traceback.format_exc().replace(chr(10), " | ")[-600:])
+PY
+for pannello in rete bluetooth condivisione schermo audio energia tastiera mouse aspetto pannello notifiche spazi utenti privacy aggiornamenti snapshot lingua dataora informazioni archiviazione; do
+	setsid runuser -u "$UTENTE" -- env "${AMBIENTE[@]}" @OS_ID@-impostazioni "$pannello" >/dev/null 2>&1 &
+	pid=$!; sleep 5
+	immagine "impostazioni-$pannello"
+	pkill -KILL -s "$pid" 2>/dev/null; pkill -KILL -u "$UTENTE" -f 'nucleo.impostazioni' 2>/dev/null; sleep 1
+done
+
 # Menu Start (logo o tasto Super)
 come_utente @OS_ID@-ctl start; sleep 3; immagine 01-start; come_utente @OS_ID@-ctl start; sleep 1
 
@@ -59,7 +81,7 @@ pgrep -u "$UTENTE" -af 'nucleo|lxqt|swaybg|swayidle' | sed 's/^/AUTOTEST-PROC /'
 
 # Elenco: app del sistema + app di base del menu
 ELENCO=()
-for f in /usr/share/applications/@OS_ID@-*.desktop /usr/share/applications/{pcmanfm-qt,firefox-esr,qterminal}.desktop; do
+for f in /usr/share/applications/@OS_ID@-*.desktop /usr/share/applications/{firefox-esr,qterminal}.desktop; do
 	[ -f "$f" ] || continue
 	case $f in *-riavvia.desktop|*-spegni.desktop|*-installa-sistema.desktop|*-benvenuto.desktop) continue ;; esac
 	ELENCO+=("$f")

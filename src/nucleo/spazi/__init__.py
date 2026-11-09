@@ -66,7 +66,7 @@ def crea(nome: str) -> str:
     file_spazio(ident).write_text(
         f'nome = "{nome}"\nicona = "user-desktop"\ndescrizione = ""\nordine = 60\n'
         '# sfondo = "/percorso/immagine.jpg"\n'
-        'app = ["pcmanfm-qt.desktop", "firefox-esr.desktop"]\n'
+        'app = ["@ID@-file.desktop", "firefox-esr.desktop"]\n'
         'cartelle = []\nenergia = "balanced"\n\n[notifiche]\nnon_disturbare = false\nconsentite = []\n\n'
         '[rete]\nconnessione = ""\nvpn = ""\n', encoding="utf-8")
     return ident

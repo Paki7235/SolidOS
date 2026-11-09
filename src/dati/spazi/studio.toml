@@ -2,7 +2,7 @@ nome = "Studio"
 icona = "applications-education"
 descrizione = "Niente distrazioni: solo notifiche importanti"
 ordine = 20
-app = ["pcmanfm-qt.desktop", "firefox-esr.desktop", "@ID@-testo.desktop", "@ID@-documenti.desktop"]
+app = ["@ID@-file.desktop", "firefox-esr.desktop", "@ID@-testo.desktop", "@ID@-documenti.desktop"]
 cartelle = ["~/Documenti/Studio"]
 energia = "balanced"
 

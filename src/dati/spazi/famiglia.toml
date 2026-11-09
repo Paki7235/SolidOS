@@ -2,7 +2,7 @@ nome = "Famiglia"
 icona = "user-home"
 descrizione = "Foto, video e videochiamate"
 ordine = 40
-app = ["pcmanfm-qt.desktop", "firefox-esr.desktop", "@ID@-foto.desktop", "@ID@-lettore.desktop"]
+app = ["@ID@-file.desktop", "firefox-esr.desktop", "@ID@-foto.desktop", "@ID@-lettore.desktop"]
 cartelle = ["~/Immagini", "~/Video"]
 energia = "power-saver"
 

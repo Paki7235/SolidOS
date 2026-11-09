@@ -202,7 +202,7 @@ id = "converti-pdf-generico"
 titolo = "Converti in PDF…"
 icona = "application-pdf"
 frasi = ["converti in pdf", "crea pdf", "salva come pdf"]
-comando = ["pcmanfm-qt"]
+comando = ["@OS_ID@-file"]
 messaggio = "Clic destro sul file → Converti in PDF"
 
 [[azione]]
@@ -270,7 +270,7 @@ id = "file"
 titolo = "Apri i file"
 icona = "system-file-manager"
 frasi = ["file", "esplora risorse", "documenti", "le mie cartelle"]
-comando = ["pcmanfm-qt"]
+comando = ["@OS_ID@-file"]
 
 [[azione]]
 id = "terminale"

@@ -165,7 +165,7 @@ class Gestore:
 
     # ── Visibilità ──────────────────────────────────────────────────────────
     async def imposta_visibilita(self, modalita: str, salva: bool = True):
-        if modalita not in ("nessuno", "associati", "tutti10"):
+        if modalita not in ("nessuno", "associati", "tutti10", "tutti"):
             return
         precedente = self.visibilita if self.visibilita != "tutti10" else self.conf.get("visibilita_base", "nessuno")
         self.visibilita = modalita

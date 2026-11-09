@@ -1,12 +1,161 @@
-#!/bin/sh
-# Converte documenti e immagini in PDF accanto all'originale (usato dal menu del file manager e dalla Barra Unica).
-for f in "$@"; do
-	cartella=$(dirname "$f")
-	case "$(echo "$f" | tr 'A-Z' 'a-z')" in
-		*.jpg|*.jpeg|*.png|*.webp|*.heic|*.bmp|*.tif|*.tiff)
-			convert "$f" "${f%.*}.pdf" ;;
-		*)
-			soffice --headless --convert-to pdf --outdir "$cartella" "$f" >/dev/null 2>&1 ;;
-	esac
-done
-notify-send --icon=application-pdf "PDF pronto" "$(basename "${1%.*}").pdf" 2>/dev/null || true
+#!/usr/bin/python3
+"""Converte immagini, testi e documenti in PDF, nella stessa cartella dell'originale.
+
+Uso: converti-pdf FILE…   (menu del file manager, app File, Barra Unica)
+- immagini (png, jpg, webp, bmp, gif, tiff, heic…) → una pagina per immagine
+- testi (.txt, .md, .csv, .log, .html…) → documento impaginato A4
+- documenti d'ufficio (.docx, .odt, .xlsx, .pptx…) → con LibreOffice, se installato
+Il PDF non sovrascrive mai un file esistente: «nome (2).pdf», «nome (3).pdf»…
+"""
+
+import os
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+IMMAGINI = {".png", ".jpg", ".jpeg", ".webp", ".bmp", ".gif", ".tif", ".tiff", ".heic", ".heif", ".avif", ".svg"}
+TESTI = {".txt", ".md", ".markdown", ".csv", ".log", ".ini", ".conf", ".json", ".xml", ".py", ".sh", ".html", ".htm"}
+UFFICIO = {".doc", ".docx", ".odt", ".rtf", ".xls", ".xlsx", ".ods", ".ppt", ".pptx", ".odp", ".odg", ".pub", ".vsdx"}
+
+
+def destinazione(sorgente: Path) -> Path:
+    dest = sorgente.with_suffix(".pdf")
+    n = 2
+    while dest.exists():
+        dest = sorgente.with_name(f"{sorgente.stem} ({n}).pdf")
+        n += 1
+    return dest
+
+
+def scrittore(dest: Path):
+    from PyQt6.QtCore import QMarginsF
+    from PyQt6.QtGui import QPageLayout, QPageSize, QPdfWriter
+
+    w = QPdfWriter(str(dest))
+    w.setResolution(300)
+    w.setPageSize(QPageSize(QPageSize.PageSizeId.A4))
+    w.setPageMargins(QMarginsF(15, 15, 15, 15), QPageLayout.Unit.Millimeter)
+    w.setCreator("SolidOS")
+    return w
+
+
+def da_immagine(sorgente: Path, dest: Path) -> str:
+    from PyQt6.QtCore import QRectF, Qt
+    from PyQt6.QtGui import QImageReader, QPainter
+
+    lettore = QImageReader(str(sorgente))
+    lettore.setAutoTransform(True)
+    immagine = lettore.read()
+    if immagine.isNull():
+        return f"immagine non leggibile ({lettore.errorString()})"
+    w = scrittore(dest)
+    if immagine.width() > immagine.height():
+        from PyQt6.QtGui import QPageLayout
+
+        w.setPageOrientation(QPageLayout.Orientation.Landscape)
+    p = QPainter(w)
+    area = QRectF(p.viewport())
+    dim = immagine.size().toSizeF().scaled(area.size(), Qt.AspectRatioMode.KeepAspectRatio)
+    p.drawImage(QRectF(area.x() + (area.width() - dim.width()) / 2, area.y() + (area.height() - dim.height()) / 2,
+                       dim.width(), dim.height()), immagine)
+    p.end()
+    return ""
+
+
+def da_testo(sorgente: Path, dest: Path) -> str:
+    from PyQt6.QtGui import QFont, QTextDocument
+
+    dati = sorgente.read_bytes()
+    testo = next((dati.decode(c) for c in ("utf-8", "cp1252", "latin-1") if _decodifica(dati, c)), "")
+    doc = QTextDocument()
+    doc.setDefaultFont(QFont("Inter", 11))
+    est = sorgente.suffix.lower()
+    if est in (".md", ".markdown"):
+        doc.setMarkdown(testo)
+    elif est in (".html", ".htm"):
+        doc.setHtml(testo)
+    else:
+        if est not in (".txt", ".log"):
+            doc.setDefaultFont(QFont("Noto Sans Mono", 9))
+        doc.setPlainText(testo)
+    doc.print(scrittore(dest))
+    return ""
+
+
+def _decodifica(dati: bytes, codifica: str) -> bool:
+    try:
+        dati.decode(codifica)
+        return True
+    except UnicodeDecodeError:
+        return False
+
+
+def da_ufficio(sorgente: Path, dest: Path) -> str:
+    comandi = []
+    if shutil.which("soffice"):
+        comandi.append(["soffice"])
+    if shutil.which("flatpak"):
+        elenco = subprocess.run(["flatpak", "list", "--app", "--columns=application"], capture_output=True, text=True).stdout
+        if "org.libreoffice.LibreOffice" in elenco:
+            comandi.append(["flatpak", "run", "--command=soffice", "org.libreoffice.LibreOffice"])
+    if not comandi:
+        return "serve LibreOffice: installalo da SolidOS App, poi riprova"
+    temporanea = dest.parent / f".conversione-{os.getpid()}"
+    temporanea.mkdir(exist_ok=True)
+    try:
+        for comando in comandi:
+            subprocess.run([*comando, "--headless", "--convert-to", "pdf", "--outdir", str(temporanea), str(sorgente)],
+                           capture_output=True, timeout=300)
+            prodotto = temporanea / (sorgente.stem + ".pdf")
+            if prodotto.exists():
+                shutil.move(str(prodotto), dest)
+                return ""
+        return "conversione non riuscita"
+    finally:
+        shutil.rmtree(temporanea, ignore_errors=True)
+
+
+def notifica(titolo: str, testo: str, icona: str = "application-pdf") -> None:
+    subprocess.run(["notify-send", "--app-name=Converti in PDF", f"--icon={icona}", titolo, testo], check=False)
+
+
+def main() -> int:
+    file = [Path(a.removeprefix("file://")).resolve() for a in sys.argv[1:] if not a.startswith("-")]
+    if not file:
+        print(__doc__)
+        return 1
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+    from PyQt6.QtGui import QGuiApplication
+
+    app = QGuiApplication(sys.argv[:1])  # noqa: F841 — serve per font e immagini
+    riusciti, errori = [], []
+    for f in file:
+        est = f.suffix.lower()
+        if est == ".pdf":
+            continue
+        dest = destinazione(f)
+        if est in IMMAGINI:
+            errore = da_immagine(f, dest)
+        elif est in TESTI:
+            errore = da_testo(f, dest)
+        elif est in UFFICIO:
+            errore = da_ufficio(f, dest)
+        else:
+            errore = "formato non supportato"
+        if errore or not dest.exists():
+            errori.append(f"{f.name}: {errore or 'conversione non riuscita'}")
+            dest.unlink(missing_ok=True)
+        else:
+            riusciti.append(dest)
+    if riusciti:
+        cartella = riusciti[0].parent
+        nomi = riusciti[0].name if len(riusciti) == 1 else f"{len(riusciti)} PDF"
+        notifica("PDF creato", f"{nomi}\nnella cartella {cartella.name} ({cartella})")
+    if errori:
+        notifica("Conversione in PDF non riuscita", "\n".join(errori[:4]), "dialog-warning")
+    return 0 if riusciti and not errori else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

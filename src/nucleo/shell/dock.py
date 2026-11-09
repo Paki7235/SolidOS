@@ -16,7 +16,7 @@ CARTELLE = [Path.home() / ".local/share/applications", Path("/usr/share/applicat
 
 def predefinite() -> list[str]:
     i = branding.id_os()
-    return ["pcmanfm-qt", "firefox-esr", "qterminal", f"{i}-store", f"{i}-linea-del-tempo",
+    return [f"{i}-file", "firefox-esr", "qterminal", f"{i}-store", f"{i}-linea-del-tempo",
             f"{i}-condividi", f"{i}-monitor", f"{i}-impostazioni"]
 
 

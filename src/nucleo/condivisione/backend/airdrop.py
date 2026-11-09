@@ -204,7 +204,7 @@ class BackendAirDrop(Backend):
         await self._spegni()
 
     async def visibilita(self, modalita):
-        if modalita == "tutti10":
+        if modalita in ("tutti10", "tutti"):
             await self._accendi(600)
         elif self.attivo:
             await self._spegni()
@@ -261,7 +261,7 @@ class BackendAirDrop(Backend):
     async def _discover(self, richiesta):
         from aiohttp import web
 
-        if self.gestore.visibilita != "tutti10":
+        if self.gestore.visibilita not in ("tutti10", "tutti"):
             raise web.HTTPUnauthorized()
         return self._plist({"ReceiverComputerName": self.gestore.nome_dispositivo, "ReceiverModelName": "Mac",
                             "ReceiverMediaCapabilities": json.dumps({"Version": 1}).encode()})

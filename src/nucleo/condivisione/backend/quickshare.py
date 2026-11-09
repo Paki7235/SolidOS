@@ -362,7 +362,7 @@ class BackendQuickShare(Backend):
             TIPO_SERVIZIO, f"{self._nome_servizio()}.{TIPO_SERVIZIO}", addresses=indirizzi, port=PORTA_QUICKSHARE,
             properties={"n": base64.urlsafe_b64encode(info).decode().rstrip("=")}, server=f"{socket.gethostname()}.local.")
         await self.zeroconf.async_register_service(self.registrazione)
-        if modalita == "tutti10":
+        if modalita in ("tutti10", "tutti"):
             from .ble import AnnuncioBLE
 
             self.ble = AnnuncioBLE.quick_share()

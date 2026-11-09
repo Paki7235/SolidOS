@@ -45,6 +45,33 @@ class BackendSelettore(Backend):
     def fermaQr(self) -> None:
         _servizio("FermaQr")
 
+    def visibilita(self) -> str:
+        nome = branding.nome_dbus("Condivisione1")
+        valore = chiama(nome, branding.percorso_dbus("Condivisione1"), "org.freedesktop.DBus.Properties", "Get",
+                        nome, "Visibilita", timeout=3)
+        return str(valore) if valore is not None else "nessuno"
+
+    def impostaVisibilita(self, modalita: str) -> None:
+        _servizio("ImpostaVisibilita", modalita, timeout=3)
+
+    def diagnosi(self) -> list:
+        """Stato di ogni sistema (Quick Share, AirDrop, LocalSend, QR) e del Bluetooth, con il motivo."""
+        testo = _servizio("StatoBackend", timeout=5)
+        stato = json.loads(str(testo)) if testo else {}
+        nomi = {"quickshare": "Quick Share (Android)", "airdrop": "AirDrop (iPhone, beta)", "localsend": "LocalSend", "qr": "Codice QR"}
+        voci = [{"nome": nomi.get(k, k), "ok": bool(v[0]), "motivo": str(v[1])} for k, v in stato.items()]
+        try:
+            from ..hw import bluetooth
+
+            bt = bluetooth.attivo() if bluetooth.disponibile() else None
+        except Exception:  # noqa: BLE001
+            bt = None
+        voci.append({"nome": "Bluetooth", "ok": bool(bt),
+                     "motivo": "Acceso" if bt else ("Spento: accendilo dal centro di controllo" if bt is False else "Nessun adattatore Bluetooth trovato")})
+        if not stato:
+            voci.insert(0, {"nome": "Servizio", "ok": False, "motivo": "Il servizio Condivisione Vicina non risponde"})
+        return voci
+
 
 def main() -> int:
     inizializza()
