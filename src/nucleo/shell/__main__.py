@@ -142,6 +142,18 @@ class BackendShell(Backend):
 
         return scrivania.cestino(percorso)
 
+    def scrivaniaCollegamento(self, desktop: str) -> bool:
+        from . import scrivania
+
+        return scrivania.aggiungi_collegamento(desktop)
+
+    def dockOrdina(self, ordine) -> None:
+        """Nuovo ordine delle icone fissate (trascinamento nel dock)."""
+        from . import dock
+
+        dock.ordina([str(x) for x in ordine])
+        self.emetti("finestre", None)
+
     def scrivaniaCopia(self, indirizzi) -> int:
         from . import scrivania
 

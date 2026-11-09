@@ -35,6 +35,13 @@ def fissa(desktop: str, si: bool) -> list[str]:
     return elenco
 
 
+def ordina(ordine: list[str]) -> list[str]:
+    """Salva l'ordine delle app fissate; un'app aperta trascinata tra le fissate viene fissata."""
+    elenco = [d for d in ordine if info(d)]
+    scrivi_json(config_utente("dock.json"), {"fissate": elenco})
+    return elenco
+
+
 @lru_cache(maxsize=256)
 def info(desktop: str) -> dict | None:
     """Nome e icona di una voce .desktop (senza estensione); None se non esiste."""

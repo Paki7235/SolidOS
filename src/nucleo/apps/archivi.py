@@ -122,7 +122,33 @@ class BackendArchivi(Backend):
         avvia(["pcmanfm-qt", percorso])
 
 
+def _riga_di_comando(argomenti: list[str]) -> int | None:
+    """Comandi del file manager (menu del tasto destro), senza finestre:
+    --comprimi FILE…  ·  --estrai ARCHIVIO…  ·  --estrai-in CARTELLA ARCHIVIO…"""
+    if not argomenti or argomenti[0] not in ("--comprimi", "--estrai", "--estrai-in"):
+        return None
+    from ..i18n import T
+    from ..sistema import avvia
+
+    b = BackendArchivi()
+    comando, resto = argomenti[0], [a.replace("file://", "") for a in argomenti[1:]]
+    if comando == "--comprimi":
+        r = b.comprimi(resto)
+        messaggio = (T("Creato") + " " + Path(r["percorso"]).name) if r["ok"] else r["errore"]
+    else:
+        destinazione = resto.pop(0) if comando == "--estrai-in" and resto else ""
+        esiti = [b.estrai(a, destinazione) for a in resto]
+        errori = [e["errore"] for e in esiti if not e["ok"]]
+        r = {"ok": not errori}
+        messaggio = errori[0] if errori else T("Estrazione completata")
+    avvia(["notify-send", "--app-name", T("Archivi"), "--icon", "org.gnome.FileRoller", messaggio])
+    return 0 if r["ok"] else 1
+
+
 def main() -> int:
+    codice = _riga_di_comando(sys.argv[1:])
+    if codice is not None:
+        return codice
     return esegui_app("archivi", "Archivi/Main.qml", lambda app: {"ponte": crea_ponte(BackendArchivi())})
 
 

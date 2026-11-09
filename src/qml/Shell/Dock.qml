@@ -10,7 +10,34 @@ Window {
     property var voci: []
     property var inAvvio: ({})
     property string sopra: ""
+    // Trascinamento per riordinare: indice di partenza, posizione d'arrivo, spostamento in px
+    property int trascinaDa: -1
+    property int trascinaA: -1
+    property real spostamento: 0
+    property real alzata: 0
+    property bool appenaTrascinato: false
+    readonly property int quanteFissate: voci.filter(function (v) { return v.fissata }).length
     signal menu(var voce, real centroX)
+
+    function fineTrascinamento() {
+        var da = trascinaDa, a = trascinaA
+        var ids = voci.map(function (v) { return v.id })
+        var trascinata = voci[da]
+        if (alzata < -60 && trascinata.fissata) {
+            shell.chiama("dockFissa", [trascinata.id, false])          // trascinata fuori: tolta dal dock
+        } else if (a !== da || (!trascinata.fissata && a < quanteFissate)) {
+            ids.splice(a, 0, ids.splice(da, 1)[0])
+            var fissate = []
+            for (var i = 0; i < ids.length; i++) {
+                var v = voci.find(function (x) { return x.id === ids[i] })
+                if (v.fissata || (v.id === trascinata.id && a < quanteFissate + (trascinata.fissata ? 0 : 1)))
+                    fissate.push(ids[i])
+            }
+            shell.chiama("dockOrdina", [fissate])
+        }
+        trascinaDa = -1; trascinaA = -1; spostamento = 0; alzata = 0
+        appenaTrascinato = true
+    }
 
     function aggiorna() {
         voci = shell.chiama0("dock")
@@ -74,7 +101,7 @@ Window {
             id: fila
             anchors.centerIn: parent
             anchors.verticalCenterOffset: -2
-            spacing: 2
+            spacing: 0
             Repeater {
                 model: dock.voci
                 Item {
@@ -84,6 +111,16 @@ Window {
                     readonly property bool avvio: dock.inAvvio[modelData.id] !== undefined
                     width: dock.passo
                     height: 58
+                    z: dock.trascinaDa === index ? 2 : 1
+                    // Durante il trascinamento: l'icona trascinata segue il mouse, le altre fanno posto
+                    transform: Translate {
+                        x: dock.trascinaDa === cella.index ? dock.spostamento
+                           : (dock.trascinaDa >= 0 && cella.index > dock.trascinaDa && cella.index <= dock.trascinaA) ? -dock.passo
+                           : (dock.trascinaDa >= 0 && cella.index < dock.trascinaDa && cella.index >= dock.trascinaA) ? dock.passo : 0
+                        y: dock.trascinaDa === cella.index ? Math.min(0, dock.alzata) : 0
+                        Behavior on x { enabled: Tema.animazioni && dock.trascinaDa !== cella.index; NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+                    }
+                    opacity: dock.trascinaDa === cella.index && dock.alzata < -60 && cella.modelData.fissata ? 0.4 : 1
                     // separatore tra fissate e solo aperte
                     Rectangle {
                         visible: !cella.modelData.fissata && (cella.index === 0 || dock.voci[cella.index - 1].fissata)
@@ -131,7 +168,25 @@ Window {
                         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
                         onEntered: { dock.sopra = cella.modelData.nome; nuvola.etichettaX = fondo.x + fila.x + cella.x + cella.width / 2 }
                         onExited: if (dock.sopra === cella.modelData.nome) dock.sopra = ""
+                        property real inizioX: 0
+                        property real inizioY: 0
+                        onPressed: function (ev) { var p = mapToItem(fila, ev.x, ev.y); inizioX = p.x; inizioY = p.y; dock.appenaTrascinato = false }
+                        onPositionChanged: function (ev) {
+                            if (!pressed || ev.buttons !== Qt.LeftButton) return
+                            var p = mapToItem(fila, ev.x, ev.y)
+                            if (dock.trascinaDa < 0 && (Math.abs(p.x - inizioX) > 10 || Math.abs(p.y - inizioY) > 14)) {
+                                dock.trascinaDa = cella.index; dock.trascinaA = cella.index; dock.sopra = ""
+                            }
+                            if (dock.trascinaDa === cella.index) {
+                                dock.spostamento = p.x - inizioX
+                                dock.alzata = p.y - inizioY
+                                var centro = cella.x + cella.width / 2 + dock.spostamento
+                                dock.trascinaA = Math.max(0, Math.min(dock.voci.length - 1, Math.floor(centro / dock.passo)))
+                            }
+                        }
+                        onReleased: if (dock.trascinaDa === cella.index) dock.fineTrascinamento()
                         onClicked: function (ev) {
+                            if (dock.appenaTrascinato) { dock.appenaTrascinato = false; return }
                             dock.sopra = ""
                             if (ev.button === Qt.RightButton) dock.menu(cella.modelData, fondo.x + fila.x + cella.x + cella.width / 2)
                             else if (ev.button === Qt.MiddleButton) shell.chiama("dockApri", [cella.modelData.id])

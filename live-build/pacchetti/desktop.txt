@@ -23,6 +23,12 @@ qt6-svg-plugins
 # App di base
 pcmanfm-qt
 ?gvfs-daemons
+# File manager completo: rete (Windows/SMB, FTP, SFTP, WebDAV), telefoni (MTP, iPhone), cestino
+gvfs
+gvfs-backends
+?gvfs-fuse
+?usbmuxd
+?cifs-utils
 qterminal
 firefox-esr
 

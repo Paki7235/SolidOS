@@ -448,6 +448,7 @@ QtObject {
                 if (finestre.length) out.push({ sep: true })
                 out.push({ t: I18n.t("Nuova finestra"), f: function () { shell.chiama("dockApri", [v.id]) } })
                 out.push({ t: v.fissata ? I18n.t("Togli dal Dock") : I18n.t("Mantieni nel Dock"), f: function () { shell.chiama("dockFissa", [v.id, !v.fissata]) } })
+                out.push({ t: I18n.t("Aggiungi alla scrivania"), f: function () { shell.chiama("scrivaniaCollegamento", [v.id]) } })
                 if (finestre.length) { out.push({ sep: true }); out.push({ t: finestre.length > 1 ? I18n.t("Chiudi tutte") : I18n.t("Chiudi"), f: function () { shell.chiama("dockChiudi", [v.id]) } }) }
                 return out
             }

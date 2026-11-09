@@ -84,7 +84,25 @@ Rectangle {
                 text: modelData.nome
                 color: "#F5F5F7"; font.family: Tema.font; font.pixelSize: 12
             }
-            MouseArea { id: area; anchors.fill: parent; hoverEnabled: true; onClicked: start.avvia(modelData) }
+            MouseArea {
+                id: area
+                anchors.fill: parent
+                hoverEnabled: true
+                acceptedButtons: Qt.LeftButton | Qt.RightButton
+                onClicked: function (ev) {
+                    if (ev.button !== Qt.RightButton) { start.avvia(modelData); return }
+                    var p = mapToItem(start, ev.x, ev.y), app = modelData
+                    menuApp.voci = [
+                        { titolo: app.nome },
+                        { t: I18n.t("Apri"), f: function () { start.avvia(app) } },
+                        { t: I18n.t("Aggiungi alla scrivania"), f: function () { shell.chiama("scrivaniaCollegamento", [app.id]) } },
+                        { t: I18n.t("Aggiungi al Dock"), f: function () { shell.chiama("dockFissa", [app.id, true]) } }
+                    ]
+                    menuApp.x = Math.min(p.x, start.width - menuApp.width - 8)
+                    menuApp.y = Math.min(p.y, start.height - menuApp.height - 8)
+                    menuApp.visible = true
+                }
+            }
         }
         Text {
             anchors.centerIn: parent
@@ -92,6 +110,13 @@ Rectangle {
             text: I18n.t("Nessuna app trovata")
             color: "#A1A1AA"; font.family: Tema.font; font.pixelSize: 13
         }
+    }
+
+    MenuPopup {
+        id: menuApp
+        z: 10
+        visible: false
+        onScelto: visible = false
     }
 
     // Barra inferiore: utente e pulsanti di sistema

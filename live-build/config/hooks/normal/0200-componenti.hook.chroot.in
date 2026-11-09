@@ -43,6 +43,10 @@ if command -v firewall-offline-cmd >/dev/null; then
 	firewall-offline-cmd --set-default-zone=home >/dev/null 2>&1 || true
 	for zona in home work nm-shared; do
 		firewall-offline-cmd --zone="$zona" --add-service=condivisione-vicina >/dev/null 2>&1 || true
+		# Rete nel file manager: scoperta di computer, stampanti e cartelle condivise
+		for servizio in mdns samba-client ws-discovery-client; do
+			firewall-offline-cmd --zone="$zona" --add-service="$servizio" >/dev/null 2>&1 || true
+		done
 	done
 	registro "firewall configurato"
 fi
@@ -98,6 +102,20 @@ else
 	registro "ATTENZIONE: precompilazione QML non riuscita"; tail -n 15 /tmp/qml.log
 fi
 grep -q QML_DISK_CACHE_PATH /etc/environment 2>/dev/null || echo "QML_DISK_CACHE_PATH=/var/cache/nucleo/qml" >>/etc/environment
+
+# ── File manager: «Comprimi» ed «Estrai qui» con l'app Archivi ──────────────
+for elenco in /usr/share/libfm-qt*/archivers.list; do
+	[ -f "$elenco" ] || continue
+	grep -q '^\[@OS_ID@-archivi\]' "$elenco" || cat >>"$elenco" <<'FINE'
+
+[@OS_ID@-archivi]
+create=@OS_ID@-archivi --comprimi %U
+extract=@OS_ID@-archivi --estrai %U
+extract_to=@OS_ID@-archivi --estrai-in %d %U
+mime_types=application/zip;application/x-tar;application/x-compressed-tar;application/x-bzip-compressed-tar;application/x-xz-compressed-tar;application/x-7z-compressed;application/vnd.rar;application/x-rar;application/gzip;application/x-cd-image;
+supports_uris=false
+FINE
+done
 
 # ── Menu delle app: nomi semplici e niente voci tecniche o doppie ─────────────
 A=/usr/share/applications

@@ -149,6 +149,8 @@ def avvia_desktop(desktop: str, file: list[str] | None = None) -> bool:
                 Path("/var/lib/flatpak/exports/share/applications"),
                 Path.home() / ".local/share/flatpak/exports/share/applications"]
     nome = desktop if desktop.endswith(".desktop") else desktop + ".desktop"
+    if desktop.startswith("/"):        # collegamento con percorso completo (es. sulla scrivania)
+        cartelle, nome = [Path(desktop).parent], Path(desktop).name
     for cartella in cartelle:
         percorso = cartella / nome
         if not percorso.is_file():
