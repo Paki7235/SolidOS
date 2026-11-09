@@ -22,13 +22,21 @@ def batteria() -> dict | None:
 
 
 def profili() -> dict:
-    if not esiste("powerprofilesctl"):
-        return {"disponibile": False, "attivo": "", "elenco": []}
-    import re
+    """Profili di alimentazione letti da power-profiles-daemon via D-Bus (risposta entro 2 s)."""
+    from ..dbusutil import a_python, chiama
 
-    attivo = uscita(["powerprofilesctl", "get"]).strip()
-    elenco = re.findall(r"^\s*\*?\s*([a-z-]+):\s*$", uscita(["powerprofilesctl", "list"]), re.M)
-    return {"disponibile": True, "attivo": attivo, "elenco": elenco or ["balanced", "power-saver"]}
+    nulla = {"disponibile": False, "attivo": "", "elenco": []}
+    for nome, percorso in (("org.freedesktop.UPower.PowerProfiles", "/org/freedesktop/UPower/PowerProfiles"),
+                           ("net.hadess.PowerProfiles", "/net/hadess/PowerProfiles")):
+        attivo = chiama(nome, percorso, "org.freedesktop.DBus.Properties", "Get", nome, "ActiveProfile",
+                        sistema=True, timeout=2)
+        if attivo is None:
+            continue
+        profili_dbus = chiama(nome, percorso, "org.freedesktop.DBus.Properties", "Get", nome, "Profiles",
+                              sistema=True, timeout=2)
+        elenco = [str(p.get("Profile")) for p in (a_python(profili_dbus) or []) if isinstance(p, dict)]
+        return {"disponibile": True, "attivo": str(attivo), "elenco": elenco or ["balanced", "power-saver"]}
+    return nulla
 
 
 def imposta_profilo(nome: str) -> bool:

@@ -306,17 +306,19 @@ class PannelloStampanti(Pannello):
             "azioni": [{"id": "predefinita", "testo": T("Predefinita")}, {"id": "prova", "testo": T("Pagina di prova")},
                        {"id": "rimuovi", "testo": T("Rimuovi"), "pericolosa": True}],
         } for s in self._stampanti()]
-        scanner = [r for r in uscita(["scanimage", "-L"], timeout=20).splitlines() if r.startswith("device")]
         return [
             elenco("stampanti", T("Stampanti"), stampanti, vuoto=T("Nessuna stampante configurata")),
             azione("cerca", T("Aggiungi stampanti trovate in rete o via USB"), T("Cerca e aggiungi"),
                    T("Le stampanti moderne funzionano senza driver")),
             intestazione(T("Scanner")),
-            *([info(f"sc{i}", r.split("`")[1].split("'")[0] if "`" in r else r, T("Pronto")) for i, r in enumerate(scanner)]
-              or [info("noscanner", T("Nessuno scanner trovato"), "")]),
+            azione("scanner", T("Scanner collegati"), T("Cerca scanner"), T("La ricerca richiede qualche secondo")),
         ]
 
     def azione(self, voce, elemento, az, dati):
+        if voce == "scanner":
+            trovati = [r for r in uscita(["scanimage", "-L"], timeout=20).splitlines() if r.startswith("device")]
+            nomi = [r.split("`")[1].split("'")[0] if "`" in r else r for r in trovati]
+            return esito(True, (T("Scanner trovati: ") + ", ".join(nomi)) if nomi else T("Nessuno scanner trovato"), ricarica=False)
         if voce == "cerca":
             aggiunte = 0
             for i, t in enumerate(self._trovate()):

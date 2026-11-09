@@ -8,11 +8,19 @@ from ..sistema import esegui, esiste, uscita
 
 
 def disponibile() -> bool:
-    return esiste("bluetoothctl") and "Controller" in uscita(["bluetoothctl", "list"], timeout=5)
+    from pathlib import Path
+
+    if not any(Path("/sys/class/bluetooth").glob("hci*")):
+        return False            # nessun adattatore: risposta immediata
+    return esiste("bluetoothctl") and "Controller" in uscita(["bluetoothctl", "list"], timeout=3)
 
 
 def attivo() -> bool:
-    return "Powered: yes" in uscita(["bluetoothctl", "show"], timeout=5)
+    from pathlib import Path
+
+    if not any(Path("/sys/class/bluetooth").glob("hci*")):
+        return False
+    return "Powered: yes" in uscita(["bluetoothctl", "show"], timeout=3)
 
 
 def imposta(acceso: bool) -> bool:
