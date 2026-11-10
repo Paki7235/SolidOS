@@ -8,8 +8,8 @@ Rectangle {
     property var voci: []
     property var sottovoci: null
     readonly property var mostrate: sottovoci !== null ? [{ t: "‹  " + I18n.t("Indietro"), indietro: true }, { sep: true }].concat(sottovoci) : voci
-    onVociChanged: sottovoci = null
-    onVisibleChanged: if (!visible) sottovoci = null
+    onVociChanged: if (sottovoci !== null) sottovoci = null
+    onVisibleChanged: if (!visible && sottovoci !== null) sottovoci = null
     signal scelto()
     width: 250
     height: colonna.implicitHeight + 10

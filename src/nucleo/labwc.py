@@ -94,7 +94,21 @@ def imposta(valori: dict[str, str], attributi_per: dict[str, dict] | None = None
 
 
 def riconfigura() -> None:
-    avvia(["labwc", "--reconfigure"])
+    """Ricarica tema e scorciatoie. «labwc --reconfigure» funziona solo dentro la sessione
+    (serve LABWC_PID); altrimenti si manda a labwc il segnale HUP, che fa la stessa cosa."""
+    if os.environ.get("LABWC_PID"):
+        avvia(["labwc", "--reconfigure"])
+        return
+    import signal
+    import subprocess
+
+    try:
+        pid = subprocess.run(["pgrep", "-u", str(os.getuid()), "-x", "labwc"], capture_output=True, text=True,
+                             timeout=3).stdout.split()
+        for p in pid:
+            os.kill(int(p), signal.SIGHUP)
+    except (OSError, ValueError, subprocess.TimeoutExpired):
+        pass
 
 
 def imposta_ambiente(variabili: dict[str, str]) -> None:

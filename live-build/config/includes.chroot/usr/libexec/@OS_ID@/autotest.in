@@ -47,6 +47,7 @@ fi
 immagine 02-dal-dock
 pkill -u "$UTENTE" -f 'nucleo.impostazioni' 2>/dev/null; sleep 2
 
+pkill -u "$UTENTE" -f 'nucleo.benvenuto' 2>/dev/null; sleep 2   # la finestra di benvenuto coprirebbe la scrivania
 # ── Scrivania con clic veri: il mouse virtuale di QEMU esegue le richieste «AUTOTEST-MOUSE» ──
 mouse() { scrivi "AUTOTEST-MOUSE $*"; sleep 4; }
 come_utente python3 -c "from nucleo.shell import scrivania; print(scrivania.aggiungi_collegamento('@OS_ID@-calcolatrice'))" >/dev/null 2>&1

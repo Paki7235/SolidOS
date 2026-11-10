@@ -23,6 +23,7 @@ Window {
     property string afferrata: ""          // l'icona presa con il mouse
     property var cellaDiArrivo: null       // dove mettere i file appena arrivati
     property bool tagliati: false
+    property var ultimaPressione: ({ percorso: "", t: 0 })
     property bool cestinoPieno: shell.chiama0("cestinoPieno")
     // tema chiaro/scuro: si passa alla versione dello sfondo adatta
     property bool temaChiaro: Tema.chiaro
@@ -254,10 +255,10 @@ Window {
         onPressed: function (ev) {
             menu.visible = false
             scrivania.inRinomina = ""
-            scrivania.requestActivate()
             inizio = Qt.point(ev.x, ev.y)
             base = (ev.modifiers & Qt.ControlModifier) ? Object.assign({}, scrivania.scelti) : ({})
             if (ev.button === Qt.LeftButton && !(ev.modifiers & Qt.ControlModifier)) scrivania.scelti = ({})
+            if (ev.button === Qt.RightButton) scrivania.menuSfondo(ev.x, ev.y)
         }
         onPositionChanged: function (ev) {
             if (!(ev.buttons & Qt.LeftButton)) return
@@ -274,7 +275,6 @@ Window {
         }
         onReleased: attivo = false
         onCanceled: attivo = false
-        onClicked: function (ev) { if (ev.button === Qt.RightButton) scrivania.menuSfondo(ev.x, ev.y) }
     }
 
     // File lasciati sulla scrivania
@@ -365,8 +365,9 @@ Window {
                 maximumLineCount: icona.selezionata ? 4 : 2
                 elide: Text.ElideRight
                 text: icona.e.nome
-                color: "#FFFFFF"
-                style: Text.Raised; styleColor: "#B3000000"
+                // nomi leggibili su ogni sfondo: scuri col tema chiaro, chiari col tema scuro
+                color: Tema.chiaro ? "#1D1D1F" : "#FFFFFF"
+                style: Text.Raised; styleColor: Tema.chiaro ? "#B3FFFFFF" : "#B3000000"
                 font.family: Tema.font; font.pixelSize: 12
             }
             MouseArea {
@@ -380,20 +381,25 @@ Window {
                     scrivania.afferrata = icona.e.percorso
                     scrivania.trascinati = icona.selezionata ? scrivania.selezionati().map(function (x) { return x.percorso }) : [icona.e.percorso]
                 }
+                // Tutto avviene alla pressione del tasto: sullo sfondo del desktop il rilascio
+                // può non arrivare, quindi doppio clic e menu non aspettano il «clic completo».
                 onPressed: function (ev) {
                     menu.visible = false
-                    scrivania.requestActivate()
-                    if (ev.button === Qt.LeftButton && !icona.selezionata) scrivania.seleziona(icona.e, ev.modifiers)
-                }
-                onClicked: function (ev) {
                     if (ev.button === Qt.RightButton) {
                         var p = icona.mapToItem(scrivania.contentItem, ev.x, ev.y)
                         scrivania.menuIcona(icona.e, p.x, p.y)
-                    } else if (!(ev.modifiers & (Qt.ControlModifier | Qt.ShiftModifier))) {
-                        var n = {}; n[icona.e.percorso] = true; scrivania.scelti = n; scrivania.ultimo = icona.e.percorso
-                    } else if (icona.selezionata && (ev.modifiers & Qt.ControlModifier)) scrivania.seleziona(icona.e, ev.modifiers)
+                        return
+                    }
+                    var adesso = Date.now()
+                    if (scrivania.ultimaPressione.percorso === icona.e.percorso && adesso - scrivania.ultimaPressione.t < 500) {
+                        scrivania.ultimaPressione = { percorso: "", t: 0 }
+                        shell.chiama("scrivaniaApri", [icona.e.percorso])
+                        return
+                    }
+                    scrivania.ultimaPressione = { percorso: icona.e.percorso, t: adesso }
+                    if (ev.modifiers & (Qt.ControlModifier | Qt.ShiftModifier)) scrivania.seleziona(icona.e, ev.modifiers)
+                    else if (!icona.selezionata) { var n = {}; n[icona.e.percorso] = true; scrivania.scelti = n; scrivania.ultimo = icona.e.percorso }
                 }
-                onDoubleClicked: function (ev) { if (ev.button === Qt.LeftButton) shell.chiama("scrivaniaApri", [icona.e.percorso]) }
                 onReleased: { fantasma.x = 0; fantasma.y = 0 }
             }
             // Cartelle e Cestino: ci si possono lasciare sopra file e icone
@@ -440,13 +446,13 @@ Window {
     }
 
     // Tastiera (quando la scrivania è in primo piano)
-    Shortcut { sequence: StandardKey.Delete; enabled: !scrivania.inRinomina; onActivated: scrivania.cestina() }
+    Shortcut { sequences: [StandardKey.Delete]; enabled: !scrivania.inRinomina; onActivated: scrivania.cestina() }
     Shortcut { sequence: "F2"; onActivated: { var s = scrivania.selezionati(); if (s.length === 1 && !s[0].sistema) scrivania.inRinomina = s[0].percorso } }
     Shortcut { sequence: "Return"; enabled: !scrivania.inRinomina; onActivated: scrivania.apriSelezionati() }
-    Shortcut { sequence: StandardKey.SelectAll; enabled: !scrivania.inRinomina; onActivated: { var n = {}; scrivania.elementi.forEach(function (e) { n[e.percorso] = true }); scrivania.scelti = n } }
-    Shortcut { sequence: StandardKey.Copy; enabled: !scrivania.inRinomina; onActivated: scrivania.copia(false) }
-    Shortcut { sequence: StandardKey.Cut; enabled: !scrivania.inRinomina; onActivated: scrivania.copia(true) }
-    Shortcut { sequence: StandardKey.Paste; enabled: !scrivania.inRinomina; onActivated: scrivania.incolla() }
+    Shortcut { sequences: [StandardKey.SelectAll]; enabled: !scrivania.inRinomina; onActivated: { var n = {}; scrivania.elementi.forEach(function (e) { n[e.percorso] = true }); scrivania.scelti = n } }
+    Shortcut { sequences: [StandardKey.Copy]; enabled: !scrivania.inRinomina; onActivated: scrivania.copia(false) }
+    Shortcut { sequences: [StandardKey.Cut]; enabled: !scrivania.inRinomina; onActivated: scrivania.copia(true) }
+    Shortcut { sequences: [StandardKey.Paste]; enabled: !scrivania.inRinomina; onActivated: scrivania.incolla() }
     Shortcut { sequence: "Escape"; onActivated: { menu.visible = false; scrivania.scelti = ({}); scrivania.inRinomina = "" } }
     Shortcut { sequence: "F5"; onActivated: scrivania.aggiorna() }
 
