@@ -3,7 +3,7 @@
 <openbox_menu>
   <menu id="root-menu" label="@OS_NAME@">
     <item label="@T_MENU_FILE@"><action name="Execute" command="@OS_ID@-file" /></item>
-    <item label="@T_MENU_BROWSER@"><action name="Execute" command="firefox-esr" /></item>
+    <item label="@T_MENU_BROWSER@"><action name="Execute" command="@OS_ID@-web" /></item>
     <item label="@T_MENU_TERMINALE@"><action name="Execute" command="qterminal" /></item>
     <item label="@T_MENU_EDITOR@"><action name="Execute" command="@OS_ID@-testo" /></item>
     <separator />

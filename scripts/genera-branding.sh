@@ -162,7 +162,8 @@ if [[ -d $SRC ]]; then
 				echo "Type=Application"
 				echo "Name=$nome"
 				echo "Comment=$descrizione"
-				echo "Exec=$OS_ID-$comando %F"
+				# le app che aprono indirizzi web ricevono URL (%U), le altre file (%F)
+				if [[ ${mime:-} == *x-scheme-handler* ]]; then echo "Exec=$OS_ID-$comando %U"; else echo "Exec=$OS_ID-$comando %F"; fi
 				echo "Icon=$icona"
 				echo "Categories=$categorie"
 				echo "Terminal=false"

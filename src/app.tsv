@@ -32,3 +32,4 @@ calcolatrice	nucleo.apps.calcolatrice	Calcolatrice	org.gnome.Calculator	Utility;
 archivi	nucleo.apps.archivi	Archivi	org.gnome.FileRoller	Utility;Archiving;	Apri, estrai e crea archivi zip	no	application/zip;application/x-tar;application/x-compressed-tar;application/x-bzip-compressed-tar;application/x-xz-compressed-tar;application/x-7z-compressed;application/vnd.rar;application/x-rar;application/gzip;
 file	nucleo.apps.file	File	system-file-manager	System;FileManager;Utility;	Sfoglia file, cartelle, rete e dispositivi	no	inode/directory;
 note	nucleo.apps.note	Note	accessories-notes	Office;Utility;	Appunti veloci, liste di cose da fare e idee, come su iPhone e Mac	no	
+web	nucleo.apps.web	Web	epiphany	Network;WebBrowser;	Naviga in internet: schede, preferiti, download e finestra privata	no	text/html;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;
