@@ -155,6 +155,32 @@ for f in "${ELENCO[@]}"; do
 	sleep 2
 done
 
+# ── Galleria: tutto anche col tema chiaro, e con la barra stile Windows ──────
+aspetto() { come_utente python3 -c "from nucleo.impostazioni.pannelli_aspetto import PannelloAspetto as P, PannelloPannello as Q; P().imposta('tema', '$1'); Q().imposta('barra', '$2')" >/dev/null 2>&1; sleep 5; }
+pannelli_shell() { # PREFISSO
+	immagine "$1-scrivania"
+	come_utente @OS_ID@-ctl start; sleep 3; immagine "$1-start"; come_utente @OS_ID@-ctl start; sleep 1
+	come_utente @OS_ID@-ctl controllo; sleep 3; immagine "$1-centro-controllo"; come_utente @OS_ID@-ctl controllo; sleep 1
+	come_utente @OS_ID@-ctl notifiche; sleep 3; immagine "$1-notifiche"; come_utente @OS_ID@-ctl notifiche; sleep 1
+}
+aspetto scuro windows; pannelli_shell scuro-windows
+aspetto chiaro windows; pannelli_shell chiaro-windows
+aspetto chiaro mac; pannelli_shell chiaro-mac
+for f in "${ELENCO[@]}"; do
+	nome=$(basename "$f" .desktop)
+	cmd=$(grep -m1 '^Exec=' "$f" | cut -d= -f2- | sed 's/ %[a-zA-Z]//g')
+	case $cmd in *-ctl\ *|*-barra) continue ;; esac
+	setsid runuser -u "$UTENTE" -- env "${AMBIENTE[@]}" sh -c "$cmd" >/dev/null 2>&1 &
+	pid=$!
+	sleep 9
+	immagine "chiaro-$nome"
+	pkill -KILL -s "$pid" 2>/dev/null
+	pkill -KILL -u "$UTENTE" -f "$(echo "$cmd" | awk '{print $1}')" 2>/dev/null
+	sleep 2
+done
+aspetto scuro mac
+scrivi "AUTOTEST-GALLERIA fatta"
+
 scrivi "AUTOTEST RAM finale: $(free -m | awk '/^Mem/{print $3"MB usati su "$2}')"
 ps -eo rss=,comm= --sort=-rss | head -15 | awk '{printf "AUTOTEST-MEM %d MB %s\n", $1/1024, $2}' >"$USCITA"
 scrivi "AUTOTEST FINE"

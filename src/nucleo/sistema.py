@@ -202,15 +202,25 @@ SFONDO_INIZIALE = "/usr/share/backgrounds/{id}/notte.png"
 
 
 def sfondo_attuale() -> str:
-    """Percorso dello sfondo scelto dall'utente (o quello iniziale)."""
+    """Percorso dello sfondo scelto dall'utente (o quello iniziale).
+    Gli sfondi del sistema esistono in coppia («nome.png» scuro, «nome-chiaro.png» chiaro):
+    si usa da solo quello adatto al tema chiaro o scuro."""
     from . import branding
 
+    percorso = SFONDO_INIZIALE.format(id=branding.id_os())
     f = config_utente("sfondo")
     if f.exists():
-        percorso = f.read_text().strip()
-        if percorso and Path(percorso).exists():
-            return percorso
-    return SFONDO_INIZIALE.format(id=branding.id_os())
+        scelto = f.read_text().strip()
+        if scelto and Path(scelto).exists():
+            percorso = scelto
+    p = Path(percorso)
+    if p.parent == Path(SFONDO_INIZIALE.format(id=branding.id_os())).parent:
+        base = p.stem.removesuffix("-chiaro")
+        chiaro = leggi_json(config_utente("aspetto.json"), {}).get("tema") == "chiaro"
+        variante = p.with_name(base + ("-chiaro" if chiaro else "") + p.suffix)
+        if variante.exists():
+            return str(variante)
+    return percorso
 
 
 def imposta_sfondo(percorso: str) -> None:

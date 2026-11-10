@@ -24,6 +24,9 @@ Window {
     property var cellaDiArrivo: null       // dove mettere i file appena arrivati
     property bool tagliati: false
     property bool cestinoPieno: shell.chiama0("cestinoPieno")
+    // tema chiaro/scuro: si passa alla versione dello sfondo adatta
+    property bool temaChiaro: Tema.chiaro
+    onTemaChiaroChanged: sfondo = shell.chiama0("sfondo") + "?" + Date.now()
 
     // ── Griglia ──────────────────────────────────────────────────────────────
     readonly property int lato: conf.lato || 52

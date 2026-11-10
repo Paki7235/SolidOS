@@ -53,8 +53,10 @@ class PannelloAspetto(Pannello):
 
     def _sfondi(self) -> list[Path]:
         cartelle = [Path("/usr/share/backgrounds"), Path.home() / ".local/share/backgrounds"]
+        # le versioni «-chiaro» degli sfondi del sistema non si elencano: il tema le sceglie da solo
         return sorted(p for c in cartelle if c.is_dir() for p in c.rglob("*")
-                      if p.suffix.lower() in (".png", ".jpg", ".jpeg", ".webp"))[:40]
+                      if p.suffix.lower() in (".png", ".jpg", ".jpeg", ".webp")
+                      and not (p.stem.endswith("-chiaro") and p.with_name(p.stem.removesuffix("-chiaro") + p.suffix).exists()))[:40]
 
     def voci(self):
         pref = leggi_json(config_utente("aspetto.json"), {})
@@ -65,14 +67,25 @@ class PannelloAspetto(Pannello):
         from ..sistema import sfondo_attuale as _sfondo
 
         sfondo_attuale = _sfondo()
+        chiaro = pref.get("tema") == "chiaro"
+
+        def uguale(p: Path) -> bool:      # «notte.png» e «notte-chiaro.png» sono lo stesso sfondo
+            a = Path(sfondo_attuale)
+            return p.parent == a.parent and p.stem.removesuffix("-chiaro") == a.stem.removesuffix("-chiaro") and p.suffix == a.suffix
+
+        def anteprima(p: Path) -> str:
+            v = p.with_name(p.stem + "-chiaro" + p.suffix)
+            return str(v) if chiaro and v.exists() else str(p)
+
         return [
             scelta("tema", T("Tema"), pref.get("tema", "scuro"), [("scuro", T("Scuro")), ("chiaro", T("Chiaro"))]),
             scelta("accento", T("Colore d'accento"), pref.get("accento", branding.get("COLORE_ACCENTO")), ACCENTI),
             intestazione(T("Sfondo")),
             elenco("sfondi", T("Sfondi"), [{
-                "id": str(p), "titolo": p.stem.replace("-", " ").capitalize(), "sottotitolo": str(p.parent),
-                "icona": str(p), "attivo": str(p) == sfondo_attuale,
-                "azioni": [] if str(p) == sfondo_attuale else [{"id": "usa", "testo": T("Usa")}]} for p in self._sfondi()]),
+                "id": str(p), "titolo": p.stem.replace("-", " ").capitalize(),
+                "sottotitolo": T("Chiaro e scuro, segue il tema") if p.with_name(p.stem + "-chiaro" + p.suffix).exists() else str(p.parent),
+                "icona": anteprima(p), "attivo": uguale(p),
+                "azioni": [] if uguale(p) else [{"id": "usa", "testo": T("Usa")}]} for p in self._sfondi()]),
             azione("sfondo-file", T("Usa un'immagine personale"), T("Scegli…"), file=True),
             intestazione(T("Testo e icone")),
             scelta("font-dimensione", T("Dimensione del testo"), pref.get("font_dimensione", branding.get("FONT_UI_DIMENSIONE", "10")),
