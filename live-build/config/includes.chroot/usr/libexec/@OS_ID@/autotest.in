@@ -46,6 +46,43 @@ else
 fi
 immagine 02-dal-dock
 pkill -u "$UTENTE" -f 'nucleo.impostazioni' 2>/dev/null; sleep 2
+
+# ── Scrivania con clic veri: il mouse virtuale di QEMU esegue le richieste «AUTOTEST-MOUSE» ──
+mouse() { scrivi "AUTOTEST-MOUSE $*"; sleep 4; }
+come_utente python3 -c "from nucleo.shell import scrivania; print(scrivania.aggiungi_collegamento('@OS_ID@-calcolatrice'))" >/dev/null 2>&1
+sleep 4
+immagine scrivania-collegamento
+# primo posto della griglia (icone medie, barra in alto): centro a 60,93
+mouse 60 93 doppio
+sleep 6
+if grep -q '"appId": "@OS_ID@-calcolatrice"' "$STATO/finestre.json" 2>/dev/null; then
+	scrivi "AUTOTEST-SCRIVANIA collegamento aperto con doppio clic: OK"
+else
+	scrivi "AUTOTEST-SCRIVANIA ERRORE: il doppio clic sul collegamento non ha aperto l'app"
+fi
+immagine scrivania-doppio-clic
+pkill -u "$UTENTE" -f 'nucleo.apps.calcolatrice' 2>/dev/null; sleep 2
+mouse 640 420 destro
+immagine scrivania-menu
+mouse esc 0 tasto
+mouse 60 93 destro
+immagine scrivania-menu-icona
+mouse esc 0 tasto
+# Barra unica in basso (stile Windows) e tema chiaro
+come_utente python3 -c "from nucleo.impostazioni.pannelli_aspetto import PannelloPannello as P; P().imposta('barra', 'windows')" >/dev/null 2>&1
+sleep 5
+immagine barra-windows
+come_utente python3 -c "from nucleo.impostazioni.pannelli_aspetto import PannelloAspetto as P; P().imposta('tema', 'chiaro')" >/dev/null 2>&1
+sleep 5
+setsid runuser -u "$UTENTE" -- env "${AMBIENTE[@]}" @OS_ID@-file >/dev/null 2>&1 &
+sleep 7
+immagine tema-chiaro-file
+pkill -u "$UTENTE" -f 'nucleo.apps.file' 2>/dev/null; sleep 1
+come_utente @OS_ID@-ctl start >/dev/null 2>&1; sleep 3
+immagine tema-chiaro-start
+come_utente @OS_ID@-ctl start >/dev/null 2>&1; sleep 1
+come_utente python3 -c "from nucleo.impostazioni.pannelli_aspetto import PannelloAspetto as P, PannelloPannello as Q; P().imposta('tema', 'scuro'); Q().imposta('barra', 'mac')" >/dev/null 2>&1
+sleep 4
 # Impostazioni: ogni pannello deve leggere le sue voci senza errori (e ne salva una foto)
 come_utente python3 - >"$USCITA" 2>&1 <<'PY'
 import time, traceback

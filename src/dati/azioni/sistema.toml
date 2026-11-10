@@ -125,7 +125,7 @@ id = "blocca"
 titolo = "Blocca lo schermo"
 icona = "system-lock-screen"
 frasi = ["blocca", "blocca schermo", "blocca il computer"]
-comando = ["swaylock", "-f"]
+comando = ["@OS_ID@-blocca"]
 
 [[azione]]
 id = "spegni-pc"

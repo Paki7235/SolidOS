@@ -1,0 +1,13 @@
+#!/bin/sh
+# Blocca lo schermo (Super+L, menu, inattività, standby).
+# Nella sessione live dalla chiavetta l'utente non ha una password sua:
+# bloccare significherebbe non poter più rientrare, quindi non si blocca.
+if grep -qw 'boot=live' /proc/cmdline 2>/dev/null; then
+	exit 0
+fi
+# Account senza password: niente blocco (non ci sarebbe modo di sbloccare)
+if passwd -S "$(id -un)" 2>/dev/null | awk '{print $2}' | grep -q '^NP$'; then
+	exit 0
+fi
+pgrep -x swaylock >/dev/null && exit 0
+exec swaylock -f "$@"   # aspetto in /etc/swaylock/config

@@ -17,8 +17,8 @@ Rectangle {
     width: 640
     height: 560
     radius: 14
-    color: "#F21C1D22"
-    border.color: "#24FFFFFF"
+    color: Tema.vetro
+    border.color: Tema.vetroBordo
     border.width: 1
     MouseArea { anchors.fill: parent }   // i clic dentro non chiudono il menu
 
@@ -39,7 +39,7 @@ Rectangle {
     Text {
         x: 24; y: 70
         text: start.filtro ? I18n.t("Risultati") : I18n.t("Tutte le app")
-        color: "#A1A1AA"; font.family: Tema.font; font.pixelSize: 12; font.weight: Font.DemiBold
+        color: Tema.testoVetroSecondario; font.family: Tema.font; font.pixelSize: 12; font.weight: Font.DemiBold
     }
 
     // Griglia delle app
@@ -63,7 +63,7 @@ Rectangle {
                 anchors.fill: parent
                 anchors.margins: 4
                 radius: 10
-                color: area.pressed ? "#33FFFFFF" : (area.containsMouse || (start.filtro && index === 0) ? "#1FFFFFFF" : "transparent")
+                color: area.pressed ? Tema.premuto : (area.containsMouse || (start.filtro && index === 0) ? Tema.sopra : "transparent")
             }
             Image {
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -82,7 +82,7 @@ Rectangle {
                 maximumLineCount: 2
                 wrapMode: Text.Wrap
                 text: modelData.nome
-                color: "#F5F5F7"; font.family: Tema.font; font.pixelSize: 12
+                color: Tema.testoVetro; font.family: Tema.font; font.pixelSize: 12
             }
             MouseArea {
                 id: area
@@ -108,7 +108,7 @@ Rectangle {
             anchors.centerIn: parent
             visible: griglia.count === 0
             text: I18n.t("Nessuna app trovata")
-            color: "#A1A1AA"; font.family: Tema.font; font.pixelSize: 13
+            color: Tema.testoVetroSecondario; font.family: Tema.font; font.pixelSize: 13
         }
     }
 
@@ -125,7 +125,7 @@ Rectangle {
         width: parent.width
         height: 56
         radius: 14
-        color: "#14FFFFFF"
+        color: Tema.separatore
         Rectangle { width: parent.width; height: 14; color: parent.color; anchors.top: parent.top; visible: false }
         Row {
             anchors.verticalCenter: parent.verticalCenter
@@ -137,7 +137,7 @@ Rectangle {
                 gradient: Gradient { GradientStop { position: 0; color: "#A1A1AA" } GradientStop { position: 1; color: "#6E6E76" } }
                 Text { anchors.centerIn: parent; text: Tema.nomeSistema.charAt(0); color: "#FFFFFF"; font.family: Tema.font; font.pixelSize: 14; font.weight: Font.DemiBold }
             }
-            Text { anchors.verticalCenter: parent.verticalCenter; text: Tema.nomeSistema; color: "#F5F5F7"; font.family: Tema.font; font.pixelSize: 13 }
+            Text { anchors.verticalCenter: parent.verticalCenter; text: Tema.nomeSistema; color: Tema.testoVetro; font.family: Tema.font; font.pixelSize: 13 }
         }
         Row {
             anchors.verticalCenter: parent.verticalCenter
@@ -155,13 +155,13 @@ Rectangle {
                     width: contenuto.width + 20
                     height: 34
                     radius: 8
-                    color: ma.pressed ? "#33FFFFFF" : (ma.containsMouse ? "#24FFFFFF" : "transparent")
+                    color: ma.pressed ? Tema.premuto : (ma.containsMouse ? Tema.sopra : "transparent")
                     Row {
                         id: contenuto
                         anchors.centerIn: parent
                         spacing: 7
                         Image { width: 18; height: 18; sourceSize.width: 36; sourceSize.height: 36; source: "image://icona/" + modelData.i; anchors.verticalCenter: parent.verticalCenter }
-                        Text { text: modelData.t; color: "#F5F5F7"; font.family: Tema.font; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
+                        Text { text: modelData.t; color: Tema.testoVetro; font.family: Tema.font; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
                     }
                     MouseArea { id: ma; anchors.fill: parent; hoverEnabled: true; onClicked: { modelData.f(); start.chiudi() } }
                 }

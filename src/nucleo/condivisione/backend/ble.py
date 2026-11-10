@@ -1,8 +1,6 @@
 """Annunci Bluetooth LE tramite BlueZ (D-Bus di sistema).
 
 - Quick Share: servizio 0xFE2C, fa comparire il PC sui telefoni Android vicini.
-- AirDrop: dati produttore Apple (0x004C, tipo 0x05), «sveglia» gli iPhone in
-  modalità «Tutti per 10 minuti» così attivano il collegamento AWDL.
 Nota: niente «from __future__ import annotations» (dbus-next legge le annotazioni).
 """
 
@@ -57,12 +55,6 @@ class AnnuncioBLE:
     def quick_share(cls):
         dati = bytes([0xFC, 0x12, 0x8E, 0x01, 0x42, 0, 0, 0, 0, 0, 0, 0, 0, 0]) + secrets.token_bytes(10)
         return cls("quickshare", ["fe2c"], {"fe2c": dati})
-
-    @classmethod
-    def airdrop(cls):
-        # tipo 0x05 (AirDrop), lunghezza 0x12: 8 zeri, versione 1, quattro hash vuoti (2 byte), zero finale
-        dati = bytes([0x05, 0x12]) + bytes(8) + bytes([0x01]) + bytes(8) + bytes([0x00])
-        return cls("airdrop", dati_produttore={0x004C: dati})
 
     async def avvia(self) -> bool:
         try:

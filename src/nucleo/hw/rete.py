@@ -17,7 +17,23 @@ def wifi_attivo() -> bool:
 
 
 def imposta_wifi(attivo: bool) -> bool:
-    return esegui(["nmcli", "radio", "wifi", "on" if attivo else "off"]).returncode == 0
+    ok = esegui(["nmcli", "radio", "wifi", "on" if attivo else "off"]).returncode == 0
+    if ok and attivo:
+        # dopo l'accensione la scheda impiega qualche secondo: si aspetta che sia pronta
+        # e si cercano subito le reti (altrimenti l'elenco risulta vuoto «senza motivo»)
+        import time
+
+        fine = time.monotonic() + 12
+        while time.monotonic() < fine:
+            stati = [_campi(r) for r in uscita(["nmcli", "-t", "-f", "TYPE,STATE", "device"], timeout=5).splitlines()]
+            if any(c[0] == "wifi" and len(c) > 1 and c[1] not in ("unavailable", "unmanaged") for c in stati):
+                break
+            time.sleep(0.5)
+        esegui(["nmcli", "device", "wifi", "rescan"], timeout=10)
+        fine = time.monotonic() + 8
+        while time.monotonic() < fine and not reti_wifi():
+            time.sleep(1)
+    return ok
 
 
 def reti_wifi(scansiona: bool = False) -> list[dict]:
@@ -37,11 +53,20 @@ def reti_wifi(scansiona: bool = False) -> list[dict]:
 
 
 def connetti_wifi(ssid: str, password: str = "") -> dict:
-    cmd = ["nmcli", "device", "wifi", "connect", ssid]
+    cmd = ["nmcli", "--wait", "40", "device", "wifi", "connect", ssid]
     if password:
         cmd += ["password", password]
-    r = esegui(cmd, timeout=45)
-    return {"ok": r.returncode == 0, "messaggio": (r.stderr or r.stdout).strip()}
+    r = esegui(cmd, timeout=50)
+    testo = (r.stderr or r.stdout).strip()
+    if r.returncode != 0:
+        basso = testo.lower()
+        if "secrets were required" in basso or "password" in basso or "802-1x" in basso:
+            testo = "Password sbagliata: riprova"
+        elif "no network with ssid" in basso:
+            testo = "Rete non trovata: avvicinati al router e riprova"
+        elif "timeout" in basso:
+            testo = "Il router non risponde: riprova tra poco"
+    return {"ok": r.returncode == 0, "messaggio": testo}
 
 
 def disconnetti_wifi() -> bool:

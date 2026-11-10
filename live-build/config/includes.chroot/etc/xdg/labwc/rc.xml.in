@@ -85,9 +85,9 @@
     <keybind key="W-S-Tab"><action name="PreviousWindow" /></keybind>
     <keybind key="C-W-f"><action name="ToggleFullscreen" /></keybind>
     <keybind key="W-comma"><action name="Execute" command="@OS_ID@-impostazioni" /></keybind>
-    <keybind key="C-W-q"><action name="Execute" command="swaylock -f" /></keybind>
+    <keybind key="C-W-q"><action name="Execute" command="@OS_ID@-blocca" /></keybind>
     <keybind key="W-space"><action name="Execute" command="@OS_ID@-barra" /></keybind>
-    <keybind key="W-l"><action name="Execute" command="swaylock -f" /></keybind>
+    <keybind key="W-l"><action name="Execute" command="@OS_ID@-blocca" /></keybind>
     <keybind key="W-i"><action name="Execute" command="@OS_ID@-impostazioni" /></keybind>
     <keybind key="W-t"><action name="Execute" command="@OS_ID@-linea-del-tempo" /></keybind>
     <keybind key="C-S-Escape"><action name="Execute" command="@OS_ID@-monitor" /></keybind>

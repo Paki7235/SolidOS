@@ -1,4 +1,6 @@
-// Menu del tasto destro del gestore dei file. mostra(voci, x, y) con voci come MenuPopup della shell.
+// Menu del tasto destro del gestore dei file. mostra(voci, x, y) con voci come MenuPopup della shell:
+// { t: "Testo", f: function, spunta: bool, sotto: [voci…] } · { sep: true }.
+// Una voce con «sotto» apre il sottomenu (con «‹ Indietro» per tornare).
 import QtQuick
 import QtQuick.Controls
 import SolidUI
@@ -6,8 +8,9 @@ import SolidUI
 Popup {
     id: menu
     property var voci: []
+    property var principali: []
     function mostra(v, px, py) {
-        voci = v
+        voci = v; principali = v
         x = Math.min(px, parent.width - width - 6)
         y = Math.min(py, parent.height - colonna.implicitHeight - 16)
         open()
@@ -35,11 +38,24 @@ Popup {
                     Text {
                         x: 10; anchors.verticalCenter: parent.verticalCenter
                         width: parent.width - 20; elide: Text.ElideRight
-                        text: modelData.t || ""
-                        color: area.containsMouse ? "#FFFFFF" : Tema.testo
+                        text: (modelData.spunta === true ? "✓  " : (modelData.spunta === false ? "     " : "")) + (modelData.t || "")
+                        color: area.containsMouse ? "#FFFFFF" : (modelData.disattiva ? Tema.testoSecondario : Tema.testo)
                         font.family: Tema.font; font.pixelSize: 13
                     }
-                    MouseArea { id: area; anchors.fill: parent; hoverEnabled: true; onClicked: { menu.close(); if (modelData.f) modelData.f() } }
+                    Text {
+                        visible: !!modelData.sotto
+                        anchors.right: parent.right; anchors.rightMargin: 10; anchors.verticalCenter: parent.verticalCenter
+                        text: "›"; color: area.containsMouse ? "#FFFFFF" : Tema.testoSecondario; font.pixelSize: 15
+                    }
+                    MouseArea {
+                        id: area; anchors.fill: parent; hoverEnabled: !modelData.disattiva
+                        onClicked: {
+                            if (modelData.disattiva) return
+                            if (modelData.sotto) { menu.voci = [{ t: "‹  " + I18n.t("Indietro"), f: null, indietro: true }, { sep: true }].concat(modelData.sotto); return }
+                            if (modelData.indietro) { menu.voci = menu.principali; return }
+                            menu.close(); if (modelData.f) modelData.f()
+                        }
+                    }
                 }
             }
         }

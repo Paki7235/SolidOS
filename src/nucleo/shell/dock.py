@@ -16,7 +16,7 @@ CARTELLE = [Path.home() / ".local/share/applications", Path("/usr/share/applicat
 
 def predefinite() -> list[str]:
     i = branding.id_os()
-    return [f"{i}-file", "firefox-esr", "qterminal", f"{i}-store", f"{i}-linea-del-tempo",
+    return [f"{i}-file", "firefox-esr", f"{i}-note", "qterminal", f"{i}-store", f"{i}-linea-del-tempo",
             f"{i}-condividi", f"{i}-monitor", f"{i}-impostazioni"]
 
 
@@ -120,7 +120,8 @@ def tutte_le_app() -> list[dict]:
             except (configparser.Error, KeyError, UnicodeDecodeError):
                 continue
             if v.get("Type", "Application") != "Application" or v.get("NoDisplay", "").lower() == "true" \
-                    or v.get("Hidden", "").lower() == "true" or "OnlyShowIn" in v:
+                    or v.get("Hidden", "").lower() == "true" or "OnlyShowIn" in v \
+                    or (v.get("Terminal", "").lower() == "true" and not f.stem.startswith(branding.id_os())):
                 continue
             app.append({"id": f.stem, "nome": v.get("Name[it]") or v.get("Name", f.stem),
                         "icona": v.get("Icon", "application-x-executable"),

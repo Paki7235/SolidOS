@@ -29,6 +29,9 @@ gvfs-backends
 ?gvfs-fuse
 ?usbmuxd
 ?cifs-utils
+# Rete: vede i PC Windows (WS-Discovery) e le cartelle condivise (SMB)
+?wsdd
+?smbclient
 qterminal
 firefox-esr
 

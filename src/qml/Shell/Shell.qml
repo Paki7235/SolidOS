@@ -9,6 +9,7 @@ QtObject {
     id: radice
 
     property var stato: ({})
+    readonly property bool stileWindows: Tema.stileBarra === "windows"
     property var popup: []          // notifiche visibili in alto a destra
     property var storico: []
 
@@ -103,9 +104,8 @@ QtObject {
         // Contenuto creato solo mentre il pannello è aperto (meno memoria)
         Loader {
             anchors.right: parent.right
-            anchors.top: parent.top
-            anchors.margins: 10
-            anchors.topMargin: 34
+            anchors.rightMargin: 10
+            y: radice.stileWindows ? parent.height - 58 - height : 34
             active: controllo.visible
             sourceComponent: CentroControllo {
                 stato: radice.stato
@@ -132,8 +132,8 @@ QtObject {
             anchors.top: parent.top
             anchors.bottom: parent.bottom
             anchors.margins: 10
-            anchors.topMargin: 34
-            anchors.bottomMargin: 84
+            anchors.topMargin: radice.stileWindows ? 10 : 34
+            anchors.bottomMargin: radice.stileWindows ? 58 : 84
             width: 380
             active: centroNotifiche.visible
             sourceComponent: CentroNotifiche {
@@ -309,7 +309,7 @@ QtObject {
     property Connections collegamentoFinestre: Connections {
         target: shell
         function onEvento(nome, dati) {
-            if (nome === "finestre") { dock.aggiorna(); barraSuperiore.aggiorna() }
+            if (nome === "finestre") { dock.aggiorna(); barraApplicazioni.aggiorna(); barraSuperiore.aggiorna() }
         }
     }
     // Sfondo e icone della scrivania (sotto tutte le finestre)
@@ -325,6 +325,16 @@ QtObject {
     property Window dock: Dock {
         id: dock
         onMenu: function (voce, centroX) { menuDock.apri(voce, centroX) }
+    }
+    // Barra unica in basso (stile Windows): sostituisce barra in alto e Dock
+    property Window barraApplicazioni: BarraApplicazioni {
+        id: barraApplicazioni
+        stato: barraSuperiore.stato
+        prestazioni: barraSuperiore.prestazioni
+        onMenu: function (voce, centroX) { menuDock.apri(voce, centroX) }
+        onStart: radice.mostra("start")
+        onControllo: radice.mostra("controllo")
+        onNotifiche: radice.mostra("notifiche")
     }
 
     // Menu del logo in alto a sinistra
@@ -371,7 +381,8 @@ QtObject {
         visible: false
         MouseArea { anchors.fill: parent; onClicked: finestraStart.visible = false }
         Loader {
-            x: 8; y: 34
+            x: radice.stileWindows ? Math.round((finestraStart.width - 640) / 2) : 8
+            y: radice.stileWindows ? finestraStart.height - 48 - 12 - 560 : 34
             active: finestraStart.visible
             sourceComponent: Start { onChiudi: finestraStart.visible = false }
         }
@@ -437,10 +448,15 @@ QtObject {
         Shortcut { sequence: "Escape"; onActivated: menuDock.visible = false }
         MenuPopup {
             id: popupDock
-            x: Math.max(6, Math.min(menuDock.width - width - 6, (menuDock.width - dock.width) / 2 + menuDock.centroX - width / 2))
-            y: menuDock.height - 84 - height
+            x: Math.max(6, Math.min(menuDock.width - width - 6, (radice.stileWindows ? 0 : (menuDock.width - dock.width) / 2) + menuDock.centroX - width / 2))
+            y: menuDock.height - (radice.stileWindows ? 54 : dock.altezza + 10) - height
             voci: {
                 var v = menuDock.voce, out = [{ titolo: v.nome || "" }]
+                if (v.cestino) {
+                    out.push({ t: I18n.t("Apri"), f: function () { shell.chiama0("cestinoApri") } })
+                    if (v.pieno) out.push({ t: I18n.t("Svuota il cestino…"), f: function () { shell.chiama0("cestinoSvuota") } })
+                    return out
+                }
                 var finestre = v.finestre || []
                 for (var i = 0; i < finestre.length; i++) {
                     (function (f) { out.push({ t: f.titolo || v.nome, f: function () { shell.chiama("dockClic", [v.id]) } }) })(finestre[i])

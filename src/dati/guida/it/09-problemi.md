@@ -8,5 +8,5 @@
 | Un file è stato sovrascritto o cancellato | Linea del Tempo (Super + T) |
 | Il disco di Windows si apre solo in lettura | Windows è in ibernazione: avvia Windows e spegnilo tenendo premuto Maiusc mentre clicchi «Arresta» |
 | Il telefono non vede il computer | Attiva Condivisione Vicina dal centro di controllo; stessa rete Wi-Fi; prova il codice QR |
-| AirDrop non disponibile | Serve una scheda Wi-Fi compatibile: vedi la pagina Condivisione Vicina |
+| L'iPhone non vede il computer | Usa il codice QR in Condivisione Vicina: si inquadra con la fotocamera |
 | Un programma Windows non funziona | Non tutti funzionano con Wine: cerca un'alternativa nello store |

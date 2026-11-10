@@ -7,7 +7,7 @@ import re
 import shutil
 from pathlib import Path
 
-from .. import labwc
+from .. import branding, labwc
 from ..hw import audio, energia, schermo
 from ..i18n import T
 from ..sistema import avvia, config_utente, esegui, leggi_json, scrivi_json, uscita
@@ -158,10 +158,11 @@ class PannelloEnergia(Pannello):
             minuti = int(valore)
             scrivi_json(config_utente("energia.json"), {"blocco": minuti})
             esegui(["pkill", "-x", "swayidle"])
+            blocco = branding.comando("blocca")
             if minuti > 0:
-                avvia(["swayidle", "-w", "timeout", str(minuti * 60), "swaylock -f", "before-sleep", "swaylock -f"])
+                avvia(["swayidle", "-w", "timeout", str(minuti * 60), blocco, "before-sleep", blocco])
             else:
-                avvia(["swayidle", "-w", "before-sleep", "swaylock -f"])
+                avvia(["swayidle", "-w", "before-sleep", blocco])
             return esito()
         return None
 

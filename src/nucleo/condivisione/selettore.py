@@ -55,10 +55,10 @@ class BackendSelettore(Backend):
         _servizio("ImpostaVisibilita", modalita, timeout=3)
 
     def diagnosi(self) -> list:
-        """Stato di ogni sistema (Quick Share, AirDrop, LocalSend, QR) e del Bluetooth, con il motivo."""
+        """Stato di ogni sistema (Quick Share, LocalSend, QR) e del Bluetooth, con il motivo."""
         testo = _servizio("StatoBackend", timeout=5)
         stato = json.loads(str(testo)) if testo else {}
-        nomi = {"quickshare": "Quick Share (Android)", "airdrop": "AirDrop (iPhone, beta)", "localsend": "LocalSend", "qr": "Codice QR"}
+        nomi = {"quickshare": "Quick Share (Android)", "localsend": "LocalSend", "qr": "Codice QR"}
         voci = [{"nome": nomi.get(k, k), "ok": bool(v[0]), "motivo": str(v[1])} for k, v in stato.items()]
         try:
             from ..hw import bluetooth

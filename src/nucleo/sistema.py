@@ -158,21 +158,42 @@ def avvia_desktop(desktop: str, file: list[str] | None = None) -> bool:
         c = configparser.RawConfigParser(strict=False, interpolation=None)
         try:
             c.read(percorso, encoding="utf-8")
-            exec_riga = c["Desktop Entry"]["Exec"]
-        except (configparser.Error, KeyError):
+            voce = c["Desktop Entry"]
+            exec_riga = voce["Exec"]
+        except (configparser.Error, KeyError, UnicodeDecodeError):
             return False
         file = file or []
         argomenti = []
-        for parte in shlex.split(exec_riga):
+        try:
+            parti = shlex.split(exec_riga)
+        except ValueError:
+            return False
+        for parte in parti:
             if parte in ("%f", "%u"):
                 argomenti += file[:1]
             elif parte in ("%F", "%U"):
                 argomenti += file
-            elif parte in ("%i", "%c", "%k"):
+            elif parte in ("%i", "%c", "%k", "%d", "%D", "%n", "%N", "%v", "%m"):
+                continue
+            elif parte in ("@@", "@@u", "@@f"):     # segnaposto di Flatpak per i file
                 continue
             else:
                 argomenti.append(parte.replace("%%", "%"))
-        avvia(argomenti)
+        if not argomenti:
+            return False
+        import shutil
+
+        if not (Path(argomenti[0]).is_file() or shutil.which(argomenti[0])):
+            return False                    # programma mancante: chi chiama prova un'altra strada
+        if voce.get("Terminal", "false").strip().lower() == "true":
+            argomenti = ["qterminal", "-e", shlex.join(argomenti)]
+        cartella_lavoro = voce.get("Path", "").strip()
+        if cartella_lavoro and Path(cartella_lavoro).is_dir():
+            ambiente = {k: v for k, v in os.environ.items() if k != "QT_WAYLAND_SHELL_INTEGRATION"}
+            subprocess.Popen(argomenti, cwd=cartella_lavoro, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                             stdin=subprocess.DEVNULL, start_new_session=True, env=ambiente)
+        else:
+            avvia(argomenti)
         return True
     return False
 

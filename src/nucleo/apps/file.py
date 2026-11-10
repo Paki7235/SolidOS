@@ -54,14 +54,42 @@ def _dimensione(byte: int) -> str:
 
 class BackendFile(Backend):
     def __init__(self):
-        self.appunti: dict = {"uri": [], "taglia": False}
+        self._monitor_volumi = None
 
     # ── Posizioni ──────────────────────────────────────────────────────────
     def iniziale(self) -> str:
         argomenti = [a for a in sys.argv[1:] if not a.startswith("-")]
         if argomenti:
-            return _f(argomenti[0]).get_uri()
+            f = _f(argomenti[0])
+            # «--proprieta FILE» o un file (non una cartella): si apre la cartella che lo contiene
+            if f.query_file_type(Gio.FileQueryInfoFlags.NONE, None) not in (Gio.FileType.DIRECTORY, Gio.FileType.UNKNOWN, Gio.FileType.MOUNTABLE) \
+                    and f.get_parent() is not None:
+                return f.get_parent().get_uri()
+            return f.get_uri()
         return Gio.File.new_for_path(str(Path.home())).get_uri()
+
+    def bersaglio(self) -> str:
+        """Il file passato da riga di comando (per «--proprieta»)."""
+        argomenti = [a for a in sys.argv[1:] if not a.startswith("-")]
+        return _f(argomenti[0]).get_uri() if argomenti else ""
+
+    def richiesta(self) -> str:
+        """Azione chiesta da riga di comando: «svuota» (Cestino nel Dock) o «proprieta»."""
+        if "--svuota-cestino" in sys.argv:
+            return "svuota"
+        if "--proprieta" in sys.argv:
+            return "proprieta"
+        return ""
+
+    def osservaVolumi(self) -> None:
+        """Chiavette, dischi e cartelle di rete collegati/scollegati: la barra laterale
+        si aggiorna da sola (eventi GIO sul thread principale, nessuna attesa)."""
+        if self._monitor_volumi:
+            return
+        m = Gio.VolumeMonitor.get()
+        for segnale in ("mount-added", "mount-removed", "mount-changed", "volume-added", "volume-removed"):
+            m.connect(segnale, lambda *_a: self.emetti("luoghi", None))
+        self._monitor_volumi = m
 
     def luoghi(self) -> list:
         def cartella(tipo, nome, icona):
@@ -213,6 +241,16 @@ class BackendFile(Backend):
             subprocess.Popen(["qterminal", "-w", percorso], start_new_session=True)
 
     # ── Operazioni ─────────────────────────────────────────────────────────
+    def nuovoFile(self, uri: str, nome: str) -> dict:
+        from .. import trasferimenti
+
+        f = trasferimenti.nome_libero(_f(uri), nome)
+        try:
+            f.create(Gio.FileCreateFlags.NONE, None).close(None)
+            return {"ok": True, "uri": f.get_uri()}
+        except GLib.Error as e:
+            return {"ok": False, "errore": e.message}
+
     def nuovaCartella(self, uri: str) -> dict:
         base, n = T("Nuova cartella"), 2
         f = _f(uri).get_child(base)
@@ -253,13 +291,6 @@ class BackendFile(Backend):
                 errori.append(e.message)
         return {"ok": not errori, "errore": errori[0] if errori else ""}
 
-    def _elimina(self, f: Gio.File):
-        info = f.query_info("standard::type", Gio.FileQueryInfoFlags.NOFOLLOW_SYMLINKS, None)
-        if info.get_file_type() == Gio.FileType.DIRECTORY:
-            for figlio in f.enumerate_children("standard::name", Gio.FileQueryInfoFlags.NOFOLLOW_SYMLINKS, None):
-                self._elimina(f.get_child(figlio.get_name()))
-        f.delete(None)
-
     def svuotaCestino(self) -> dict:
         cestino = Gio.File.new_for_uri("trash:///")
         try:
@@ -282,58 +313,42 @@ class BackendFile(Backend):
                 errori.append(e.message)
         return {"ok": not errori, "errore": errori[0] if errori else ""}
 
-    # Appunti (copia / taglia / incolla) tra cartelle
-    def copia(self, uris, taglia: bool = False) -> None:
-        self.appunti = {"uri": [str(u) for u in uris], "taglia": bool(taglia)}
+    # Appunti di sistema: copia/taglia/incolla anche tra File, Scrivania e altre app
+    def copia(self, uris, taglia: bool = False) -> bool:
+        from .. import appunti
+
+        return appunti.copia([str(u) for u in uris], bool(taglia))
+
+    def appunti(self) -> dict:
+        from .. import appunti
+
+        return appunti.leggi()
 
     def appuntiPieni(self) -> bool:
-        return bool(self.appunti["uri"])
+        return bool(self.appunti()["uri"])
 
-    def incolla(self, cartella: str) -> dict:
-        return self.trasferisci(self.appunti["uri"], cartella, self.appunti["taglia"], svuota=True)
+    def svuotaAppunti(self) -> None:
+        from .. import appunti
 
-    def trasferisci(self, uris, cartella: str, sposta: bool = False, svuota: bool = False) -> dict:
-        """Copia o sposta (anche cartelle intere); i nomi già presenti diventano «nome (2)»."""
-        dest_cartella = _f(cartella)
-        errori, fatti = [], 0
-        for uri in uris:
-            sorgente = _f(str(uri))
-            if sorgente.equal(dest_cartella) or dest_cartella.has_prefix(sorgente):
-                errori.append(T("Non puoi copiare una cartella dentro se stessa"))
-                continue
-            nome = sorgente.get_basename()
-            dest = dest_cartella.get_child(nome)
-            if sposta and dest.equal(sorgente):
-                continue
-            n = 2
-            while dest.query_exists(None):
-                radice, punto, est = nome.rpartition(".")
-                dest = dest_cartella.get_child(f"{radice} ({n}).{est}" if punto and radice else f"{nome} ({n})")
-                n += 1
-            try:
-                if sposta:
-                    try:
-                        sorgente.move(dest, Gio.FileCopyFlags.NOFOLLOW_SYMLINKS, None, None, None)
-                    except GLib.Error:
-                        self._copia_ricorsiva(sorgente, dest)
-                        self._elimina(sorgente)
-                else:
-                    self._copia_ricorsiva(sorgente, dest)
-                fatti += 1
-            except GLib.Error as e:
-                errori.append(f"{nome}: {e.message}")
-        if svuota and self.appunti.get("taglia"):
-            self.appunti = {"uri": [], "taglia": False}
-        return {"ok": not errori, "fatti": fatti, "errore": errori[0] if errori else ""}
+        appunti.svuota()
 
-    def _copia_ricorsiva(self, sorgente: Gio.File, dest: Gio.File):
-        info = sorgente.query_info("standard::type", Gio.FileQueryInfoFlags.NOFOLLOW_SYMLINKS, None)
-        if info.get_file_type() == Gio.FileType.DIRECTORY:
-            dest.make_directory(None)
-            for figlio in sorgente.enumerate_children("standard::name", Gio.FileQueryInfoFlags.NOFOLLOW_SYMLINKS, None):
-                self._copia_ricorsiva(sorgente.get_child(figlio.get_name()), dest.get_child(figlio.get_name()))
-        else:
-            sorgente.copy(dest, Gio.FileCopyFlags.NOFOLLOW_SYMLINKS | Gio.FileCopyFlags.ALL_METADATA, None, None, None)
+    def trasferisci(self, uris, cartella: str, modo="auto", _svuota: bool = False) -> dict:
+        """Copia o sposta (anche cartelle intere) con la barra di avanzamento.
+        modo: «auto» (come Windows: sposta sullo stesso disco, copia su un altro), «copia», «sposta».
+        Per compatibilità accetta anche True (= sposta) / False (= auto)."""
+        from .. import trasferimenti
+
+        if modo is True:
+            modo = "sposta"
+        elif modo is False or modo not in ("auto", "copia", "sposta"):
+            modo = "auto"
+        return trasferimenti.trasferisci([str(u) for u in uris], cartella, modo,
+                                         lambda fatti, totale, nome: self.emetti("avanzamento", {"fatti": fatti, "totale": totale, "nome": nome}))
+
+    def _elimina(self, f: Gio.File):
+        from .. import trasferimenti
+
+        trasferimenti.elimina(f)
 
     # ── Proprietà ──────────────────────────────────────────────────────────
     def proprieta(self, uri: str) -> dict:

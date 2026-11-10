@@ -47,7 +47,9 @@ def imposta_profilo(nome: str) -> bool:
 
 
 def blocca() -> None:
-    avvia(["swaylock", "-f"])
+    from .. import branding
+
+    avvia([branding.comando("blocca")])
 
 
 def esci() -> None:

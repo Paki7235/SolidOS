@@ -64,7 +64,104 @@ def _preferiti_firefox(utente: Path) -> list[tuple[str, str]]:
     return risultato
 
 
+# Cartelle tipiche di un utente su Windows, Mac e Linux (inglese e italiano) → cartella di qui
+CARTELLE_NOTE = [
+    (("Documents", "Documenti", "My Documents"), "Documenti", "DOCUMENTS"),
+    (("Pictures", "Immagini", "Foto", "Photos", "My Pictures"), "Immagini", "PICTURES"),
+    (("Music", "Musica", "My Music"), "Musica", "MUSIC"),
+    (("Videos", "Movies", "Video", "Filmati", "My Videos"), "Video", "VIDEOS"),
+    (("Desktop", "Scrivania"), "Scrivania", "DESKTOP"),
+    (("Downloads", "Scaricati", "Download"), "Scaricati", "DOWNLOAD"),
+]
+
+
+def _dimensione_mb(p: Path, limite_s: float = 6.0) -> int:
+    totale, fine = 0, time.monotonic() + limite_s
+    for radice, _cartelle, file in __import__("os").walk(p):
+        for f in file:
+            try:
+                totale += (Path(radice) / f).stat().st_size
+            except OSError:
+                pass
+        if time.monotonic() > fine:
+            break
+    return round(totale / 1048576)
+
+
+def _dischi_esterni() -> list[dict]:
+    """Chiavette, dischi esterni e partizioni montate (esclusa quella di sistema)."""
+    risultato = []
+    for base in (Path("/media") / Path.home().name, Path("/run/media") / Path.home().name, Path("/media")):
+        if not base.is_dir():
+            continue
+        for punto in sorted(base.iterdir()):
+            if punto.is_dir() and not any(r["percorso"] == str(punto) for r in risultato) and punto.name != Path.home().name:
+                risultato.append({"nome": punto.name, "percorso": str(punto)})
+    return risultato
+
+
+def _utenti_in(cartella: Path) -> list[dict]:
+    """Utenti dentro un disco: Users/ (Windows, Mac), Utenti/, home/ (Linux)."""
+    utenti = []
+    for nome in ("Users", "Utenti", "home"):
+        base = cartella / nome
+        if base.is_dir():
+            for u in sorted(base.iterdir()):
+                if u.is_dir() and u.name not in ("Public", "Default", "Default User", "All Users", "Shared", "Guest", "lost+found") \
+                        and not u.name.startswith("."):
+                    utenti.append({"nome": u.name, "percorso": str(u)})
+    return utenti
+
+
 class BackendMigrazione(Backend):
+    # ── Sorgenti (passo 1) ────────────────────────────────────────────────
+    def sorgenti(self) -> dict:
+        return {"windows": self.partizioni(), "dischi": _dischi_esterni()}
+
+    def utentiIn(self, percorso: str) -> list:
+        return _utenti_in(Path(percorso))
+
+    def analizza(self, percorso: str) -> list:
+        """Cosa si può portare da una cartella qualsiasi (utente di un Mac, di Windows o di Linux,
+        oppure una cartella di backup): le cartelle note, oppure tutto il contenuto."""
+        base = Path(percorso)
+        utenti = _utenti_in(base)
+        if len(utenti) == 1:
+            base = Path(utenti[0]["percorso"])
+        voci = []
+        for nomi, italiano, xdg in CARTELLE_NOTE:
+            for n in nomi:
+                p = base / n
+                if p.is_dir():
+                    voci.append({"id": italiano, "nome": italiano, "xdg": xdg, "tipo": "cartella", "percorso": str(p),
+                                 "dimensione": _dimensione_mb(p)})
+                    break
+        # su Windows anche sfondo e preferiti del browser
+        if (base / "AppData").is_dir():
+            voci += [v for v in self.elementi(str(base)) if v["tipo"] != "cartella"]
+        if not voci and base.is_dir():
+            voci.append({"id": "tutto", "nome": T("Tutto il contenuto di «{n}»", n=base.name), "xdg": "DOCUMENTS",
+                         "tipo": "cartella", "percorso": str(base), "dimensione": _dimensione_mb(base), "sottocartella": base.name})
+        return voci
+
+    def apriCondivisione(self) -> None:
+        from .. import branding
+        from ..sistema import avvia
+
+        avvia([branding.comando("condividi")])
+
+    def apriRete(self) -> None:
+        from .. import branding
+        from ..sistema import avvia
+
+        avvia([branding.comando("file"), "network:///"])
+
+    def apriCartella(self, xdg: str) -> None:
+        from .. import branding
+        from ..sistema import avvia
+
+        avvia([branding.comando("file"), str(cartella_utente(xdg or "DOCUMENTS", "Documenti"))])
+
     def partizioni(self) -> list:
         return [p for p in windows.partizioni() if not p["bitlocker"]]
 
@@ -106,6 +203,9 @@ class BackendMigrazione(Backend):
         totale_copiati = 0
         for c in cartelle:
             destinazione = cartella_utente(c["xdg"], c["nome"])
+            if c.get("sottocartella"):
+                destinazione = destinazione / c["sottocartella"]
+                destinazione.mkdir(parents=True, exist_ok=True)
             r = copia([str(Path(c["percorso"]) / f.name) for f in Path(c["percorso"]).iterdir()
                        if not f.name.lower().startswith(("desktop.ini", "my ", "thumbs.db"))],
                       str(destinazione), lambda f, t, n: self.emetti("avanzamento", {"fatto": f, "totale": t, "nome": n}))

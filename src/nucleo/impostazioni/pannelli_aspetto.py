@@ -117,12 +117,24 @@ class PannelloAspetto(Pannello):
             g.add_section("Settings")
         g.set("Settings", "gtk-application-prefer-dark-theme", "false" if chiaro else "true")
         _salva_ini(g, gtk)
+        # Icone: simboli scuri sul tema chiaro (solo se si usano le icone del sistema)
+        c = _ini(file)
+        icone = c.get("General", "icon_theme", fallback=branding.id_os()) if c.has_section("General") else branding.id_os()
+        if icone in (branding.id_os(), branding.id_os() + "-chiaro"):
+            if not c.has_section("General"):
+                c.add_section("General")
+            c.set("General", "icon_theme", branding.id_os() + ("-chiaro" if chiaro else ""))
+            _salva_ini(c, file)
+        # Bordi e pulsanti delle finestre
+        from .. import labwc
+
+        labwc.imposta({"theme/name": branding.nome() + ("-Chiaro" if chiaro else "")})
 
     def imposta(self, voce, valore):
         if voce in ("tema", "accento"):
             self._pref(voce, str(valore))
             self._applica_palette()
-            return esito(True, T("Le app aperte useranno il nuovo aspetto alla prossima apertura"))
+            return esito(True, T("Aspetto aggiornato"))
         if voce == "font-dimensione":
             self._pref("font_dimensione", str(valore))
             file = _lxqt_conf()
@@ -170,41 +182,48 @@ def _panel_conf() -> Path:
 
 class PannelloPannello(Pannello):
     id = "pannello"
-    titolo = T("Pannello e Dock")
+    titolo = T("Barra e Dock")
     icona = "preferences-desktop"
     gruppo = T("Personalizzazione")
-    chiavi = "barra delle applicazioni posizione dimensione nascondi dock"
+    chiavi = "barra delle applicazioni dock stile mac windows cestino orologio icone start"
 
     def voci(self):
-        c = _ini(_panel_conf())
-        get = lambda k, d: c.get("panel1", k, fallback=d)  # noqa: E731
+        pref = leggi_json(config_utente("aspetto.json"), {})
         return [
-            scelta("position", T("Posizione"), get("position", "Bottom"),
-                   [("Bottom", T("In basso")), ("Top", T("In alto")), ("Left", T("A sinistra")), ("Right", T("A destra"))]),
-            scelta("panelSize", T("Altezza"), get("panelSize", "44"), [("36", T("Compatta")), ("44", T("Normale")), ("56", T("Grande"))]),
-            scelta("iconSize", T("Dimensione delle icone"), get("iconSize", "24"), [("20", "20"), ("24", "24"), ("32", "32"), ("40", "40")]),
-            interruttore("hidable", T("Nascondi automaticamente"), get("hidable", "false") == "true"),
-            scelta("buttonStyle", T("Pulsanti delle finestre"), c.get("taskbar", "buttonStyle", fallback="Icon"),
-                   [("Icon", T("Solo icone")), ("IconText", T("Icone e titoli"))]),
-            azione("ripristina", T("Ripristina il pannello predefinito"), T("Ripristina"), pericolosa=True),
+            intestazione(T("Disposizione")),
+            scelta("barra", T("Stile"), "windows" if pref.get("barra") == "windows" else "mac",
+                   [("mac", T("Barra in alto e Dock (come Mac)")),
+                    ("windows", T("Una barra in basso (come Windows)"))]),
+            info("spiegazione", T("Come Windows: menu S, app, orologio, Wi-Fi e centro di controllo in basso"), ""),
+            intestazione(T("Dock")),
+            scelta("dockLato", T("Dimensione delle icone"), str(pref.get("dockLato", 48)),
+                   [("40", T("Piccole")), ("48", T("Medie")), ("56", T("Grandi"))]),
+            interruttore("barraPrestazioni", T("Mostra processore e memoria nella barra"), pref.get("barraPrestazioni", True)),
+            azione("ripristina", T("App del Dock predefinite"), T("Ripristina"),
+                   T("Rimette le app iniziali; il Cestino resta sempre in fondo"), pericolosa=True),
         ]
 
     def imposta(self, voce, valore):
-        file = _panel_conf()
-        c = _ini(file)
-        sezione = "taskbar" if voce == "buttonStyle" else "panel1"
-        if not c.has_section(sezione):
-            c.add_section(sezione)
-        c.set(sezione, voce, ("true" if valore else "false") if isinstance(valore, bool) else str(valore))
-        _salva_ini(c, file)
-        riavvia_pannello()
+        file = config_utente("aspetto.json")
+        pref = leggi_json(file, {})
+        if voce == "barra":
+            pref["barra"] = "windows" if valore == "windows" else "mac"
+        elif voce == "dockLato":
+            pref["dockLato"] = int(valore)
+        elif voce == "barraPrestazioni":
+            pref["barraPrestazioni"] = bool(valore)
+        else:
+            return esito(False, T("Impostazione sconosciuta"))
+        scrivi_json(file, pref)   # la shell lo vede subito e cambia disposizione
         return esito()
 
     def azione(self, voce, elemento, az, dati):
         if voce == "ripristina":
-            _panel_conf().unlink(missing_ok=True)
-            riavvia_pannello()
-            return esito()
+            config_utente("dock.json").unlink(missing_ok=True)
+            from ..dbusutil import chiama as _chiama
+
+            _chiama(branding.nome_dbus("Shell"), branding.percorso_dbus("Shell"), branding.nome_dbus("Shell"), "Aggiorna")
+            return esito(True, T("Dock ripristinato"))
         return None
 
 

@@ -17,7 +17,9 @@ Window {
     property real alzata: 0
     property bool appenaTrascinato: false
     readonly property int quanteFissate: voci.filter(function (v) { return v.fissata }).length
+    property bool cestinoPieno: false
     signal menu(var voce, real centroX)
+    function aggiornaCestino() { cestinoPieno = shell.chiama0("cestinoPieno") }
 
     function fineTrascinamento() {
         var da = trascinaDa, a = trascinaA
@@ -41,6 +43,7 @@ Window {
 
     function aggiorna() {
         voci = shell.chiama0("dock")
+        aggiornaCestino()
         var nuovi = {}
         for (var k in inAvvio) {
             var v = voci.find(function (x) { return x.id === k })
@@ -53,19 +56,20 @@ Window {
         if (esito === "avviata") { var a = Object.assign({}, inAvvio); a[voce.id] = Date.now(); inAvvio = a }
     }
 
-    readonly property int lato: 48
-    readonly property int passo: 58
+    readonly property int lato: Tema.dockLato || 48
+    readonly property int passo: lato + 10
     readonly property int etichetta: 30
+    readonly property int altezza: lato + 26
 
     LayerShell.Window.scope: "dock"
     LayerShell.Window.layer: LayerShell.Window.LayerTop
     LayerShell.Window.anchors: LayerShell.Window.AnchorBottom
-    LayerShell.Window.exclusionZone: 74
+    LayerShell.Window.exclusionZone: altezza
     LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityNone
     width: Math.max(200, fila.width + 24)
-    height: 74 + etichetta
+    height: altezza + etichetta
     color: "transparent"
-    visible: true
+    visible: Tema.stileBarra !== "windows"
 
     Timer { interval: 1500; repeat: true; running: Object.keys(dock.inAvvio).length > 0; onTriggered: dock.aggiorna() }
 
@@ -79,9 +83,9 @@ Window {
         width: testoNuvola.implicitWidth + 20
         height: 24
         radius: 7
-        color: "#E6202126"
-        border.color: "#1FFFFFFF"
-        Text { id: testoNuvola; anchors.centerIn: parent; text: dock.sopra; color: "#F5F5F7"; font.family: Tema.font; font.pixelSize: 12 }
+        color: Tema.nuvola
+        border.color: Tema.vetroBordo
+        Text { id: testoNuvola; anchors.centerIn: parent; text: dock.sopra; color: Tema.testoVetro; font.family: Tema.font; font.pixelSize: 12 }
     }
 
     // Fondo del dock
@@ -91,10 +95,10 @@ Window {
         anchors.bottom: parent.bottom
         anchors.bottomMargin: 6
         width: fila.width + 16
-        height: 64
+        height: dock.lato + 16
         radius: 20
-        color: "#B8282A32"
-        border.color: "#24FFFFFF"
+        color: Tema.dock
+        border.color: Tema.vetroBordo
         border.width: 1
 
         Row {
@@ -110,7 +114,7 @@ Window {
                     required property int index
                     readonly property bool avvio: dock.inAvvio[modelData.id] !== undefined
                     width: dock.passo
-                    height: 58
+                    height: dock.lato + 10
                     z: dock.trascinaDa === index ? 2 : 1
                     // Durante il trascinamento: l'icona trascinata segue il mouse, le altre fanno posto
                     transform: Translate {
@@ -124,13 +128,13 @@ Window {
                     // separatore tra fissate e solo aperte
                     Rectangle {
                         visible: !cella.modelData.fissata && (cella.index === 0 || dock.voci[cella.index - 1].fissata)
-                        x: -3; y: 10; width: 1; height: 38
-                        color: "#33FFFFFF"
+                        x: -3; y: 10; width: 1; height: dock.lato - 10
+                        color: Tema.separatore
                     }
                     Rectangle {
                         anchors.centerIn: icona
                         width: dock.lato + 8; height: dock.lato + 8; radius: 12
-                        color: area.pressed ? "#33FFFFFF" : (area.containsMouse ? "#1AFFFFFF" : "transparent")
+                        color: area.pressed ? Tema.premuto : (area.containsMouse ? Tema.sopra : "transparent")
                     }
                     Image {
                         id: icona
@@ -158,7 +162,7 @@ Window {
                         width: cella.modelData.attiva ? 14 : 5
                         height: 5
                         radius: 2.5
-                        color: cella.modelData.attiva ? "#FFFFFF" : "#B8B8C0"
+                        color: cella.modelData.attiva ? Tema.testoVetro : Tema.testoVetroSecondario
                         Behavior on width { enabled: Tema.animazioni; NumberAnimation { duration: 150 } }
                     }
                     MouseArea {
@@ -195,7 +199,52 @@ Window {
                     }
                 }
             }
+            // ── Cestino: sempre in fondo, non si può togliere ──
+            Item {
+                id: cellaCestino
+                width: dock.passo
+                height: dock.lato + 10
+                Rectangle { x: 4; y: 10; width: 1; height: dock.lato - 10; color: Tema.separatore }
+                Rectangle {
+                    anchors.centerIn: iconaCestino
+                    width: dock.lato + 8; height: dock.lato + 8; radius: 12
+                    color: dropCestino.containsDrag ? Tema.premuto : (areaCestino.pressed ? Tema.premuto : (areaCestino.containsMouse ? Tema.sopra : "transparent"))
+                }
+                Image {
+                    id: iconaCestino
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.horizontalCenterOffset: 4
+                    y: 3
+                    width: dock.lato; height: dock.lato
+                    sourceSize.width: dock.lato * 2; sourceSize.height: dock.lato * 2
+                    source: "image://icona/" + (dock.cestinoPieno ? "user-trash-full" : "user-trash")
+                }
+                MouseArea {
+                    id: areaCestino
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    acceptedButtons: Qt.LeftButton | Qt.RightButton
+                    onEntered: { dock.sopra = I18n.t("Cestino"); nuvola.etichettaX = fondo.x + fila.x + cellaCestino.x + cellaCestino.width / 2 }
+                    onExited: if (dock.sopra === I18n.t("Cestino")) dock.sopra = ""
+                    onClicked: function (ev) {
+                        dock.sopra = ""
+                        if (ev.button === Qt.RightButton) dock.menu({ cestino: true, nome: I18n.t("Cestino"), pieno: dock.cestinoPieno }, fondo.x + fila.x + cellaCestino.x + cellaCestino.width / 2)
+                        else shell.chiama0("cestinoApri")
+                    }
+                }
+                // File trascinati sul cestino: spostati nel cestino
+                DropArea {
+                    id: dropCestino
+                    anchors.fill: parent
+                    onDropped: function (d) {
+                        if (!d.hasUrls) return
+                        shell.chiama("cestinoSposta", [Array.prototype.map.call(d.urls, function (u) { return u.toString() })])
+                        d.acceptProposedAction()
+                    }
+                }
+            }
         }
     }
+    Connections { target: shell; function onEvento(nome, dati) { if (nome === "cestino") dock.aggiornaCestino() } }
     Component.onCompleted: aggiorna()
 }

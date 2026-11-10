@@ -14,7 +14,7 @@ dbus-update-activation-environment --systemd \
 lxqt-policykit-agent >/dev/null 2>&1 &
 
 # Blocco automatico dopo 10 minuti e prima della sospensione
-swayidle -w timeout 600 'swaylock -f' before-sleep 'swaylock -f' >/dev/null 2>&1 &
+swayidle -w timeout 600 '@OS_ID@-blocca' before-sleep '@OS_ID@-blocca' >/dev/null 2>&1 &
 
 # Servizi utente: Condivisione Vicina, Spazi, registro privacy
 systemctl --user start @OS_ID@-privacy.service >/dev/null 2>&1 &

@@ -4,6 +4,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtCore
 import SolidUI
 
 Finestra {
@@ -25,8 +26,65 @@ Finestra {
     property string ricerca: ""
     property var risultati: null
     property bool caricamento: false
-    readonly property var voci: risultati !== null ? risultati : dati.voci
+    // Visualizzazione (ricordata tra un'apertura e l'altra)
+    property string ordina: "nome"          // nome · data · dimensione · tipo
+    property bool crescente: true
+    property int latoIcone: 52              // 32 piccole · 52 medie · 80 grandi
+    property bool dettagli: false           // riquadro dei dettagli a destra (Alt+P)
+    property var avanzamento: null          // {fatti, totale, nome} durante copie lunghe
+    readonly property var voci: ordinate(risultati !== null ? risultati : dati.voci)
     readonly property var elencoScelti: voci.filter(function (v) { return scelti[v.uri] })
+
+    Settings {
+        category: "vista"
+        property alias griglia: finestra.griglia
+        property alias ordina: finestra.ordina
+        property alias crescente: finestra.crescente
+        property alias latoIcone: finestra.latoIcone
+        property alias dettagli: finestra.dettagli
+    }
+
+    function ordinate(arr) {
+        var c = (arr || []).slice(), chiave = ordina, verso = crescente ? 1 : -1
+        c.sort(function (a, b) {
+            if (a.cartella !== b.cartella) return a.cartella ? -1 : 1
+            var r = 0
+            if (chiave === "data") r = (a.ordinaData || 0) - (b.ordinaData || 0)
+            else if (chiave === "dimensione") r = (a.dimensione || 0) - (b.dimensione || 0)
+            else if (chiave === "tipo") r = (a.tipo || "").localeCompare(b.tipo || "")
+            if (r === 0) r = a.nome.toLowerCase().localeCompare(b.nome.toLowerCase())
+            return r * verso
+        })
+        return c
+    }
+    function cambiaOrdine(k) { if (ordina === k) crescente = !crescente; else { ordina = k; crescente = k === "nome" || k === "tipo" } }
+    function vociOrdina() {
+        function v(k, t) { return { t: t, spunta: finestra.ordina === k, f: function () { finestra.cambiaOrdine(k) } } }
+        return [v("nome", I18n.t("Nome")), v("data", I18n.t("Data di modifica")), v("dimensione", I18n.t("Dimensione")), v("tipo", I18n.t("Tipo")),
+                { sep: true },
+                { t: I18n.t("Crescente"), spunta: finestra.crescente, f: function () { finestra.crescente = true } },
+                { t: I18n.t("Decrescente"), spunta: !finestra.crescente, f: function () { finestra.crescente = false } }]
+    }
+    function vociVista() {
+        function g(l, t) { return { t: t, spunta: finestra.griglia && finestra.latoIcone === l, f: function () { finestra.griglia = true; finestra.latoIcone = l } } }
+        return [g(80, I18n.t("Icone grandi")), g(52, I18n.t("Icone medie")), g(32, I18n.t("Icone piccole")),
+                { t: I18n.t("Dettagli (elenco)"), spunta: !finestra.griglia, f: function () { finestra.griglia = false } },
+                { sep: true },
+                { t: I18n.t("Riquadro dei dettagli") + "    Alt+P", spunta: finestra.dettagli, f: function () { finestra.dettagli = !finestra.dettagli } },
+                { t: I18n.t("File nascosti") + "    Ctrl+H", spunta: finestra.nascosti, f: function () { finestra.nascosti = !finestra.nascosti; finestra.ricarica() } }]
+    }
+    function vociNuovo() {
+        return [{ t: I18n.t("Cartella") + "    Ctrl+Maiusc+N", f: function () { finestra.nuovaCartella() } },
+                { t: I18n.t("Documento di testo"), f: function () { var r = ponte.chiama("nuovoFile", [finestra.uri, I18n.t("Nuovo documento") + ".txt"]); finestra.esito(r); if (r.ok) finestra.inRinomina = r.uri } }]
+    }
+    function nuovaCartella() { var r = ponte.chiama("nuovaCartella", [finestra.uri]); finestra.esito(r); if (r.ok) finestra.inRinomina = r.uri }
+    // Trascinare o incollare: «auto» come Windows (stesso disco = sposta, altro disco = copia)
+    function trasferisci(u, dest, modo) {
+        if (!u.length || finestra.dati.cestino) return
+        finestra.caricamento = true
+        ponte.avvia("trasferisci", [u, dest, modo], "operazione")
+    }
+    function modoDa(mod) { return (mod & Qt.ControlModifier) ? "copia" : ((mod & Qt.ShiftModifier) ? "sposta" : "auto") }
 
     function vai(u, daStoria) {
         if (!u) return
@@ -35,7 +93,7 @@ Finestra {
         if (!daStoria) { storia = storia.slice(0, posizione + 1).concat([u]); posizione = storia.length - 1 }
         uri = u; scelti = ({}); ultimoScelto = -1; inRinomina = ""
     }
-    function ricarica() { ponte.avvia("elenco", [uri, nascosti], "elenco:" + uri); luoghi = ponte.chiama0("luoghi") }
+    function ricarica() { ponte.avvia("elenco", [uri, nascosti], "elenco:" + uri) }
     function apriVoce(v) {
         if (v.cartella) vai(v.uri, false)
         else ponte.chiama("apri", [v.uri])
@@ -50,7 +108,13 @@ Finestra {
     }
     function uriScelti() { return elencoScelti.map(function (v) { return v.uri }) }
     function esito(r, ok) { if (r && r.ok === false && r.errore) finestra.avviso(r.errore); else if (ok) finestra.avviso(ok); ricarica() }
-    function incolla() { if (ponte.chiama0("appuntiPieni")) { caricamento = true; ponte.avvia("incolla", [uri], "operazione") } }
+    property bool tagliati: false
+    function incolla() {
+        var a = ponte.chiama0("appunti")
+        if (!a.uri || !a.uri.length) { finestra.avviso(I18n.t("Negli appunti non ci sono file")); return }
+        tagliati = a.taglia
+        trasferisci(a.uri, uri, a.taglia ? "sposta" : "copia")
+    }
     function cestina() {
         var u = uriScelti(); if (!u.length) return
         if (dati.cestino) eliminaDialogo.apri(u)
@@ -87,27 +151,48 @@ Finestra {
     function menuSfondo(x, y) {
         scelti = ({})
         var voci = dati.cestino ? [{ t: I18n.t("Svuota il cestino"), f: function () { svuota.open() } }] : [
-            { t: I18n.t("Nuova cartella"), f: function () { var r = ponte.chiama("nuovaCartella", [finestra.uri]); finestra.esito(r); if (r.ok) finestra.inRinomina = r.uri } },
-            { t: I18n.t("Incolla") + "    Ctrl+V", f: function () { finestra.incolla() } },
+            { t: I18n.t("Visualizza"), sotto: vociVista() },
+            { t: I18n.t("Ordina per"), sotto: vociOrdina() },
+            { t: I18n.t("Aggiorna") + "    F5", f: function () { finestra.ricarica() } },
+            { sep: true },
+            { t: I18n.t("Incolla") + "    Ctrl+V", disattiva: !ponte.chiama0("appuntiPieni"), f: function () { finestra.incolla() } },
+            { t: I18n.t("Nuovo"), sotto: vociNuovo() },
             { sep: true },
             { t: I18n.t("Apri nel terminale"), f: function () { ponte.chiama("terminaleQui", [finestra.uri]) } },
-            { t: finestra.nascosti ? I18n.t("Nascondi file nascosti") : I18n.t("Mostra file nascosti"), f: function () { finestra.nascosti = !finestra.nascosti; finestra.ricarica() } },
+            { t: I18n.t("Aggiungi ai Preferiti"), f: function () { ponte.chiama("aggiungiSegnalibro", [finestra.uri]); finestra.luoghi = ponte.chiama0("luoghi") } },
             { sep: true },
-            { t: I18n.t("Proprietà della cartella"), f: function () { proprieta.apri(finestra.uri) } }]
+            { t: I18n.t("Proprietà"), f: function () { proprieta.apri(finestra.uri) } }]
         menu.mostra(voci, x, y)
     }
 
-    Component.onCompleted: { luoghi = ponte.chiama0("luoghi"); vai(ponte.chiama0("iniziale"), false) }
-    onActiveChanged: if (active && uri) ricarica()
+    Component.onCompleted: {
+        luoghi = ponte.chiama0("luoghi")
+        ponte.chiama0("osservaVolumi")
+        vai(ponte.chiama0("iniziale"), false)
+        var r = ponte.chiama0("richiesta")
+        if (r === "svuota") svuota.open()
+        else if (r === "proprieta") Qt.callLater(function () { proprieta.apri(ponte.chiama0("bersaglio") || finestra.uri) })
+    }
+    // Tornando alla finestra si rilegge solo la cartella (in background, senza bloccare)
+    onActiveChanged: if (active && uri && !caricamento) ricarica()
     Connections {
         target: ponte
+        function onEvento(nome, d) {
+            if (nome === "avanzamento") finestra.avanzamento = (d.totale > 0 && d.fatti < d.totale) ? d : null
+            else if (nome === "luoghi") finestra.luoghi = ponte.chiama0("luoghi")
+        }
         function onCompletato(id, r) {
             if (id === "elenco:" + finestra.uri) {
                 finestra.caricamento = false
                 if (r.ok) finestra.dati = r
                 else if (r.montare) collega.apri(finestra.uri, "")
                 else { finestra.dati = { voci: [], briciole: [], titolo: "" }; finestra.avviso(r.errore) }
-            } else if (id === "operazione") { finestra.caricamento = false; finestra.esito(r, r.ok ? I18n.t("Fatto") : "") }
+            } else if (id === "operazione") {
+                finestra.caricamento = false; finestra.avanzamento = null
+                if (finestra.tagliati && r.ok) { ponte.chiama0("svuotaAppunti"); finestra.tagliati = false }
+                var testo = r.ok ? (r.spostati && !r.copiati ? r.spostati + " " + I18n.t("spostati") : (r.copiati ? r.copiati + " " + I18n.t("copiati") : I18n.t("Fatto"))) : ""
+                finestra.esito(r, r.fatti === 0 && r.ok ? "" : testo)
+            }
             else if (id === "cerca") { finestra.caricamento = false; finestra.risultati = r }
             else if (id === "contenuto") proprieta.contenuto = r.testo
             else if (id === "collega") {
@@ -132,6 +217,10 @@ Finestra {
     Shortcut { sequence: "Ctrl+L"; onActivated: { indirizzo.modifica = true; campoIndirizzo.forceActiveFocus(); campoIndirizzo.selectAll() } }
     Shortcut { sequence: StandardKey.Refresh; onActivated: finestra.ricarica() }
     Shortcut { sequence: StandardKey.Find; onActivated: campoCerca.forceActiveFocus() }
+    Shortcut { sequence: "Ctrl+Shift+N"; onActivated: finestra.nuovaCartella() }
+    Shortcut { sequence: "Alt+P"; onActivated: finestra.dettagli = !finestra.dettagli }
+    Shortcut { sequence: "Alt+Return"; onActivated: proprieta.apri(finestra.elencoScelti.length === 1 ? finestra.elencoScelti[0].uri : finestra.uri) }
+    Shortcut { sequence: "Backspace"; onActivated: if (finestra.posizione > 0 && !finestra.inRinomina) { finestra.posizione--; finestra.vai(finestra.storia[finestra.posizione], true) } }
     Shortcut { sequence: "Return"; onActivated: if (finestra.elencoScelti.length === 1 && !finestra.inRinomina) finestra.apriVoce(finestra.elencoScelti[0]) }
 
     RowLayout {
@@ -165,8 +254,21 @@ Finestra {
                                 anchors.fill: parent
                                 icona: modelData.icona
                                 titolo: modelData.nome
-                                selezionata: finestra.uri === modelData.uri
+                                selezionata: finestra.uri === modelData.uri || dropLuogo.containsDrag
                                 onClicked: modelData.uri.indexOf("volume:") === 0 ? (finestra.caricamento = true, ponte.avvia("collega", [modelData.uri, "", "", ""], "collega")) : finestra.vai(modelData.uri, false)
+                            }
+                            // File trascinati su un luogo: spostati/copiati lì (sul Cestino: nel cestino)
+                            DropArea {
+                                id: dropLuogo
+                                anchors.fill: parent
+                                enabled: modelData.uri.indexOf("volume:") !== 0 && modelData.uri !== "network:///" && modelData.uri !== "file:///"
+                                onDropped: function (d) {
+                                    if (!d.hasUrls) return
+                                    var u = Array.prototype.map.call(d.urls, function (x) { return x.toString() })
+                                    if (modelData.uri.indexOf("trash:") === 0) finestra.esito(ponte.chiama("cestino", [u]), I18n.t("Spostato nel cestino"))
+                                    else finestra.trasferisci(u, modelData.uri, finestra.modoDa(d.modifiers))
+                                    d.acceptProposedAction()
+                                }
                             }
                             Rectangle {
                                 visible: !!modelData.espellibile
@@ -242,7 +344,6 @@ Finestra {
                             Keys.onEscapePressed: indirizzo.modifica = false
                         }
                     }
-                    Pulsante { icona: finestra.griglia ? "view-list-symbolic" : "view-grid-symbolic"; onClicked: finestra.griglia = !finestra.griglia }
                     CampoRicerca {
                         id: campoCerca
                         Layout.preferredWidth: 190
@@ -252,7 +353,36 @@ Finestra {
                     }
                 }
             }
-            BarraProgresso { Layout.fillWidth: true; Layout.preferredHeight: 2; indeterminate: true; visible: finestra.caricamento }
+            // Barra dei comandi: Nuovo, Taglia, Copia, Incolla, Rinomina, Condividi, Elimina, Ordina, Visualizza
+            Rectangle {
+                visible: !finestra.dati.cestino
+                Layout.fillWidth: true
+                implicitHeight: 40
+                color: Tema.chiaro ? "#F6F6F9" : Tema.superficie
+                Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: Tema.chiaro ? "#12000000" : "#40000000" }
+                Row {
+                    anchors.verticalCenter: parent.verticalCenter
+                    x: 10
+                    spacing: 2
+                    Comando { id: cmdNuovo; icona: "list-add-symbolic"; testo: I18n.t("Nuovo"); freccia: true; onPremuto: { var p = cmdNuovo.mapToItem(finestra.contentItem, 0, cmdNuovo.height + 4); menu.mostra(finestra.vociNuovo(), p.x, p.y) } }
+                    Rectangle { width: 1; height: 22; anchors.verticalCenter: parent.verticalCenter; color: Tema.chiaro ? "#1A000000" : "#1FFFFFFF" }
+                    Comando { icona: "edit-cut-symbolic"; suggerimento: I18n.t("Taglia") + " (Ctrl+X)"; attivo: finestra.elencoScelti.length > 0; onPremuto: ponte.chiama("copia", [finestra.uriScelti(), true]) }
+                    Comando { icona: "edit-copy-symbolic"; suggerimento: I18n.t("Copia") + " (Ctrl+C)"; attivo: finestra.elencoScelti.length > 0; onPremuto: ponte.chiama("copia", [finestra.uriScelti(), false]) }
+                    Comando { icona: "edit-paste-symbolic"; suggerimento: I18n.t("Incolla") + " (Ctrl+V)"; onPremuto: finestra.incolla() }
+                    Comando { icona: "edit-rename-symbolic"; suggerimento: I18n.t("Rinomina") + " (F2)"; attivo: finestra.elencoScelti.length === 1; onPremuto: finestra.inRinomina = finestra.elencoScelti[0].uri }
+                    Comando { icona: "emblem-shared-symbolic"; suggerimento: I18n.t("Condividi"); attivo: finestra.elencoScelti.length > 0; onPremuto: ponte.chiama("condividi", [finestra.uriScelti()]) }
+                    Comando { icona: "user-trash-symbolic"; suggerimento: I18n.t("Sposta nel cestino") + " (Canc)"; attivo: finestra.elencoScelti.length > 0; onPremuto: finestra.cestina() }
+                    Rectangle { width: 1; height: 22; anchors.verticalCenter: parent.verticalCenter; color: Tema.chiaro ? "#1A000000" : "#1FFFFFFF" }
+                    Comando { id: cmdOrdina; icona: "view-sort-ascending-symbolic"; testo: I18n.t("Ordina"); freccia: true; onPremuto: { var p = cmdOrdina.mapToItem(finestra.contentItem, 0, cmdOrdina.height + 4); menu.mostra(finestra.vociOrdina(), p.x, p.y) } }
+                    Comando { id: cmdVista; icona: finestra.griglia ? "view-grid-symbolic" : "view-list-symbolic"; testo: I18n.t("Visualizza"); freccia: true; onPremuto: { var p = cmdVista.mapToItem(finestra.contentItem, 0, cmdVista.height + 4); menu.mostra(finestra.vociVista(), p.x, p.y) } }
+                }
+                Comando {
+                    anchors.right: parent.right; anchors.rightMargin: 10; anchors.verticalCenter: parent.verticalCenter
+                    icona: "view-reveal-symbolic"; testo: I18n.t("Dettagli"); acceso: finestra.dettagli
+                    onPremuto: finestra.dettagli = !finestra.dettagli
+                }
+            }
+            BarraProgresso { Layout.fillWidth: true; Layout.preferredHeight: 2; indeterminate: true; visible: finestra.caricamento && !finestra.avanzamento }
             // Cestino: barra con «Svuota»
             Rectangle {
                 visible: !!finestra.dati.cestino
@@ -266,56 +396,129 @@ Finestra {
                 }
             }
 
-            // Vista dei file
+            // Vista dei file (+ riquadro dei dettagli a destra)
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                spacing: 0
             Item {
+                id: areaVista
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 clip: true
+                readonly property int cellaL: finestra.latoIcone + 56
+                readonly property int cellaA: finestra.latoIcone + 60
+                property rect rettangolo: Qt.rect(0, 0, 0, 0)
+                property bool selezionando: false
+                // Selezione a rettangolo: trascinando sul vuoto si selezionano più file
+                function selezionaRettangolo(base) {
+                    var r = rettangolo, n = Object.assign({}, base)
+                    for (var i = 0; i < finestra.voci.length; i++) {
+                        var x, y, w, h
+                        if (finestra.griglia) {
+                            var col = Math.max(1, Math.floor(vistaGriglia.width / vistaGriglia.cellWidth))
+                            x = 10 + (i % col) * vistaGriglia.cellWidth; y = 10 + Math.floor(i / col) * vistaGriglia.cellHeight - vistaGriglia.contentY
+                            w = vistaGriglia.cellWidth - 4; h = vistaGriglia.cellHeight - 4
+                        } else {
+                            x = 0; y = 28 + i * 30 - vistaElenco.contentY - vistaElenco.originY; w = Math.min(vistaElenco.width, 420); h = 30
+                        }
+                        if (x < r.x + r.width && x + w > r.x && y < r.y + r.height && y + h > r.y) n[finestra.voci[i].uri] = true
+                    }
+                    finestra.scelti = n
+                }
                 MouseArea {
                     anchors.fill: parent
                     acceptedButtons: Qt.LeftButton | Qt.RightButton
-                    onClicked: function (ev) { finestra.scelti = ({}); finestra.inRinomina = ""; if (ev.button === Qt.RightButton) finestra.menuSfondo(ev.x, ev.y) }
+                    property point inizio
+                    property var base: ({})
+                    onPressed: function (ev) {
+                        if (ev.button !== Qt.LeftButton) return
+                        inizio = Qt.point(ev.x, ev.y)
+                        base = (ev.modifiers & Qt.ControlModifier) ? Object.assign({}, finestra.scelti) : ({})
+                        finestra.inRinomina = ""
+                    }
+                    onPositionChanged: function (ev) {
+                        if (!pressed || !(ev.buttons & Qt.LeftButton)) return
+                        if (!areaVista.selezionando && Math.abs(ev.x - inizio.x) + Math.abs(ev.y - inizio.y) < 6) return
+                        areaVista.selezionando = true
+                        areaVista.rettangolo = Qt.rect(Math.min(inizio.x, ev.x), Math.min(inizio.y, ev.y), Math.abs(ev.x - inizio.x), Math.abs(ev.y - inizio.y))
+                        areaVista.selezionaRettangolo(base)
+                    }
+                    onReleased: areaVista.selezionando = false
+                    onClicked: function (ev) {
+                        if (areaVista.rettangolo.width > 0) { areaVista.rettangolo = Qt.rect(0, 0, 0, 0); return }
+                        finestra.scelti = ({}); finestra.inRinomina = ""
+                        if (ev.button === Qt.RightButton) { var p = mapToItem(finestra.contentItem, ev.x, ev.y); finestra.menuSfondo(p.x, p.y) }
+                    }
+                    onCanceled: areaVista.selezionando = false
+                }
+                // la rotellina scorre la vista (le viste non si trascinano: il trascinamento seleziona)
+                WheelHandler {
+                    onWheel: function (ev) {
+                        var v = finestra.griglia ? vistaGriglia : vistaElenco
+                        var massimo = Math.max(0, v.contentHeight - v.height + (finestra.griglia ? 0 : 28))
+                        v.contentY = Math.max(v.originY, Math.min(v.originY + massimo, v.contentY - ev.angleDelta.y))
+                    }
                 }
                 DropArea {
                     anchors.fill: parent
                     onDropped: function (d) {
                         if (!d.hasUrls || finestra.dati.cestino) return
-                        var u = Array.prototype.map.call(d.urls, function (x) { return x.toString() })
-                        finestra.caricamento = true
-                        ponte.avvia("trasferisci", [u, finestra.uri, (d.modifiers & Qt.ShiftModifier) !== 0, false], "operazione")
+                        finestra.trasferisci(Array.prototype.map.call(d.urls, function (x) { return x.toString() }), finestra.uri, finestra.modoDa(d.modifiers))
                         d.acceptProposedAction()
                     }
                 }
                 GridView {
                     id: vistaGriglia
                     visible: finestra.griglia
+                    interactive: false
                     anchors.fill: parent
                     anchors.margins: 10
-                    cellWidth: 108
-                    cellHeight: 112
+                    cellWidth: areaVista.cellaL
+                    cellHeight: areaVista.cellaA
                     model: finestra.voci
                     boundsBehavior: Flickable.StopAtBounds
                     ScrollBar.vertical: ScrollBar {}
-                    delegate: Elemento { larghezza: 104; altezza: 108; vistaGriglia: true }
+                    delegate: Elemento { larghezza: areaVista.cellaL - 4; altezza: areaVista.cellaA - 4; vistaGriglia: true }
                 }
                 ListView {
                     id: vistaElenco
                     visible: !finestra.griglia
+                    interactive: false
                     anchors.fill: parent
                     model: finestra.voci
                     boundsBehavior: Flickable.StopAtBounds
                     ScrollBar.vertical: ScrollBar {}
+                    // Intestazione: un clic su una colonna ordina (di nuovo: inverte)
                     header: Rectangle {
-                        width: vistaElenco.width; height: 28; color: Tema.sfondo
+                        width: vistaElenco.width; height: 28; color: Tema.sfondo; z: 3
                         RowLayout {
                             anchors.fill: parent; anchors.leftMargin: 44; anchors.rightMargin: 16
-                            Text { text: I18n.t("Nome"); Layout.fillWidth: true; color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 11 }
-                            Text { text: I18n.t("Modificato"); Layout.preferredWidth: 130; color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 11 }
-                            Text { text: I18n.t("Dimensione"); Layout.preferredWidth: 90; horizontalAlignment: Text.AlignRight; color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 11 }
-                            Text { text: I18n.t("Tipo"); Layout.preferredWidth: 150; color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 11 }
+                            Repeater {
+                                model: [{ k: "nome", t: I18n.t("Nome"), l: -1 }, { k: "data", t: I18n.t("Modificato"), l: 130 }, { k: "dimensione", t: I18n.t("Dimensione"), l: 90 }, { k: "tipo", t: I18n.t("Tipo"), l: 150 }]
+                                Text {
+                                    required property var modelData
+                                    Layout.fillWidth: modelData.l < 0
+                                    Layout.preferredWidth: modelData.l > 0 ? modelData.l : -1
+                                    horizontalAlignment: modelData.k === "dimensione" ? Text.AlignRight : Text.AlignLeft
+                                    text: modelData.t + (finestra.ordina === modelData.k ? (finestra.crescente ? "  ▴" : "  ▾") : "")
+                                    color: finestra.ordina === modelData.k ? Tema.testo : Tema.testoSecondario
+                                    font.family: Tema.font; font.pixelSize: 11; font.weight: finestra.ordina === modelData.k ? Font.DemiBold : Font.Normal
+                                    MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: finestra.cambiaOrdine(modelData.k) }
+                                }
+                            }
                         }
                     }
                     delegate: Elemento { larghezza: vistaElenco.width; altezza: 30; vistaGriglia: false }
+                }
+                // Rettangolo di selezione
+                Rectangle {
+                    visible: areaVista.selezionando
+                    x: areaVista.rettangolo.x; y: areaVista.rettangolo.y
+                    width: areaVista.rettangolo.width; height: areaVista.rettangolo.height
+                    color: "#26" + Tema.accento.substring(1)
+                    border.color: Tema.accento
+                    border.width: 1
                 }
                 Column {
                     anchors.centerIn: parent
@@ -325,16 +528,94 @@ Finestra {
                     Text { anchors.horizontalCenter: parent.horizontalCenter; text: finestra.risultati !== null ? I18n.t("Nessun risultato") : (finestra.dati.cestino ? I18n.t("Il cestino è vuoto") : I18n.t("Questa cartella è vuota")); color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 13 }
                 }
             }
-            // Barra di stato
+            // Riquadro dei dettagli (Alt+P)
+            Rectangle {
+                visible: finestra.dettagli
+                Layout.preferredWidth: 260
+                Layout.fillHeight: true
+                color: Tema.chiaro ? "#F6F6F9" : Tema.superficie
+                Rectangle { width: 1; height: parent.height; color: Tema.chiaro ? "#12000000" : "#40000000" }
+                readonly property var v: finestra.elencoScelti.length === 1 ? finestra.elencoScelti[0] : null
+                ColumnLayout {
+                    anchors.fill: parent
+                    anchors.margins: 18
+                    spacing: 10
+                    Image {
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.preferredWidth: 160; Layout.preferredHeight: 120
+                        fillMode: Image.PreserveAspectFit
+                        sourceSize.width: 320; sourceSize.height: 240
+                        asynchronous: true
+                        readonly property var v: parent.parent.v
+                        source: v ? (v.miniatura || v.anteprima || (v.icona.indexOf("/") === 0 ? "file://" + v.icona : "image://icona/" + v.icona))
+                                  : "image://icona/" + (finestra.elencoScelti.length > 1 ? "edit-copy" : (finestra.dati.cestino ? "user-trash" : "folder"))
+                    }
+                    Text {
+                        Layout.fillWidth: true
+                        horizontalAlignment: Text.AlignHCenter
+                        wrapMode: Text.WrapAnywhere
+                        maximumLineCount: 3
+                        elide: Text.ElideRight
+                        readonly property var v: parent.parent.v
+                        text: v ? v.nome : (finestra.elencoScelti.length > 1 ? finestra.elencoScelti.length + " " + I18n.t("elementi selezionati") : (finestra.dati.titolo || ""))
+                        color: Tema.testo; font.family: Tema.font; font.pixelSize: 14; font.weight: Font.DemiBold
+                    }
+                    Rectangle { Layout.fillWidth: true; height: 1; color: Tema.chiaro ? "#12000000" : "#1FFFFFFF" }
+                    Repeater {
+                        model: {
+                            var v = parent.parent.v
+                            if (v) return [{ k: I18n.t("Tipo"), t: v.tipo }, { k: I18n.t("Dimensione"), t: v.testoDimensione }, { k: I18n.t("Modificato"), t: v.modificato }]
+                            if (finestra.elencoScelti.length > 1) {
+                                var tot = 0; finestra.elencoScelti.forEach(function (x) { if (x.dimensione > 0) tot += x.dimensione })
+                                return [{ k: I18n.t("Dimensione totale"), t: tot >= 1048576 ? (tot / 1048576).toFixed(1).replace(".", ",") + " MB" : Math.round(tot / 1024) + " KB" }]
+                            }
+                            return [{ k: I18n.t("Contenuto"), t: finestra.voci.length + " " + I18n.t("elementi") }]
+                        }
+                        ColumnLayout {
+                            required property var modelData
+                            visible: !!modelData.t
+                            spacing: 1
+                            Text { text: modelData.k; color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 11 }
+                            Text { text: modelData.t || ""; Layout.maximumWidth: 220; elide: Text.ElideRight; color: Tema.testo; font.family: Tema.font; font.pixelSize: 12 }
+                        }
+                    }
+                    Pulsante {
+                        visible: finestra.elencoScelti.length === 1
+                        text: I18n.t("Proprietà")
+                        onClicked: proprieta.apri(finestra.elencoScelti[0].uri)
+                    }
+                    Item { Layout.fillHeight: true }
+                }
+            }
+            }
+            // Barra di stato (con l'avanzamento delle copie lunghe)
             Rectangle {
                 Layout.fillWidth: true
                 implicitHeight: 26
                 color: Tema.superficie
                 Text {
+                    visible: !finestra.avanzamento
                     anchors.verticalCenter: parent.verticalCenter; x: 14
                     color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 11
                     text: finestra.elencoScelti.length > 0 ? finestra.elencoScelti.length + " " + I18n.t("selezionati su") + " " + finestra.voci.length
                                                           : finestra.voci.length + " " + I18n.t("elementi")
+                }
+                Row {
+                    visible: !!finestra.avanzamento
+                    anchors.verticalCenter: parent.verticalCenter; x: 14
+                    spacing: 10
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 260; elide: Text.ElideMiddle
+                        text: finestra.avanzamento ? I18n.t("Trasferimento") + ": " + finestra.avanzamento.nome : ""
+                        color: Tema.testo; font.family: Tema.font; font.pixelSize: 11
+                    }
+                    BarraProgresso { width: 200; anchors.verticalCenter: parent.verticalCenter; value: finestra.avanzamento ? finestra.avanzamento.fatti / finestra.avanzamento.totale : 0 }
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: finestra.avanzamento ? Math.round(100 * finestra.avanzamento.fatti / finestra.avanzamento.totale) + "%" : ""
+                        color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 11
+                    }
                 }
             }
         }
@@ -369,16 +650,16 @@ Finestra {
             visible: el.vistaGriglia
             anchors.horizontalCenter: parent.horizontalCenter
             y: 8
-            width: 52; height: 52
+            width: finestra.latoIcone; height: finestra.latoIcone
             fillMode: Image.PreserveAspectFit
-            sourceSize.width: 104; sourceSize.height: 104
+            sourceSize.width: finestra.latoIcone * 2; sourceSize.height: finestra.latoIcone * 2
             asynchronous: true
             source: el.modelData.miniatura || el.modelData.anteprima || (el.modelData.icona.indexOf("/") === 0 ? "file://" + el.modelData.icona : "image://icona/" + el.modelData.icona)
         }
         Text {
             visible: el.vistaGriglia && finestra.inRinomina !== el.modelData.uri
             anchors.horizontalCenter: parent.horizontalCenter
-            y: 66
+            y: finestra.latoIcone + 14
             width: parent.width - 8
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.Wrap
@@ -426,8 +707,7 @@ Finestra {
                 if (!d.hasUrls) return
                 var u = Array.prototype.map.call(d.urls, function (x) { return x.toString() }).filter(function (x) { return x !== el.modelData.uri })
                 if (!u.length) return
-                finestra.caricamento = true
-                ponte.avvia("trasferisci", [u, el.modelData.uri, (d.modifiers & Qt.ShiftModifier) !== 0, false], "operazione")
+                finestra.trasferisci(u, el.modelData.uri, finestra.modoDa(d.modifiers))
                 d.acceptProposedAction()
             }
         }
@@ -435,13 +715,42 @@ Finestra {
         CampoTesto {
             visible: finestra.inRinomina === el.modelData.uri
             x: el.vistaGriglia ? 2 : 44
-            y: el.vistaGriglia ? 64 : 1
+            y: el.vistaGriglia ? finestra.latoIcone + 12 : 1
             width: el.vistaGriglia ? parent.width - 4 : parent.width * 0.4
             font.pixelSize: 12
             onVisibleChanged: if (visible) { text = el.modelData.nome; forceActiveFocus(); var p = text.lastIndexOf("."); select(0, p > 0 && !el.modelData.cartella ? p : text.length) }
             onAccepted: { var r = ponte.chiama("rinomina", [el.modelData.uri, text]); finestra.inRinomina = ""; finestra.esito(r) }
             Keys.onEscapePressed: finestra.inRinomina = ""
         }
+    }
+
+    // ── Pulsante piatto della barra dei comandi ─────────────────────────────
+    component Comando: Rectangle {
+        id: c
+        property string icona: ""
+        property string testo: ""
+        property string suggerimento: ""
+        property bool freccia: false
+        property bool attivo: true
+        property bool acceso: false
+        signal premuto()
+        width: rigaComando.implicitWidth + 16
+        height: 30
+        radius: 6
+        opacity: attivo ? 1 : 0.4
+        color: acceso ? (Tema.chiaro ? "#1A000000" : "#24FFFFFF") : (maC.pressed ? (Tema.chiaro ? "#1A000000" : "#24FFFFFF") : (maC.containsMouse && attivo ? (Tema.chiaro ? "#0F000000" : "#14FFFFFF") : "transparent"))
+        Row {
+            id: rigaComando
+            anchors.centerIn: parent
+            spacing: 6
+            Icona { nome: c.icona + (Tema.chiaro ? "?c" : ""); lato: 16; anchors.verticalCenter: parent.verticalCenter }
+            Text { visible: c.testo !== ""; text: c.testo; color: Tema.testo; font.family: Tema.font; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
+            Text { visible: c.freccia; text: "▾"; color: Tema.testoSecondario; font.pixelSize: 10; anchors.verticalCenter: parent.verticalCenter }
+        }
+        MouseArea { id: maC; anchors.fill: parent; hoverEnabled: true; onClicked: if (c.attivo) c.premuto() }
+        ToolTip.visible: maC.containsMouse && c.suggerimento !== ""
+        ToolTip.delay: 600
+        ToolTip.text: c.suggerimento
     }
 
     // ── Menu ─────────────────────────────────────────────────────────────────

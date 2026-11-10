@@ -112,10 +112,27 @@ class BackendShell(Backend):
 
         return "file://" + sfondo_attuale()
 
+    def mostraStart(self) -> None:
+        self.emetti("mostra", "start")
+
+    # ── Scrivania ───────────────────────────────────────────────────────────
     def scrivania(self) -> list:
         from . import scrivania
 
         return scrivania.elementi()
+
+    def scrivaniaImpostazioni(self) -> dict:
+        from . import scrivania
+
+        return scrivania.impostazioni()
+
+    def scrivaniaSalva(self, cambi) -> dict:
+        from . import scrivania
+
+        conf = scrivania.salva_impostazioni(dict(cambi))
+        if "mostra" in cambi or "sistema" in cambi:
+            self.emetti("scrivania", None)
+        return conf
 
     def scrivaniaCartella(self) -> str:
         from . import scrivania
@@ -137,27 +154,99 @@ class BackendShell(Backend):
 
         return scrivania.rinomina(percorso, nuovo)
 
-    def scrivaniaCestino(self, percorso: str) -> bool:
+    def scrivaniaCestino(self, percorsi) -> int:
         from . import scrivania
 
-        return scrivania.cestino(percorso)
+        elenco = [percorsi] if isinstance(percorsi, str) else list(percorsi)
+        return sum(1 for p in elenco if scrivania.cestino(str(p)))
 
     def scrivaniaCollegamento(self, desktop: str) -> bool:
         from . import scrivania
 
         return scrivania.aggiungi_collegamento(desktop)
 
-    def dockOrdina(self, ordine) -> None:
-        """Nuovo ordine delle icone fissate (trascinamento nel dock)."""
-        from . import dock
-
-        dock.ordina([str(x) for x in ordine])
-        self.emetti("finestre", None)
-
-    def scrivaniaCopia(self, indirizzi) -> int:
+    def scrivaniaTrasferisci(self, indirizzi, cartella: str, modo: str = "auto") -> dict:
+        """File trascinati o incollati sulla scrivania (o su una sua cartella)."""
+        from .. import trasferimenti
         from . import scrivania
 
-        return scrivania.copia_qui([str(i) for i in indirizzi])
+        return trasferimenti.trasferisci([str(i) for i in indirizzi], cartella or str(scrivania.cartella()), modo)
+
+    def scrivaniaCopia(self, indirizzi) -> int:      # compatibilità
+        return self.scrivaniaTrasferisci(indirizzi, "", "copia").get("fatti", 0)
+
+    # Appunti di sistema (gli stessi dell'app File)
+    def appuntiCopia(self, percorsi, taglia: bool = False) -> bool:
+        from .. import appunti
+
+        return appunti.copia([str(p) for p in percorsi], bool(taglia))
+
+    def appunti(self) -> dict:
+        from .. import appunti
+
+        return appunti.leggi()
+
+    def appuntiSvuota(self) -> None:
+        from .. import appunti
+
+        appunti.svuota()
+
+    def scrivaniaAzione(self, azione: str, percorsi) -> None:
+        """Voci del menu delle icone: Apri con, Mostra in File, Proprietà, PDF, zip, Condividi, Terminale."""
+        from . import scrivania
+
+        p = [str(x) for x in percorsi]
+        if not p:
+            return
+        c = branding.comando
+        if azione == "apricon":
+            avvia([c("apri-con"), p[0]])
+        elif azione == "mostra":
+            avvia([c("file"), p[0]])          # File apre la cartella che contiene il file
+        elif azione == "proprieta":
+            avvia([c("file"), "--proprieta", p[0]])
+        elif azione == "pdf":
+            avvia(["/usr/libexec/nucleo/converti-pdf", *p])
+        elif azione == "comprimi":
+            avvia([c("archivi"), "--comprimi", *p])
+        elif azione == "estrai":
+            avvia([c("archivi"), "--estrai", *p])
+        elif azione == "condividi":
+            avvia([c("condividi"), *p])
+        elif azione == "terminale":
+            avvia(["qterminal", "-w", p[0]])
+        elif azione == "cartella":
+            avvia([c("file"), str(scrivania.cartella())])
+
+    # ── Cestino (fisso in fondo al Dock / alla barra) ───────────────────────
+    def cestinoPieno(self) -> bool:
+        from gi.repository import Gio, GLib
+
+        try:
+            info = Gio.File.new_for_uri("trash:///").query_info("trash::item-count", Gio.FileQueryInfoFlags.NONE, None)
+            return info.get_attribute_uint32("trash::item-count") > 0
+        except GLib.Error:
+            return False
+
+    def cestinoApri(self) -> None:
+        avvia([branding.comando("file"), "trash:///"])
+
+    def cestinoSvuota(self) -> None:
+        # chiede conferma nella finestra del Cestino (si può annullare)
+        avvia([branding.comando("file"), "trash:///", "--svuota-cestino"])
+
+    def cestinoSposta(self, indirizzi) -> int:
+        from gi.repository import Gio, GLib
+
+        n = 0
+        for indirizzo in indirizzi:
+            try:
+                Gio.File.new_for_uri(str(indirizzo)).trash(None)
+                n += 1
+            except GLib.Error:
+                pass
+        self.emetti("cestino", None)
+        return n
 
     def tutteLeApp(self) -> list:
         from . import dock
@@ -391,6 +480,10 @@ def crea_servizio_shell(bus, backend: BackendShell):
             return bool(backend.dockApri(str(desktop)))
 
         @dbus.service.method(nome, in_signature="", out_signature="")
+        def Aggiorna(self):
+            backend.emetti("finestre", None)
+
+        @dbus.service.method(nome, in_signature="", out_signature="")
         def AggiornaSfondo(self):
             backend.emetti("sfondo", None)
 
@@ -478,6 +571,19 @@ def main() -> int:
     from PyQt6.QtCore import QFileSystemWatcher
 
     from . import scrivania
+
+    # Il Cestino nel Dock cambia icona quando si riempie o si svuota
+    try:
+        import gi
+
+        gi.require_version("Gio", "2.0")
+        from gi.repository import Gio
+
+        monitor_cestino = Gio.File.new_for_uri("trash:///").monitor_directory(Gio.FileMonitorFlags.NONE, None)
+        monitor_cestino.connect("changed", lambda *_a: backend.emetti("cestino", None))
+        backend._monitor_cestino = monitor_cestino
+    except Exception as e:  # noqa: BLE001 — senza gvfs il cestino si aggiorna comunque col Dock
+        print("cestino:", e, file=sys.stderr)
 
     osservatore = QFileSystemWatcher([str(scrivania.cartella())])
     osservatore.directoryChanged.connect(lambda _p: backend.emetti("scrivania", None))

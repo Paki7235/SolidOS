@@ -23,6 +23,7 @@ Finestra {
     }
     property var voci: []
     property bool caricamento: false
+    property string attesa: ""      // operazione lunga in corso (es. «Connessione a CasaMia…»)
     property string evidenzia: ""
     property var risultati: []
 
@@ -60,8 +61,15 @@ Finestra {
         carica()
     }
     function apri(id, voce) { vai(id, voce, false) }
-    function imposta(voce, valore) { ponte.avvia("imposta", [corrente, voce, valore], "imposta") }
-    function esegui(voce, elemento, azione, dati) { ponte.avvia("azione", [corrente, voce, elemento, azione, dati || {}], "azione") }
+    function imposta(voce, valore) {
+        if (corrente === "rete" && voce === "wifi") attesa = valore ? I18n.t("Accensione del Wi-Fi e ricerca delle reti…") : I18n.t("Spegnimento del Wi-Fi…")
+        ponte.avvia("imposta", [corrente, voce, valore], "imposta")
+    }
+    function esegui(voce, elemento, azione, dati) {
+        attesa = azione === "connetti" ? I18n.t("Connessione a") + " «" + elemento + "» " + I18n.t("in corso…")
+               : (azione === "disconnetti" ? I18n.t("Disconnessione…") : (voce === "aggiorna" ? I18n.t("Ricerca delle reti…") : I18n.t("Un momento…")))
+        ponte.avvia("azione", [corrente, voce, elemento, azione, dati || {}], "azione")
+    }
 
     Component.onCompleted: { storia = [corrente]; posizione = 0; carica() }
     Connections {
@@ -69,6 +77,7 @@ Finestra {
         function onCompletato(id, r) {
             if (id === "voci:" + finestra.corrente) { finestra.voci = r; finestra.caricamento = false }
             else if (id === "imposta" || id === "azione") {
+                finestra.attesa = ""
                 if (r.messaggio) finestra.avviso(r.messaggio)
                 else if (r.ok === false) finestra.avviso(I18n.t("Operazione non riuscita"))
                 if (r.ricarica !== false) finestra.carica()
@@ -173,7 +182,20 @@ Finestra {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 2
                 color: "transparent"
-                BarraProgresso { anchors.fill: parent; indeterminate: true; visible: finestra.caricamento }
+                BarraProgresso { anchors.fill: parent; indeterminate: true; visible: finestra.caricamento || finestra.attesa !== "" }
+            }
+            // Avviso di operazione in corso: si vede che sta lavorando (connessione Wi-Fi, ricerca…)
+            Rectangle {
+                visible: finestra.attesa !== ""
+                Layout.fillWidth: true
+                Layout.preferredHeight: 40
+                color: Tema.chiaro ? "#EAF2FF" : "#1A2A44"
+                Row {
+                    anchors.centerIn: parent
+                    spacing: 10
+                    BusyIndicator { width: 22; height: 22; running: parent.visible; anchors.verticalCenter: parent.verticalCenter }
+                    Text { text: finestra.attesa; color: Tema.testo; font.family: Tema.font; font.pixelSize: 13; font.weight: Font.Medium; anchors.verticalCenter: parent.verticalCenter }
+                }
             }
             ScrollView {
                 id: scorrimento

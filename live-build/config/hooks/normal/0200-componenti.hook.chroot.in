@@ -12,32 +12,6 @@ fi
 apt-get install -y -qq --no-install-recommends wine32:i386 >/dev/null 2>&1 \
 	&& registro "wine32 installato" || registro "wine32 non disponibile (solo programmi a 64 bit)"
 
-# ── OWL (AWDL per AirDrop, GPL-3.0) compilato dai sorgenti ────────────────────
-# Dipendenze verificate con il workflow «Prova OWL» su Debian 13.
-DIPENDENZE="ca-certificates git cmake build-essential pkg-config libpcap-dev libev-dev libnl-3-dev libnl-genl-3-dev libnl-route-3-dev"
-RUNTIME="libpcap0.8t64 libev4t64 libnl-3-200 libnl-genl-3-200 libnl-route-3-200"
-REGISTRO_OWL=/tmp/owl-build.log
-if apt-get install -y -qq --no-install-recommends $DIPENDENZE $RUNTIME >"$REGISTRO_OWL" 2>&1; then
-	rm -rf /tmp/owl
-	if git clone --depth 1 --recurse-submodules https://github.com/seemoo-lab/owl.git /tmp/owl >>"$REGISTRO_OWL" 2>&1 \
-		&& cmake -S /tmp/owl -B /tmp/owl/build -DCMAKE_BUILD_TYPE=Release -Wno-dev >>"$REGISTRO_OWL" 2>&1 \
-		&& cmake --build /tmp/owl/build --target owl -j"$(nproc)" >>"$REGISTRO_OWL" 2>&1 \
-		&& install -m 0755 /tmp/owl/build/daemon/owl /usr/local/bin/owl; then
-		registro "OWL installato ($(cd /tmp/owl && git log -1 --format=%h))"
-		mkdir -p /usr/share/doc/owl && cp /tmp/owl/COPYING /usr/share/doc/owl/copyright 2>/dev/null || true
-	else
-		registro "ATTENZIONE: compilazione di OWL non riuscita: AirDrop non sarà disponibile. Ultime righe:"
-		tail -n 40 "$REGISTRO_OWL" | sed 's/^/    /'
-	fi
-	rm -rf /tmp/owl
-	apt-mark manual $RUNTIME >/dev/null 2>&1 || true
-	apt-get purge -y -qq git cmake build-essential pkg-config libpcap-dev libev-dev libnl-3-dev libnl-genl-3-dev libnl-route-3-dev >/dev/null 2>&1 || true
-else
-	registro "ATTENZIONE: dipendenze di OWL non installabili: AirDrop non sarà disponibile. Ultime righe:"
-	tail -n 20 "$REGISTRO_OWL" | sed 's/^/    /'
-fi
-rm -f "$REGISTRO_OWL"
-
 # ── Firewall: Condivisione Vicina ammessa nelle reti di casa/lavoro e nell'hotspot ──
 if command -v firewall-offline-cmd >/dev/null; then
 	firewall-offline-cmd --set-default-zone=home >/dev/null 2>&1 || true
@@ -64,6 +38,16 @@ if apt-get install -y -qq --no-install-recommends git ca-certificates >/tmp/coll
 		[ -d "/tmp/colloid/links/$cartella" ] && cp -a "/tmp/colloid/links/$cartella/." "$D/$cartella/"
 	done
 	cp -a /tmp/colloid/dark/*.svg "$D/places/scalable/" 2>/dev/null || true
+	# Variante chiara (tema chiaro): solo i simboli e le icone piccole, con i colori
+	# originali scuri; tutto il resto lo eredita da Colloid-Dark (nessun doppione).
+	L=/usr/share/icons/Colloid-Light
+	rm -rf "$L" && cp -a "$D" "$L"
+	find "$L" \( -type f -o -type l \) -name '*.svg' ! \( -path '*/symbolic/*' -o -path '*/16/*' -o -path '*/22/*' -o -path '*/24/*' -o -path '*/32/*' \) -delete
+	find "$L" -xtype l -delete
+	find "$L" -type d -empty -delete
+	sed -i -e 's/Colloid-Dark/Colloid-Light/g' -e 's/^Inherits=.*/Inherits=Colloid-Dark,Papirus,breeze,hicolor/' "$L/index.theme"
+	grep -q '^Inherits=' "$L/index.theme" || sed -i '/^\[Icon Theme\]/a Inherits=Colloid-Dark,Papirus,breeze,hicolor' "$L/index.theme"
+	gtk-update-icon-cache -q "$L" 2>/dev/null || true
 	# Variante scura: simboli chiari sulle barre scure
 	find "$D" -type f -name '*.svg' \( -path '*/symbolic/*' -o -path '*/16/*' -o -path '*/22/*' -o -path '*/24/*' -o -path '*/32/*' \) \
 		-exec sed -i 's/#363636/#dedede/g' {} +
@@ -75,6 +59,30 @@ else
 fi
 rm -rf /tmp/colloid
 apt-get purge -y -qq git >/dev/null 2>&1 || true
+
+# ── Tema chiaro: icone del sistema e bordi delle finestre ───────────────────
+I=/usr/share/icons/@OS_ID@
+if [ -d "$I" ]; then
+	mkdir -p "$I-chiaro"
+	ln -sfn "$I/scalable" "$I-chiaro/scalable"
+	sed -e 's/^Name=.*/Name=@OS_NAME@ Chiaro/' -e 's/^Inherits=.*/Inherits=Colloid-Light,Colloid-Dark,Papirus,breeze,hicolor/' \
+		"$I/index.theme" >"$I-chiaro/index.theme"
+	gtk-update-icon-cache -q "$I-chiaro" 2>/dev/null || true
+fi
+T=/usr/share/themes/@OS_NAME@/labwc
+C="/usr/share/themes/@OS_NAME@-Chiaro/labwc"
+if [ -d "$T" ]; then
+	mkdir -p "$C" && cp -a "$T/." "$C/"
+	# pulsanti: segni scuri; al passaggio fondo grigio chiaro (la X resta rossa e bianca)
+	sed -i -e 's/#E4E4E7/#1D1D1F/g' -e 's/#7C7C84/#A1A1A6/g' -e 's/#3F4048/#E1E1E6/g' "$C"/*.svg
+	for f in "$C"/iconify_hover-active.svg "$C"/max_hover-active.svg "$C"/max_toggled_hover-active.svg; do
+		[ -f "$f" ] && sed -i 's/#FFFFFF/#1D1D1F/g' "$f"
+	done
+	sed -i -e 's/#3A3B42/#D1D1D6/g' -e 's/#2C2D33/#E5E5EA/g' -e 's/#2B2C32/#F4F4F6/g' -e 's/#232429/#ECECF0/g' \
+		-e 's/#E4E4E7/#1D1D1F/g' -e 's/#7C7C84/#8E8E93/g' -e 's/#26272D/#FFFFFF/g' -e 's/#F5F5F7/#1D1D1F/g' \
+		-e 's/#1E1F24/#F4F4F6/g' -e 's/#E6202126/#F2F6F6F8/g' -e 's/#00000080/#00000038/g' -e 's/#00000050/#00000024/g' \
+		-e 's/title.separator.color: #000000/title.separator.color: #E5E5EA/' "$C/themerc"
+fi
 
 # ── Protocollo Wayland delle finestre (dock e barra della shell) ─────────────
 WL=/usr/lib/python3/dist-packages/nucleo/wl
@@ -128,6 +136,24 @@ rinomina qterminal.desktop "Terminale"
 for voce in pcmanfm-qt.desktop calamares.desktop install-debian.desktop wine.desktop wine-*.desktop debian-xterm.desktop debian-uxterm.desktop \
 	xterm.desktop uxterm.desktop pcmanfm-qt-desktop-pref.desktop qterminal-drop.desktop avahi-discover.desktop bssh.desktop \
 	bvnc.desktop lxqt-*.desktop org.kde.*.desktop nm-applet.desktop display-im*.desktop; do
+	for f in $A/$voce; do
+		[ -f "$f" ] && ! grep -q '^NoDisplay=true' "$f" && sed -i 's/^\[Desktop Entry\]$/[Desktop Entry]\nNoDisplay=true/' "$f"
+	done
+done
+# Programmi da terminale (Vim, htop, …) e strumenti tecnici: non servono a chi usa il computer
+# tutti i giorni (da Windows, Mac o Linux). Restano installati e si avviano dal Terminale.
+for f in $A/*.desktop; do
+	[ -f "$f" ] || continue
+	case "$(basename "$f")" in @OS_ID@-*|firefox*|qterminal.desktop) continue ;; esac
+	if grep -qi '^Terminal=true' "$f"; then
+		grep -q '^NoDisplay=true' "$f" || sed -i 's/^\[Desktop Entry\]$/[Desktop Entry]\nNoDisplay=true/' "$f"
+	fi
+done
+for voce in vim.desktop gvim.desktop nvim.desktop htop.desktop btop.desktop nvtop.desktop python3*.desktop ipython*.desktop \
+	im-config.desktop gparted.desktop pavucontrol*.desktop nm-connection-editor.desktop blueman-*.desktop \
+	system-config-printer.desktop org.freedesktop.*.desktop yelp.desktop mpv.desktop vlc.desktop libfm-pref-apps.desktop \
+	lstopo.desktop kbd*.desktop debian-*.desktop xdg-*.desktop org.gnome.Software*.desktop software-properties*.desktop \
+	gcr-*.desktop gnome-*-panel.desktop zenity*.desktop wpa_gui.desktop; do
 	for f in $A/$voce; do
 		[ -f "$f" ] && ! grep -q '^NoDisplay=true' "$f" && sed -i 's/^\[Desktop Entry\]$/[Desktop Entry]\nNoDisplay=true/' "$f"
 	done

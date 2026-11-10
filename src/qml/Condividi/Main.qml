@@ -1,5 +1,5 @@
-// «Condividi»: visibilità del computer, dispositivi vicini (Quick Share, AirDrop,
-// LocalSend), codice QR e stato di ogni sistema (diagnosi).
+// «Condividi»: visibilità del computer, dispositivi vicini (Quick Share, LocalSend),
+// codice QR (per iPhone e qualsiasi telefono) e stato di ogni sistema (diagnosi).
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -23,7 +23,7 @@ Finestra {
     function aggiornaDiagnosi() { ponte.avvia("diagnosi", [], "diagnosi") }
 
     Component.onCompleted: {
-        // Come AirDrop su Mac: aprendo la finestra il computer diventa visibile per 10 minuti
+        // Aprendo la finestra il computer diventa visibile per 10 minuti
         if (visibilita === "nessuno" || visibilita === "associati") imposta("tutti10")
         ponte.chiama0("scopri")
         aggiornaDiagnosi()
@@ -40,7 +40,7 @@ Finestra {
     onClosing: ponte.chiama0("fermaQr")
 
     function iconaTipo(t) { return t === "computer" ? "computer" : (t === "tablet" ? "tablet" : "phone") }
-    function nomeBackend(b) { return { quickshare: "Quick Share", airdrop: "AirDrop (beta)", localsend: "LocalSend", qr: "QR" }[b] || b }
+    function nomeBackend(b) { return { quickshare: "Quick Share", localsend: "LocalSend", qr: "QR" }[b] || b }
 
     ScrollView {
         anchors.fill: parent
@@ -92,7 +92,7 @@ Finestra {
                         color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 12; lineHeight: 1.2
                         text: I18n.t("Sul telefono apri la foto o il file → Condividi.") + "\n"
                               + "• Android: " + I18n.t("Quick Share, poi scegli questo computer (stessa rete Wi-Fi, Bluetooth acceso).") + "\n"
-                              + "• iPhone: " + I18n.t("AirDrop (serve una scheda Wi-Fi compatibile, vedi Stato), oppure usa il Codice QR qui sotto.") + "\n"
+                              + "• iPhone: " + I18n.t("usa il Codice QR qui sotto con la fotocamera, oppure l'app LocalSend.") + "\n"
                               + I18n.t("I file arrivano nella cartella Scaricati › Ricevuti.")
                     }
                 }
@@ -118,7 +118,7 @@ Finestra {
                 ColumnLayout {
                     spacing: 8
                     BarraProgresso { Layout.fillWidth: true; indeterminate: true }
-                    Testo { secondario: true; Layout.fillWidth: true; text: I18n.t("Ricerca in corso… Sul telefono metti la ricezione su «Tutti»: Quick Share su Android, AirDrop su «Tutti per 10 minuti» su iPhone, oppure apri LocalSend.") }
+                    Testo { secondario: true; Layout.fillWidth: true; text: I18n.t("Ricerca in corso… Sul telefono metti la ricezione su «Tutti»: Quick Share su Android, oppure apri LocalSend sul telefono.") }
                     ListView {
                         Layout.fillWidth: true
                         Layout.fillHeight: true

@@ -35,8 +35,8 @@ Window {
     LayerShell.Window.exclusionZone: 28
     LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityNone
     height: 28
-    color: "#C70C0E14"
-    visible: true
+    color: Tema.barra
+    visible: Tema.stileBarra !== "windows"
 
     Timer { interval: 1000; repeat: true; running: true; triggeredOnStart: true; onTriggered: barra.aggiornaOra() }
     Timer { interval: 4000; repeat: true; running: true; triggeredOnStart: true; onTriggered: barra.aggiornaStato() }
@@ -49,12 +49,12 @@ Window {
         height: 22
         radius: 5
         anchors.verticalCenter: parent ? parent.verticalCenter : undefined
-        color: ma.pressed ? "#40FFFFFF" : (ma.containsMouse ? "#26FFFFFF" : "transparent")
+        color: ma.pressed ? Tema.premuto : (ma.containsMouse ? Tema.sopra : "transparent")
         Item { id: interno; x: 8; width: childrenRect.width; height: parent.height }
         MouseArea { id: ma; anchors.fill: parent; hoverEnabled: true; onClicked: p.premuto() }
     }
 
-    Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: "#14FFFFFF" }
+    Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: Tema.separatore }
 
     // ── Sinistra ───────────────────────────────────────────────────────────
     Row {
@@ -67,7 +67,7 @@ Window {
             contenuto: Image {
                 y: 4; width: 14; height: 14
                 sourceSize.width: 28; sourceSize.height: 28
-                source: "file:///usr/share/" + Tema.idSistema + "/logo-chiaro.svg"
+                source: "file:///usr/share/" + Tema.idSistema + (Tema.chiaro ? "/logo.svg" : "/logo-chiaro.svg")
             }
         }
         // Nome dell'app in primo piano: un clic apre il suo menu (Nascondi, Chiudi, Esci…)
@@ -77,7 +77,7 @@ Window {
             contenuto: Text {
                 y: 3
                 text: barra.attiva.nome || ""
-                color: "#F5F5F7"
+                color: Tema.testoVetro
                 font.family: Tema.font; font.pixelSize: 13; font.weight: Font.DemiBold
             }
         }
@@ -88,7 +88,7 @@ Window {
             ] : []
             Pulsantino {
                 onPremuto: barra.menuVoce(modelData.m)
-                contenuto: Text { y: 3; text: modelData.t; color: "#E4E4E7"; font.family: Tema.font; font.pixelSize: 13 }
+                contenuto: Text { y: 3; text: modelData.t; color: Tema.testoVetro; font.family: Tema.font; font.pixelSize: 13 }
             }
         }
     }
@@ -100,8 +100,9 @@ Window {
         height: parent.height
         spacing: 2
         Pulsantino {
+            visible: Tema.barraPrestazioni !== false
             onPremuto: shell.chiama("apri", ["monitor"])
-            contenuto: Text { y: 4; text: Math.round(barra.prestazioni.cpu || 0) + "%  ·  " + (barra.prestazioni.memoriaUsata || 0).toLocaleString(Qt.locale(), "f", 1) + " GB"; color: "#D4D4D8"; font.family: Tema.font; font.pixelSize: 12; font.features: ({ "tnum": 1 }) }
+            contenuto: Text { y: 4; text: Math.round(barra.prestazioni.cpu || 0) + "%  ·  " + (barra.prestazioni.memoriaUsata || 0).toLocaleString(Qt.locale(), "f", 1) + " GB"; color: Tema.testoVetroSecondario; font.family: Tema.font; font.pixelSize: 12; font.features: ({ "tnum": 1 }) }
         }
         Pulsantino {
             visible: barra.stato.connesso !== undefined
@@ -118,30 +119,30 @@ Window {
                 y: 4; spacing: 5
                 Item {
                     width: 24; height: 12; anchors.verticalCenter: parent.verticalCenter
-                    Rectangle { x: 0; width: 21; height: 12; radius: 3; color: "transparent"; border.color: "#8CF5F5F7"; border.width: 1 }
-                    Rectangle { x: 2; y: 2; height: 8; radius: 1.5; width: 17 * Math.max(0.08, (barra.stato.batteria ? barra.stato.batteria.percentuale : 0) / 100); color: (barra.stato.batteria && barra.stato.batteria.percentuale <= 15) ? "#FF453A" : "#F5F5F7" }
-                    Rectangle { x: 22; y: 4; width: 2; height: 4; radius: 1; color: "#8CF5F5F7" }
+                    Rectangle { x: 0; width: 21; height: 12; radius: 3; color: "transparent"; border.color: Tema.testoVetroSecondario; border.width: 1 }
+                    Rectangle { x: 2; y: 2; height: 8; radius: 1.5; width: 17 * Math.max(0.08, (barra.stato.batteria ? barra.stato.batteria.percentuale : 0) / 100); color: (barra.stato.batteria && barra.stato.batteria.percentuale <= 15) ? "#FF453A" : Tema.testoVetro }
+                    Rectangle { x: 22; y: 4; width: 2; height: 4; radius: 1; color: Tema.testoVetroSecondario }
                 }
-                Text { text: (barra.stato.batteria ? barra.stato.batteria.percentuale : 0) + "%"; color: "#F5F5F7"; font.family: Tema.font; font.pixelSize: 12 }
+                Text { text: (barra.stato.batteria ? barra.stato.batteria.percentuale : 0) + "%"; color: Tema.testoVetro; font.family: Tema.font; font.pixelSize: 12 }
             }
         }
         Pulsantino {
             onPremuto: barra.controllo()
             contenuto: Image {
                 y: 3; width: 16; height: 16; sourceSize.width: 32; sourceSize.height: 32
-                source: "image://icona/" + (barra.stato.muto ? "audio-volume-muted-symbolic" : "audio-volume-high-symbolic")
+                source: "image://icona/" + (barra.stato.muto ? "audio-volume-muted-symbolic" : "audio-volume-high-symbolic") + (Tema.chiaro ? "?c" : "")
             }
         }
         Pulsantino {
             onPremuto: barra.controllo()
             contenuto: Image {
                 y: 3; width: 18; height: 16; sourceSize.width: 36; sourceSize.height: 32
-                source: "image://icona/" + Tema.idSistema + "-centro-controllo"
+                source: "image://icona/" + Tema.idSistema + "-centro-controllo" + (Tema.chiaro ? "?c" : "")
             }
         }
         Pulsantino {
             onPremuto: barra.notifiche()
-            contenuto: Text { y: 4; text: barra.ora; color: "#F5F5F7"; font.family: Tema.font; font.pixelSize: 13; font.weight: Font.Medium; font.features: ({ "tnum": 1 }) }
+            contenuto: Text { y: 4; text: barra.ora; color: Tema.testoVetro; font.family: Tema.font; font.pixelSize: 13; font.weight: Font.Medium; font.features: ({ "tnum": 1 }) }
         }
     }
 }

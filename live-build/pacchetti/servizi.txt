@@ -21,10 +21,5 @@ iw
 ?earlyoom
 ?libnss-mdns
 
-# Condivisione Vicina (AirDrop: librerie usate da OWL)
-?libpcap0.8t64
-?libev4t64
-?libnl-3-200
-?libnl-genl-3-200
-?libnl-route-3-200
+# Condivisione Vicina
 ?bluez-tools

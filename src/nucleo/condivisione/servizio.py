@@ -24,7 +24,7 @@ from .modelli import Dispositivo, Trasferimento
 
 log = logging.getLogger("condivisione")
 
-ORDINE_PREDEFINITO = ["quickshare", "airdrop", "localsend", "qr"]
+ORDINE_PREDEFINITO = ["quickshare", "localsend", "qr"]
 
 
 class Notifiche:
@@ -132,7 +132,6 @@ class Gestore:
 
     # ── Avvio ───────────────────────────────────────────────────────────────
     async def avvia(self):
-        from .backend.airdrop import BackendAirDrop
         from .backend.localsend import BackendLocalSend
         from .backend.qr import BackendQR
         from .backend.quickshare import BackendQuickShare
@@ -147,7 +146,7 @@ class Gestore:
         self.bus.export(branding.percorso_dbus("Condivisione1"), self.interfaccia)
         await self.bus.request_name(branding.nome_dbus("Condivisione1"))
 
-        for cls in (BackendQuickShare, BackendAirDrop, BackendLocalSend, BackendQR):
+        for cls in (BackendQuickShare, BackendLocalSend, BackendQR):
             b = cls(self)
             self.backend[b.nome] = b
             ok, motivo = b.disponibile()
@@ -205,7 +204,7 @@ class Gestore:
         """Unisce i dispositivi visti da più backend e sceglie il migliore per ciascuno."""
         ordine = list(ORDINE_PREDEFINITO)
         if self.conf.get("preferisci_stabili", True):
-            ordine = ["quickshare", "localsend", "airdrop", "qr"]
+            ordine = ["quickshare", "localsend", "qr"]
         adesso = time.time()
         per_nome: dict[str, list[Dispositivo]] = {}
         for d in self.dispositivi.values():
@@ -356,7 +355,7 @@ class Gestore:
                 if x.id != d.id and x.nome.strip().lower() == d.nome.strip().lower()]
 
 
-NOMI_BACKEND = {"quickshare": "Quick Share", "airdrop": "AirDrop", "localsend": "LocalSend", "qr": T("codice QR")}
+NOMI_BACKEND = {"quickshare": "Quick Share", "localsend": "LocalSend", "qr": T("codice QR")}
 
 
 def _iface_nome() -> str:

@@ -12,6 +12,7 @@ Finestra {
     property var info: ponte.chiama0("info")
     property var reti: []
     property string tema: "scuro"
+    property string stile: Tema.stileBarra
     property string accento: Tema.accento
     property var statoCondivisione: ({})
 
@@ -19,7 +20,7 @@ Finestra {
         id: passi
         anchors.fill: parent
         testoFine: I18n.t("Inizia a usare") + " " + Tema.nomeSistema
-        pagine: [pBenvenuto, pLingua, pWifi, pAccount, pAspetto, pWindows, pPrestazioni, pCondivisione, pFine]
+        pagine: [pBenvenuto, pLingua, pWifi, pAccount, pAspetto, pStile, pWindows, pPrestazioni, pCondivisione, pFine]
         onCambioPagina: function (i) { if (i === 2) ponte.avvia("reti", [], "reti") }
         onFinito: { ponte.chiama0("fine"); Qt.quit() }
     }
@@ -144,13 +145,58 @@ Finestra {
         }
     }
     Component {
+        id: pStile
+        ColumnLayout {
+            spacing: 16
+            Titolo { text: I18n.t("Come preferisci la barra?") }
+            Testo { Layout.fillWidth: true; secondario: true; text: I18n.t("Puoi cambiarla quando vuoi in Impostazioni › Barra e Dock.") }
+            RowLayout {
+                spacing: 24
+                Repeater {
+                    model: [{ id: "mac", nome: I18n.t("Come Mac"), testo: I18n.t("Barra in alto con orologio e menu, Dock in basso") },
+                            { id: "windows", nome: I18n.t("Come Windows"), testo: I18n.t("Una barra in basso: S, app, orologio e Wi-Fi a destra") }]
+                    ColumnLayout {
+                        spacing: 8
+                        Rectangle {
+                            id: anteprima
+                            width: 260; height: 160; radius: 12
+                            color: "#2B3550"
+                            border.width: finestra.stile === modelData.id ? 3 : 1
+                            border.color: finestra.stile === modelData.id ? Tema.accento : Tema.bordo
+                            clip: true
+                            // finestra di esempio
+                            Rectangle { x: 40; y: modelData.id === "mac" ? 34 : 22; width: 150; height: 82; radius: 6; color: "#E9EAEE"
+                                Rectangle { width: parent.width; height: 12; radius: 6; color: "#C9CBD2" } }
+                            // stile Mac: barra in alto + Dock
+                            Rectangle { visible: modelData.id === "mac"; x: 3; y: 3; width: parent.width - 6; height: 12; radius: 9; color: "#CC0C0E14"
+                                Rectangle { x: 6; y: 3; width: 6; height: 6; radius: 3; color: "#FFFFFF" }
+                                Rectangle { anchors.right: parent.right; anchors.rightMargin: 8; y: 4; width: 34; height: 4; radius: 2; color: "#FFFFFF" } }
+                            Rectangle { visible: modelData.id === "mac"; anchors.horizontalCenter: parent.horizontalCenter; y: parent.height - 26; width: 118; height: 20; radius: 7; color: "#B8282A32"
+                                Row { anchors.centerIn: parent; spacing: 5; Repeater { model: 6; Rectangle { width: 12; height: 12; radius: 3; color: ["#3B82F6", "#F97316", "#22C55E", "#EAB308", "#8B5CF6", "#9CA3AF"][index] } } } }
+                            // stile Windows: una barra in basso
+                            Rectangle { visible: modelData.id === "windows"; x: 0; y: parent.height - 22; width: parent.width; height: 22; color: "#F21C1D22"
+                                Row { anchors.centerIn: parent; spacing: 5
+                                    Rectangle { width: 12; height: 12; radius: 3; color: "#FFFFFF" }
+                                    Repeater { model: 5; Rectangle { width: 12; height: 12; radius: 3; color: ["#3B82F6", "#F97316", "#22C55E", "#EAB308", "#9CA3AF"][index] } } }
+                                Rectangle { anchors.right: parent.right; anchors.rightMargin: 8; y: 6; width: 40; height: 10; radius: 3; color: "#66FFFFFF" } }
+                            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: { finestra.stile = modelData.id; ponte.chiama("stileBarra", [modelData.id]) } }
+                        }
+                        Testo { text: modelData.nome; font.weight: Font.DemiBold }
+                        Testo { Layout.preferredWidth: 260; secondario: true; wrapMode: Text.Wrap; text: modelData.testo }
+                    }
+                }
+            }
+            Item { Layout.fillHeight: true }
+        }
+    }
+    Component {
         id: pWindows
         ColumnLayout {
             spacing: 14
-            Titolo { text: I18n.t("Arrivi da Windows?") }
-            Testo { Layout.fillWidth: true; text: I18n.t("Puoi importare documenti, foto, musica, sfondo, preferiti del browser e reti Wi-Fi dal tuo vecchio Windows, anche se è su questo stesso computer.") }
-            Pulsante { text: I18n.t("Importa da Windows"); icona: "folder-download"; principale: true; onClicked: ponte.chiama0("migrazione") }
-            Testo { secondario: true; text: I18n.t("Puoi farlo anche più tardi dal menu: «Migrazione da Windows».") }
+            Titolo { text: I18n.t("Porta qui i tuoi file") }
+            Testo { Layout.fillWidth: true; text: I18n.t("Documenti, foto, musica, sfondo e preferiti del browser da Windows (anche se è su questo computer), da un Mac o da un disco esterno, dal telefono o da un altro computer.") }
+            Pulsante { text: I18n.t("Trasferisci i miei file"); icona: "folder-download"; principale: true; onClicked: ponte.chiama0("migrazione") }
+            Testo { secondario: true; text: I18n.t("Puoi farlo anche più tardi: menu S › «Trasferisci file».") }
             Item { Layout.fillHeight: true }
         }
     }
@@ -174,7 +220,7 @@ Finestra {
         ColumnLayout {
             spacing: 12
             Titolo { text: I18n.t("Condivisione Vicina") }
-            Testo { Layout.fillWidth: true; text: I18n.t("Scambia file con telefoni Android, iPhone e altri computer. Chi può vedere questo computer?") }
+            Testo { Layout.fillWidth: true; text: I18n.t("Scambia file con telefoni Android (Quick Share), iPhone (codice QR) e altri computer. Chi può vedere questo computer?") }
             Scelta {
                 id: vis
                 Layout.preferredWidth: 320
@@ -184,7 +230,7 @@ Finestra {
             Pulsante { text: I18n.t("Salva e verifica la compatibilità"); onClicked: ponte.avvia("condivisione", [vis.currentValue, nomeDisp.text], "condivisione") }
             Repeater {
                 model: Object.keys(finestra.statoCondivisione)
-                Testo { Layout.fillWidth: true; text: ({ quickshare: "Android", airdrop: "iPhone/Mac (AirDrop)", localsend: "LocalSend", qr: "QR" })[modelData] + ": " + (finestra.statoCondivisione[modelData][0] ? "✅ " : "⚠️ ") + finestra.statoCondivisione[modelData][1] }
+                Testo { Layout.fillWidth: true; text: ({ quickshare: "Android", localsend: "LocalSend", qr: "QR" })[modelData] + ": " + (finestra.statoCondivisione[modelData][0] ? "✅ " : "⚠️ ") + finestra.statoCondivisione[modelData][1] }
             }
             Item { Layout.fillHeight: true }
         }

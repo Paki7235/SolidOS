@@ -24,6 +24,8 @@ class PannelloRete(Pannello):
     def voci(self):
         wifi = rete.wifi_attivo()
         reti = rete.reti_wifi() if wifi else []
+        if wifi and not reti:
+            reti = rete.reti_wifi(scansiona=True)    # elenco vuoto: si cerca davvero prima di dirlo
         elementi_reti = [{
             "id": r["ssid"], "titolo": r["ssid"],
             "sottotitolo": (T("Connessa") if r["connessa"] else "") + (" · " if r["connessa"] else "")
@@ -159,7 +161,7 @@ class PannelloCondivisione(Pannello):
     titolo = T("Condivisione Vicina")
     icona = "document-send"
     gruppo = T("Connessioni")
-    chiavi = "airdrop quick share nearby localsend qr telefono iphone android invia ricevi"
+    chiavi = "quick share nearby localsend qr telefono iphone android invia ricevi"
 
     def _servizio(self, metodo, *argomenti):
         nome = branding.nome_dbus("Condivisione1")
@@ -184,13 +186,10 @@ class PannelloCondivisione(Pannello):
             info("cartella", T("Cartella dei file ricevuti"),
                  conf.get("cartella", str(cartella_utente("DOWNLOAD", "Scaricati") / T("Ricevuti")))),
             azione("scegli-cartella", T("Cambia cartella"), T("Scegli…"), file=True),
-            interruttore("stabili", T("Preferisci i collegamenti stabili"), conf.get("preferisci_stabili", True),
-                         T("Per un iPhone con l'app LocalSend usa LocalSend invece di AirDrop (beta)")),
             intestazione(T("Compatibilità")),
         ]
-        nomi = {"quickshare": T("Telefoni Android (Quick Share)"), "airdrop": T("Dispositivi Apple (AirDrop) — BETA"),
-                "localsend": T("App LocalSend (iPhone, Android, Windows, Mac)"), "qr": T("Qualsiasi telefono con codice QR")}
-        for chiave in ("quickshare", "airdrop", "localsend", "qr"):
+        nomi = {"quickshare": T("Telefoni Android (Quick Share)"), "localsend": T("App LocalSend (iPhone, Android, Windows, Mac)"), "qr": T("Qualsiasi telefono con codice QR")}
+        for chiave in ("quickshare", "localsend", "qr"):
             disponibile, motivo = stato.get(chiave, (False, T("Servizio non avviato")))
             voci.append(info("stato-" + chiave, nomi[chiave], ("✅ " if disponibile else "⚠️ ") + str(motivo)))
         voci.append(azione("registro", T("Registro dei trasferimenti"), T("Apri"),

@@ -9,7 +9,7 @@ from pathlib import Path
 from urllib.parse import unquote, urlparse
 
 from ..i18n import T
-from ..sistema import avvia
+from ..sistema import avvia, config_utente, leggi_json, scrivi_json
 
 IMMAGINI = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp", ".svg"}
 
@@ -62,29 +62,87 @@ def _voce_desktop(p: Path) -> dict:
         return {"nome": p.stem, "icona": "application-x-executable"}
 
 
+PREDEFINITE = {"lato": 52, "ordina": "nome", "mostra": True, "posizioni": {},
+               "sistema": {"home": False, "cestino": False, "computer": False}}
+
+
+def impostazioni() -> dict:
+    conf = leggi_json(config_utente("scrivania.json"), {})
+    risultato = dict(PREDEFINITE, **{k: v for k, v in conf.items() if k in PREDEFINITE})
+    risultato["sistema"] = dict(PREDEFINITE["sistema"], **(conf.get("sistema") or {}))
+    return risultato
+
+
+def salva_impostazioni(cambi: dict) -> dict:
+    conf = impostazioni()
+    for k, v in (cambi or {}).items():
+        if k == "sistema" and isinstance(v, dict):
+            conf["sistema"].update(v)
+        elif k in PREDEFINITE:
+            conf[k] = v
+    scrivi_json(config_utente("scrivania.json"), conf)
+    return conf
+
+
+def _icone_di_sistema(conf: dict) -> list[dict]:
+    voci = []
+    s = conf.get("sistema", {})
+    if s.get("home"):
+        voci.append({"nome": T("Home"), "percorso": "home:", "uri": Path.home().as_uri(), "icona": "user-home"})
+    if s.get("computer"):
+        voci.append({"nome": T("Computer"), "percorso": "computer:", "uri": "file:///", "icona": "computer"})
+    if s.get("cestino"):
+        voci.append({"nome": T("Cestino"), "percorso": "cestino:", "uri": "trash:///", "icona": "user-trash"})
+    for v in voci:
+        v.update({"cartella": True, "collegamento": False, "sistema": True, "anteprima": "", "dimensione": 0, "data": 0, "tipo": ""})
+    return voci
+
+
 def elementi() -> list[dict]:
     c = cartella()
-    risultato = []
-    for p in sorted(c.iterdir(), key=lambda x: (x.suffix != ".desktop", not x.is_dir(), x.name.lower())):
+    conf = impostazioni()
+    if not conf.get("mostra", True):
+        return []
+    risultato = _icone_di_sistema(conf)
+    for p in c.iterdir():
         if p.name.startswith("."):
             continue
         app = _voce_desktop(p) if p.suffix == ".desktop" else None
+        try:
+            st = p.stat()
+        except OSError:
+            continue
         risultato.append({
             "nome": app["nome"] if app else p.name,
             "percorso": str(p),
+            "uri": p.as_uri(),
             "cartella": p.is_dir(),
             "collegamento": app is not None,
+            "sistema": False,
             "icona": app["icona"] if app else icona(p),
             "anteprima": ("file://" + str(p)) if p.suffix.lower() in IMMAGINI else "",
+            "dimensione": 0 if p.is_dir() else st.st_size,
+            "data": int(st.st_mtime),
+            "tipo": "" if p.is_dir() else (mimetypes.guess_type(p.name)[0] or p.suffix.lower()),
         })
     return risultato
 
 
 def apri(percorso: str) -> None:
+    from .. import branding
+
+    sistema = {"home:": str(Path.home()), "computer:": "file:///", "cestino:": "trash:///"}
+    if percorso in sistema:
+        avvia([branding.comando("file"), sistema[percorso]])
+        return
     if percorso.endswith(".desktop"):     # collegamento a un'app: la si avvia
         from ..sistema import avvia_desktop
 
-        avvia_desktop(percorso)
+        if not avvia_desktop(percorso):
+            avvia(["gio", "launch", percorso])
+        return
+    if Path(percorso).is_dir():
+        avvia([branding.comando("file"), percorso])
         return
     avvia(["xdg-open", percorso])
 

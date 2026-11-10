@@ -84,6 +84,23 @@ def tema_effettivo() -> dict:
             base["accento"] = base["accentoScuro"]   # più contrasto su fondo chiaro
     else:
         base.update({"superficieAlta": "#2F3037", "testoSecondario": "#A1A1AA", "bordo": "#3A3B42"})
+    # Colori della shell (barra, dock, menu, Start, centro di controllo): seguono il tema
+    if chiaro:
+        base.update({
+            "vetro": "#F2F6F6F8", "vetroBordo": "#1F000000", "barra": "#E0F4F4F6", "dock": "#D9F4F4F6",
+            "sopra": "#12000000", "premuto": "#24000000", "separatore": "#1A000000",
+            "testoVetro": "#1D1D1F", "testoVetroSecondario": "#6E6E73", "nuvola": "#F2FFFFFF",
+        })
+    else:
+        base.update({
+            "vetro": "#F21C1D22", "vetroBordo": "#24FFFFFF", "barra": "#C70C0E14", "dock": "#B8282A32",
+            "sopra": "#1FFFFFFF", "premuto": "#33FFFFFF", "separatore": "#1FFFFFFF",
+            "testoVetro": "#F5F5F7", "testoVetroSecondario": "#A1A1AA", "nuvola": "#E6202126",
+        })
+    # Disposizione: «mac» (barra in alto + dock) o «windows» (una sola barra in basso)
+    base["stileBarra"] = "windows" if pref.get("barra") == "windows" else "mac"
+    base["dockLato"] = int(pref.get("dockLato", 48)) if str(pref.get("dockLato", 48)).isdigit() else 48
+    base["barraPrestazioni"] = pref.get("barraPrestazioni", True) is not False
     base["chiaro"] = chiaro
     base["logo"] = base["idSistema"] + ("-logo" if chiaro else "-logo-chiaro")
     base["pericolo"] = "#E5484D"
@@ -120,6 +137,42 @@ def _provider_icone():
     return ProviderIcone()
 
 
+def _segui_tema(motore, radice) -> None:
+    """Quando cambia aspetto.json (tema chiaro/scuro, accento, stile della barra)
+    il nuovo Tema arriva subito a tutte le finestre aperte, senza riavviarle."""
+    from PyQt6.QtCore import QFileSystemWatcher, QTimer
+    from PyQt6.QtGui import QIcon
+
+    from .sistema import config_utente
+
+    try:
+        file = config_utente("aspetto.json")
+        file.parent.mkdir(parents=True, exist_ok=True)
+    except OSError:
+        return
+    osservatore = QFileSystemWatcher([str(file.parent)])
+    ritardo = QTimer()
+    ritardo.setSingleShot(True)
+    ritardo.setInterval(150)
+    ultimo = {"tema": tema_effettivo()}
+
+    def applica():
+        nuovo = tema_effettivo()
+        if nuovo == ultimo["tema"]:
+            return
+        if nuovo["chiaro"] != ultimo["tema"]["chiaro"]:
+            nome = QIcon.themeName()
+            base = branding.id_os()
+            if nome in (base, base + "-chiaro"):
+                QIcon.setThemeName(base + "-chiaro" if nuovo["chiaro"] else base)
+        ultimo["tema"] = nuovo
+        radice.setContextProperty("Tema", nuovo)
+
+    ritardo.timeout.connect(applica)
+    osservatore.directoryChanged.connect(lambda _p: ritardo.start())
+    motore._osservatore_tema = (osservatore, ritardo)
+
+
 def carica(app, file_qml: str, contesto: dict | None = None):
     """Crea il motore QML, espone Tema, I18n e gli oggetti del contesto, carica il file."""
     from PyQt6.QtQml import QQmlApplicationEngine
@@ -129,6 +182,7 @@ def carica(app, file_qml: str, contesto: dict | None = None):
     motore.addImageProvider("icona", _provider_icone())
     radice = motore.rootContext()
     radice.setContextProperty("Tema", tema_effettivo())
+    _segui_tema(motore, radice)
     i18n = Traduttore()
     radice.setContextProperty("I18n", i18n)
     motore._trattieni = [i18n]  # evita la raccolta del garbage collector

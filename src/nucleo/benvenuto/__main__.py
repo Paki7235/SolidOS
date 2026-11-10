@@ -49,6 +49,11 @@ class BackendBenvenuto(Backend):
         if accento:
             p.imposta("accento", accento)
 
+    def stileBarra(self, stile: str) -> None:
+        from ..impostazioni.pannelli_aspetto import PannelloPannello
+
+        PannelloPannello().imposta("barra", stile)
+
     def migrazione(self) -> None:
         avvia([branding.comando("migrazione")])
 
