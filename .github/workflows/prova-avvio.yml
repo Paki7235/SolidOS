@@ -92,13 +92,15 @@ jobs:
             while [ "$fatti" -lt "${n:-0}" ]; do
               fatti=$((fatti + 1))
               set -- $(grep -a '^AUTOTEST-MOUSE ' risultati/app.log | sed -n "${fatti}p")
+              # pulsanti di QEMU: 1 = sinistro, 2 = destro, 4 = centrale. Ogni comando va da solo,
+              # con una pausa: comandi insieme verrebbero fusi in un solo clic dal mouse USB.
+              mon() { printf '%s\n' "$1" | socat - UNIX-CONNECT:/tmp/mon-app.sock >/dev/null 2>&1 || echo "monitor non raggiungibile"; sleep 0.08; }
               case "$4" in
-                doppio) c="mouse_move $2 $3\nmouse_button 1\nmouse_button 0\nmouse_button 1\nmouse_button 0" ;;
-                destro) c="mouse_move $2 $3\nmouse_button 4\nmouse_button 0" ;;
-                tasto)  c="sendkey $2" ;;
-                *)      c="mouse_move $2 $3\nmouse_button 1\nmouse_button 0" ;;
+                doppio) mon "mouse_move $2 $3"; mon "mouse_button 1"; mon "mouse_button 0"; mon "mouse_button 1"; mon "mouse_button 0" ;;
+                destro) mon "mouse_move $2 $3"; mon "mouse_button 2"; mon "mouse_button 0" ;;
+                tasto)  mon "sendkey $2" ;;
+                *)      mon "mouse_move $2 $3"; mon "mouse_button 1"; mon "mouse_button 0" ;;
               esac
-              printf "$c\n" | socat - UNIX-CONNECT:/tmp/mon-app.sock >/dev/null 2>&1 || echo "monitor non raggiungibile"
               echo "mouse: $*"
             done
             sleep 1
