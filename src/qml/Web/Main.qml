@@ -1,4 +1,4 @@
-// Web: il browser di SolidOS.
+// Vela: il browser di SolidOS.
 // Schede in alto · barra degli indirizzi che apre i siti o cerca · stella per i preferiti ·
 // pagina «Nuova scheda» con ricerca e siti più visitati · download · cronologia ·
 // finestra privata · zoom · trova nella pagina · tutto schermo per i video.
@@ -14,7 +14,7 @@ Finestra {
     height: 780
     minimumWidth: 520
     readonly property bool privata: ponte.chiama0("privata")
-    title: (vista && vista.title ? vista.title + " — " : "") + I18n.t("Web") + (privata ? " (" + I18n.t("privata") + ")" : "")
+    title: (vista && vista.title ? vista.title + " — " : "") + "Vela" + (privata ? " (" + I18n.t("privata") + ")" : "")
     property int corrente: 0
     property int contatore: 0
     readonly property var vista: ripetitore.count > corrente ? ripetitore.itemAt(corrente) : null
@@ -438,7 +438,7 @@ Finestra {
                         Image { width: 44; height: 44; sourceSize.width: 88; sourceSize.height: 88; source: "image://icona/" + (finestra.privata ? "security-high" : Tema.logo) }
                         Text {
                             anchors.verticalCenter: parent.verticalCenter
-                            text: finestra.privata ? I18n.t("Navigazione privata") : Tema.nomeSistema + " Web"
+                            text: finestra.privata ? I18n.t("Navigazione privata") : "Vela"
                             color: Tema.testo; font.family: Tema.font; font.pixelSize: 28; font.weight: Font.DemiBold
                         }
                     }
@@ -464,7 +464,7 @@ Finestra {
                                 background: null
                                 color: Tema.testo
                                 font.family: Tema.font; font.pixelSize: 16
-                                placeholderText: I18n.t("Cerca con") + " " + ((finestra.conf.motori || []).find(function (m) { return m.valore === finestra.conf.motore }) || { testo: "DuckDuckGo" }).testo + " " + I18n.t("o scrivi un indirizzo")
+                                placeholderText: I18n.t("Cerca con") + " " + ((finestra.conf.motori || []).find(function (m) { return m.valore === finestra.conf.motore }) || { testo: "Google" }).testo + " " + I18n.t("o scrivi un indirizzo")
                                 placeholderTextColor: Tema.testoSecondario
                                 onAccepted: { finestra.vai(text); text = "" }
                             }

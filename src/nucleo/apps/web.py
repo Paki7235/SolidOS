@@ -1,4 +1,4 @@
-"""Web: il browser di SolidOS (motore Chromium di Qt WebEngine).
+"""Vela: il browser di SolidOS (motore Chromium di Qt WebEngine).
 
 Schede, barra degli indirizzi che cerca o apre, pagina «Nuova scheda» con i siti
 più visitati, preferiti, cronologia, download in «Scaricati», finestra privata
@@ -20,8 +20,8 @@ from .. import branding
 from ..ponte import Backend, crea_ponte
 
 MOTORI = {
-    "duckduckgo": ("DuckDuckGo", "https://duckduckgo.com/?q={}"),
     "google": ("Google", "https://www.google.com/search?q={}"),
+    "duckduckgo": ("DuckDuckGo", "https://duckduckgo.com/?q={}"),
     "bing": ("Bing", "https://www.bing.com/search?q={}"),
     "ecosia": ("Ecosia", "https://www.ecosia.org/search?q={}"),
     "startpage": ("Startpage", "https://www.startpage.com/do/search?q={}"),
@@ -81,7 +81,7 @@ class BackendWeb(Backend):
 
     # ── Impostazioni ───────────────────────────────────────────────────────
     def impostazioni(self) -> dict:
-        conf = {"motore": "duckduckgo", "paginaIniziale": "", "barraPreferiti": True}
+        conf = {"motore": "google", "paginaIniziale": "", "barraPreferiti": True}
         conf.update(_leggi("impostazioni.json", {}))
         conf["motori"] = [{"testo": n, "valore": k} for k, (n, _u) in MOTORI.items()]
         return conf
@@ -103,8 +103,8 @@ class BackendWeb(Backend):
             dominio = t.split("/")[0].split(":")[0]
             if dominio == "localhost" or dominio.replace(".", "").isdigit() or len(dominio.rsplit(".", 1)[-1]) >= 2:
                 return ("http://" if dominio == "localhost" or dominio.replace(".", "").isdigit() else "https://") + t
-        motore = self.impostazioni().get("motore", "duckduckgo")
-        return MOTORI.get(motore, MOTORI["duckduckgo"])[1].format(quote_plus(t))
+        motore = self.impostazioni().get("motore", "google")
+        return MOTORI.get(motore, MOTORI["google"])[1].format(quote_plus(t))
 
     def suggerimenti(self, testo: str) -> list:
         """Dalla cronologia e dai preferiti, mentre si scrive nella barra degli indirizzi."""
@@ -175,7 +175,7 @@ class BackendWeb(Backend):
         siti = sorted(per_dominio.values(), key=lambda x: -x["visite"])[:8]
         if len(siti) < 4:
             for url, nome in (("https://it.wikipedia.org/", "wikipedia.org"), ("https://www.youtube.com/", "youtube.com"),
-                              ("https://www.openstreetmap.org/", "openstreetmap.org"), ("https://duckduckgo.com/", "duckduckgo.com")):
+                              ("https://www.openstreetmap.org/", "openstreetmap.org"), ("https://www.google.com/", "google.com")):
                 if all(s["dominio"] != nome for s in siti):
                     siti.append({"url": url, "dominio": nome, "titolo": nome, "visite": 0})
         return siti[:8]
