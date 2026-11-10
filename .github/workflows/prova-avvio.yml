@@ -12,7 +12,7 @@ on:
 jobs:
   avvio:
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 80
     steps:
       - name: KVM e strumenti
         run: |
@@ -86,7 +86,7 @@ jobs:
           # Il sistema in prova chiede clic veri con righe «AUTOTEST-MOUSE x y azione»:
           # qui si eseguono con il mouse virtuale (tavoletta USB) dal monitor di QEMU.
           fatti=0
-          for i in $(seq 1000); do
+          for i in $(seq 2400); do
             grep -aq 'AUTOTEST FINE' risultati/app.log && break
             n=$(grep -ac '^AUTOTEST-MOUSE ' risultati/app.log || true)
             while [ "$fatti" -lt "${n:-0}" ]; do

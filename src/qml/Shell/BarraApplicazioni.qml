@@ -15,7 +15,7 @@ Window {
     property var prestazioni: ({})
     property bool cestinoPieno: false
     property string ora: ""
-    property string data: ""
+    property string giorno: ""
     // Trascinamento per riordinare (come nel Dock)
     property int trascinaDa: -1
     property int trascinaA: -1
@@ -63,7 +63,7 @@ Window {
     function aggiornaOra() {
         var d = new Date()
         ora = d.toLocaleTimeString(Qt.locale(), "HH:mm")
-        data = d.toLocaleDateString(Qt.locale(), "dd/MM/yyyy")
+        giorno = d.toLocaleDateString(Qt.locale(), "dd/MM/yyyy")
     }
     function centro(item) { var p = item.mapToItem(barra.contentItem, item.width / 2, 0); return p.x }
 
@@ -275,7 +275,7 @@ Window {
             Column {
                 anchors.centerIn: parent
                 Text { id: testoOra; anchors.right: parent.right; text: barra.ora; color: Tema.testoVetro; font.family: Tema.font; font.pixelSize: 12; font.features: ({ "tnum": 1 }) }
-                Text { id: testoData; anchors.right: parent.right; text: barra.data; color: Tema.testoVetro; font.family: Tema.font; font.pixelSize: 12; font.features: ({ "tnum": 1 }) }
+                Text { id: testoData; anchors.right: parent.right; text: barra.giorno; color: Tema.testoVetro; font.family: Tema.font; font.pixelSize: 12; font.features: ({ "tnum": 1 }) }
             }
         }
         // Striscia «Mostra desktop» (come su Windows)

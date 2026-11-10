@@ -86,7 +86,7 @@ fi
 
 # ── Protocollo Wayland delle finestre (dock e barra della shell) ─────────────
 WL=/usr/lib/python3/dist-packages/nucleo/wl
-if apt-get install -y -qq --no-install-recommends libwayland-dev >/tmp/wl.log 2>&1; then
+if apt-get install -y -qq --no-install-recommends libwayland-dev pkg-config >/tmp/wl.log 2>&1; then
 	rm -rf "$WL" && mkdir -p "$WL"
 	if python3 -m pywayland.scanner -o "$WL" -i /usr/share/wayland/wayland.xml \
 		/usr/share/nucleo/protocolli/wlr-foreign-toplevel-management-unstable-v1.xml >>/tmp/wl.log 2>&1; then
