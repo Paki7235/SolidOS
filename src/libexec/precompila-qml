@@ -19,6 +19,16 @@ from PyQt6.QtCore import QUrl  # noqa: E402
 from PyQt6.QtGui import QGuiApplication  # noqa: E402
 from PyQt6.QtQml import QQmlComponent, QQmlEngine  # noqa: E402
 
+# Il browser Vela usa QtWebEngine: va preparato prima di creare l'app, altrimenti
+# importare i suoi componenti QML interrompe tutta la precompilazione.
+try:
+    from PyQt6.QtCore import Qt  # noqa: E402
+    from PyQt6.QtWebEngineQuick import QtWebEngineQuick  # noqa: E402
+
+    QGuiApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
+    QtWebEngineQuick.initialize()
+except ImportError:
+    pass
 app = QGuiApplication(sys.argv[:1])
 motore = QQmlEngine()
 motore.addImportPath(str(RADICE))
