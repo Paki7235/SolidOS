@@ -73,6 +73,15 @@ else
 	echo "[@OS_ID@] ATTENZIONE: tema Plymouth @OS_ID@ mancante" >&2
 fi
 
+# ── Terminale: anche i comandi di Windows e del Mac (dir, cls, ipconfig, open…) ──
+if ! grep -q "terminale/comandi.bash" /etc/bash.bashrc; then
+	cat >> /etc/bash.bashrc <<'FINE'
+
+# Comandi di Windows e del Mac («comandi» per l'elenco)
+[ -r /usr/share/nucleo/terminale/comandi.bash ] && . /usr/share/nucleo/terminale/comandi.bash
+FINE
+fi
+
 # ── Componenti del sistema ───────────────────────────────────────────────────
 install -d -o _greetd -g _greetd /var/cache/nucleo-greeter 2>/dev/null || install -d /var/cache/nucleo-greeter
 python3 -m compileall -q /usr/lib/python3/dist-packages/nucleo || true

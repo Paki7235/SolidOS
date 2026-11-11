@@ -142,6 +142,8 @@ class BackendFile(Backend):
 
     # ── Elenco del contenuto ───────────────────────────────────────────────
     def elenco(self, uri: str, nascosti: bool = False) -> dict:
+        if uri.rstrip("/") == "network:":
+            return self._elenco_rete(nascosti)
         cartella = _f(uri)
         try:
             enumeratore = cartella.enumerate_children(ATTRIBUTI, Gio.FileQueryInfoFlags.NONE, None)
@@ -179,6 +181,48 @@ class BackendFile(Backend):
         return {"ok": True, "uri": cartella.get_uri(), "titolo": titolo, "voci": voci, "percorso": cartella.get_path() or "",
                 "genitore": cartella.get_parent().get_uri() if cartella.get_parent() else "",
                 "cestino": cartella.get_uri().startswith("trash:"), "briciole": self._briciole(cartella)}
+
+    _dispositivi_cache: tuple[float, list] = (0.0, [])
+
+    def _elenco_rete(self, nascosti: bool) -> dict:
+        """Rete: le cartelle condivise viste da GIO più tutti i dispositivi collegati
+        alla stessa rete (modem, computer, telefoni, stampanti, TV…)."""
+        import time
+
+        from .. import dispositivi_rete
+
+        cartella = Gio.File.new_for_uri("network:///")
+        voci = []
+        try:
+            enumeratore = cartella.enumerate_children(ATTRIBUTI, Gio.FileQueryInfoFlags.NONE, None)
+            for info in enumeratore:
+                bersaglio = info.get_attribute_string("standard::target-uri")
+                voci.append({"nome": info.get_display_name() or info.get_name(),
+                             "uri": bersaglio or enumeratore.get_child(info).get_uri(), "cartella": True,
+                             "dimensione": -1, "testoDimensione": "", "modificato": "", "ordinaData": 0,
+                             "tipo": T("Cartelle condivise"), "icona": _icona(info), "anteprima": "", "miniatura": ""})
+            enumeratore.close(None)
+        except GLib.Error:
+            pass
+        adesso = time.monotonic()
+        quando, dispositivi = BackendFile._dispositivi_cache
+        if adesso - quando > 30 or not dispositivi:
+            dispositivi = dispositivi_rete.cerca()
+            BackendFile._dispositivi_cache = (adesso, dispositivi)
+        gia = {v["nome"].lower() for v in voci}
+        for d in dispositivi:
+            if d["nome"].lower() in gia:
+                continue
+            voci.append({"nome": d["nome"], "uri": d["uri"] or "dispositivo:" + d["ip"], "cartella": d["cartelle"],
+                         "dimensione": -1, "testoDimensione": "", "modificato": d["ip"], "ordinaData": 0,
+                         "tipo": d["descrizione"] + (" · " + d["dettagli"] if d["dettagli"] else ""),
+                         "icona": d["icona"], "anteprima": "", "miniatura": "", "dispositivo": d})
+        return {"ok": True, "uri": "network:///", "titolo": T("Rete"), "voci": voci, "percorso": "", "genitore": "",
+                "cestino": False, "rete": True, "briciole": [{"nome": T("Rete"), "uri": "network:///"}],
+                "vuoto": T("Nessun dispositivo trovato: controlla di essere collegato al Wi-Fi o al cavo di rete")}
+
+    def aggiornaRete(self) -> None:
+        BackendFile._dispositivi_cache = (0.0, [])
 
     def _titolo(self, f: Gio.File) -> str:
         uri = f.get_uri()
@@ -314,6 +358,9 @@ class BackendFile(Backend):
         return {"ok": not errori, "errore": errori[0] if errori else ""}
 
     # Appunti di sistema: copia/taglia/incolla anche tra File, Scrivania e altre app
+    def copiaTesto(self, testo: str) -> None:
+        subprocess.run(["wl-copy", "--", str(testo)], timeout=5, check=False)
+
     def copia(self, uris, taglia: bool = False) -> bool:
         from .. import appunti
 

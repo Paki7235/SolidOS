@@ -20,6 +20,7 @@ from ..ponte import Backend, crea_ponte
 from ..qmlapp import carica, crea_app, prepara_ambiente
 
 ULTIMO_UTENTE = Path("/var/cache/nucleo-greeter/ultimo-utente")
+SENZA_PASSWORD = Path("/var/lib/nucleo/senza-password")   # account che si aprono con Invio
 
 
 class Greetd:
@@ -51,10 +52,19 @@ class BackendGreeter(Backend):
         risultato = []
         for u in pwd.getpwall():
             if 1000 <= u.pw_uid < 60000 and not u.pw_shell.endswith(("nologin", "false")):
-                nome = u.pw_gecos.split(",")[0] or u.pw_name
-                avatar = Path(u.pw_dir) / ".face"
-                risultato.append({"utente": u.pw_name, "nome": nome,
-                                  "avatar": str(avatar) if avatar.is_file() else ""})
+                nome = (u.pw_gecos.split(",")[0] or u.pw_name).strip()
+                foto = ""
+                for p in (Path("/var/lib/AccountsService/icons") / u.pw_name, Path(u.pw_dir) / ".face"):
+                    try:
+                        if p.is_file() and os.access(p, os.R_OK):
+                            foto = "file://" + str(p)
+                            break
+                    except OSError:
+                        pass
+                parole = nome.split() or ["?"]
+                iniziali = (parole[0][0] + (parole[-1][0] if len(parole) > 1 else "")).upper()
+                risultato.append({"utente": u.pw_name, "nome": nome, "foto": foto, "iniziali": iniziali,
+                                  "password": not (SENZA_PASSWORD / u.pw_name).exists()})
         return risultato
 
     def ultimoUtente(self) -> str:

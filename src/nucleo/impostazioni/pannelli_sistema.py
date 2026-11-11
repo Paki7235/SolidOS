@@ -34,8 +34,13 @@ class PannelloUtenti(Pannello):
         utenti = []
         for u in pwd.getpwall():
             if 1000 <= u.pw_uid < 60000 and not u.pw_shell.endswith(("nologin", "false")):
-                azioni = [{"id": "password", "testo": T("Cambia password"),
+                azioni = [{"id": "password", "testo": T("Cambia password") if u.pw_name != io or self._con_password() else T("Imposta una password"),
                            "richiede": [{"id": "password", "etichetta": T("Nuova password"), "segreto": True}]}]
+                if u.pw_name == io:
+                    azioni.append({"id": "nome", "testo": T("Cambia nome"),
+                                   "richiede": [{"id": "nome", "etichetta": T("Nome mostrato all'accesso e nel blocco")}]})
+                    if self._con_password():
+                        azioni.append({"id": "senza-password", "testo": T("Entra senza password")})
                 if u.pw_name != io:
                     azioni.append({"id": "elimina", "testo": T("Elimina"), "pericolosa": True})
                 utenti.append({"id": u.pw_name, "titolo": (u.pw_gecos.split(",")[0] or u.pw_name) + (f" ({T('tu')})" if u.pw_name == io else ""),
@@ -49,7 +54,24 @@ class PannelloUtenti(Pannello):
                              {"id": "amministratore", "etichetta": T("Amministratore? (si/no)")}]),
         ]
 
+    @staticmethod
+    def _con_password() -> bool:
+        from ..account import info
+
+        return info()["password"]
+
     def azione(self, voce, elemento, az, dati):
+        from .. import account
+
+        io = pwd.getpwuid(os.getuid()).pw_name
+        if voce == "utenti" and elemento == io and az in ("nome", "senza-password", "password"):
+            if az == "nome":
+                r = account.imposta_nome(dati.get("nome", ""))
+            elif az == "senza-password":
+                r = account.togli_password()
+            else:
+                r = account.imposta_password(dati.get("password", ""), dati.get("password", ""))
+            return esito(r["ok"], r["messaggio"])
         if voce == "utenti" and az == "password":
             import subprocess
 

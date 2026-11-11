@@ -215,7 +215,73 @@ def cmd_utente_password(nome_utente: str):
     password = sys.stdin.readline().rstrip("\n")
     if len(password) < 4:
         errore("password troppo corta")
-    sys.exit(esegui(["chpasswd"], input=f"{nome_utente}:{password}\n", text=True))
+    codice = esegui(["chpasswd"], input=f"{nome_utente}:{password}\n", text=True)
+    if codice == 0:
+        (SENZA_PASSWORD / nome_utente).unlink(missing_ok=True)
+    sys.exit(codice)
+
+
+SENZA_PASSWORD = Path("/var/lib/nucleo/senza-password")
+
+
+def _solo_proprio_o_amministratore(nome_utente: str):
+    """Nome e password: il proprio account, oppure qualsiasi se chi chiede è amministratore."""
+    if not RE_UTENTE.match(nome_utente):
+        errore("utente non valido")
+    import pwd
+
+    try:
+        pwd.getpwnam(nome_utente)
+    except KeyError:
+        errore("utente inesistente")
+    chiamante = utente_chiamante()
+    if chiamante not in (nome_utente, "root"):
+        gruppi = subprocess.run(["id", "-nG", chiamante], capture_output=True, text=True).stdout.split()
+        if "sudo" not in gruppi:
+            errore("puoi cambiare solo il tuo account")
+
+
+def cmd_utente_nome(nome_utente: str, nome_completo: str):
+    """Nome mostrato nella schermata di accesso e di blocco (campo GECOS)."""
+    _solo_proprio_o_amministratore(nome_utente)
+    nome_completo = nome_completo.strip()
+    if not nome_completo or len(nome_completo) > 64 or any(c in nome_completo for c in ":,=\n\\"):
+        errore("nome non valido")
+    sys.exit(esegui(["usermod", "-c", nome_completo, nome_utente]))
+
+
+def cmd_utente_senza_password(nome_utente: str):
+    """L'account si apre senza password (accesso e sblocco con Invio)."""
+    _solo_proprio_o_amministratore(nome_utente)
+    codice = esegui(["passwd", "-d", nome_utente])
+    if codice == 0:
+        esegui(["chage", "-d", "-1", nome_utente])   # niente «password scaduta» da cambiare
+        SENZA_PASSWORD.mkdir(parents=True, exist_ok=True)
+        (SENZA_PASSWORD / nome_utente).touch()
+    sys.exit(codice)
+
+
+def cmd_utente_foto(nome_utente: str):
+    """Copia ~/.face dell'utente dove la vede anche la schermata di accesso."""
+    _solo_proprio_o_amministratore(nome_utente)
+    import pwd
+
+    casa = Path(pwd.getpwnam(nome_utente).pw_dir)
+    origine = casa / ".face"
+    destinazione = Path("/var/lib/AccountsService/icons") / nome_utente
+    destinazione.parent.mkdir(parents=True, exist_ok=True)
+    if not origine.exists():
+        destinazione.unlink(missing_ok=True)
+        sys.exit(0)
+    # Mai seguire collegamenti: si copia solo un file vero dell'utente, piccolo
+    fd = os.open(origine, os.O_RDONLY | os.O_NOFOLLOW)
+    with os.fdopen(fd, "rb") as f:
+        if not stat.S_ISREG(os.fstat(f.fileno()).st_mode) or os.fstat(f.fileno()).st_size > 8 * 1024 * 1024:
+            errore("foto non valida")
+        dati = f.read()
+    destinazione.write_bytes(dati)
+    destinazione.chmod(0o644)
+    sys.exit(0)
 
 
 def cmd_profilo_leggero(attivo: str):
@@ -323,6 +389,7 @@ COMANDI = {
     "ripristina-file": cmd_ripristina_file, "ripristina-sistema": cmd_ripristina_sistema,
     "hostname": cmd_hostname, "firewall": cmd_firewall,
     "utente-crea": cmd_utente_crea, "utente-elimina": cmd_utente_elimina, "utente-password": cmd_utente_password,
+    "utente-nome": cmd_utente_nome, "utente-senza-password": cmd_utente_senza_password, "utente-foto": cmd_utente_foto,
     "profilo-leggero": cmd_profilo_leggero, "aggiorna-ora": cmd_aggiorna_ora,
     "condivisione-porta": cmd_condivisione_porta, "persistenza": cmd_persistenza,
 }

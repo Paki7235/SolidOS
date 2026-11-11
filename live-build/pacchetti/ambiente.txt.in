@@ -2,6 +2,7 @@
 
 # Accesso, blocco e schermo
 cage
+gtklock
 swaylock
 swayidle
 wlr-randr

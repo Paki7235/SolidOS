@@ -186,6 +186,30 @@ done
 aspetto scuro mac
 scrivi "AUTOTEST-GALLERIA fatta"
 
+# ── Schermata di accesso (stile Mac) vista dentro la sessione ─────────────────
+setsid runuser -u "$UTENTE" -- env "${AMBIENTE[@]}" python3 -m nucleo.greeter >/tmp/autotest-greeter.log 2>&1 &
+pid=$!; sleep 12; immagine accesso
+grep -aiE 'error|traceback|referenceerror|typeerror' /tmp/autotest-greeter.log | head -15 | sed 's/^/AUTOTEST-LOG greeter: /' >"$USCITA"
+pkill -KILL -s "$pid" 2>/dev/null; pkill -KILL -u "$UTENTE" -f 'nucleo.greeter' 2>/dev/null; sleep 2
+
+# ── File › Rete: dispositivi collegati alla stessa rete ──────────────────────
+come_utente timeout 30 python3 -m nucleo.dispositivi_rete 2>&1 | head -20 | sed 's/^/AUTOTEST-RETE /' >"$USCITA"
+setsid runuser -u "$UTENTE" -- env "${AMBIENTE[@]}" @OS_ID@-file network:/// >/tmp/autotest-rete.log 2>&1 &
+pid=$!; sleep 15; immagine file-rete
+grep -aiE 'error|traceback|referenceerror|typeerror' /tmp/autotest-rete.log | head -15 | sed 's/^/AUTOTEST-LOG file-rete: /' >"$USCITA"
+pkill -KILL -s "$pid" 2>/dev/null; pkill -KILL -u "$UTENTE" -f 'nucleo.apps.file' 2>/dev/null; sleep 2
+
+# ── Terminale: comandi di Windows e del Mac ─────────────────────────────────
+come_utente bash -ic 'cd /etc; dir /b | head -3; DIR /b | head -2; ver; sw_vers; ipconfig | head -3; where ls; type ls; Get-ChildItem /usr | head -2; comandi | head -3' 2>&1 \
+	| grep -v 'no job control\|cannot set terminal' | head -30 | sed 's/^/AUTOTEST-TERM /' >"$USCITA"
+
+# ── Schermata di blocco (ultima prova: dopo resta bloccato) ─────────────────
+come_utente python3 -m nucleo.blocco --prepara 2>&1 | head -5 | sed 's/^/AUTOTEST-BLOCCO /' >"$USCITA"
+come_utente bash -c 'cmd=$(python3 -m nucleo.blocco --prepara 2>/dev/null); $cmd' >/tmp/autotest-blocco.log 2>&1
+sleep 6; immagine blocco
+head -c 1500 /tmp/autotest-blocco.log | sed 's/^/AUTOTEST-LOG blocco: /' >"$USCITA"
+pgrep -u "$UTENTE" -x gtklock >/dev/null && scrivi "AUTOTEST-BLOCCO gtklock attivo: OK" || scrivi "AUTOTEST-BLOCCO ERRORE: gtklock non è partito"
+
 scrivi "AUTOTEST RAM finale: $(free -m | awk '/^Mem/{print $3"MB usati su "$2}')"
 ps -eo rss=,comm= --sort=-rss | head -15 | awk '{printf "AUTOTEST-MEM %d MB %s\n", $1/1024, $2}' >"$USCITA"
 scrivi "AUTOTEST FINE"

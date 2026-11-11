@@ -83,6 +83,40 @@ class BackendBenvenuto(Backend):
     def utenti(self) -> None:
         avvia([branding.comando("impostazioni"), "utenti"])
 
+    # ── Account: nome, foto e password (si vedono all'accesso e nella schermata di blocco)
+    def account(self) -> dict:
+        from .. import account
+
+        return account.info()
+
+    def _account(self, esito: dict) -> dict:
+        return {**esito, "account": self.account()}
+
+    def accountNome(self, nome: str) -> dict:
+        from .. import account
+
+        return self._account(account.imposta_nome(nome))
+
+    def accountPassword(self, password: str, conferma: str) -> dict:
+        from .. import account
+
+        return self._account(account.imposta_password(password, conferma))
+
+    def accountSenzaPassword(self) -> dict:
+        from .. import account
+
+        return self._account(account.togli_password())
+
+    def accountFoto(self, percorso: str) -> dict:
+        from .. import account
+
+        return self._account(account.imposta_foto(percorso))
+
+    def accountTogliFoto(self) -> dict:
+        from .. import account
+
+        return self._account(account.togli_foto())
+
     def fine(self) -> None:
         config_utente("benvenuto-fatto").write_text("1")
 

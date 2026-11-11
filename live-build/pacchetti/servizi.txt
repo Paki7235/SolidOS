@@ -18,6 +18,11 @@ plocate
 iproute2
 iw
 ?avahi-daemon
+?avahi-utils
+?ieee-data
+?traceroute
+?tree
+?bind9-dnsutils
 ?earlyoom
 ?libnss-mdns
 

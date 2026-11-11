@@ -2,6 +2,8 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtQuick.Dialogs
+import QtCore
 import SolidUI
 
 Finestra {
@@ -15,6 +17,9 @@ Finestra {
     property string stile: Tema.stileBarra
     property string accento: Tema.accento
     property var statoCondivisione: ({})
+    property var account: ponte.chiama0("account")
+    property bool accountInCorso: false
+    function azioneAccount(metodo, argomenti) { accountInCorso = true; ponte.avvia(metodo, argomenti, "account") }
 
     PassiGuidati {
         id: passi
@@ -30,6 +35,7 @@ Finestra {
             if (id === "reti") finestra.reti = r
             else if (id === "connetti") { finestra.avviso(r.ok ? I18n.t("Connesso") : r.messaggio); ponte.avvia("reti", [], "reti") }
             else if (id === "condivisione") finestra.statoCondivisione = r
+            else if (id === "account") { finestra.accountInCorso = false; if (r.account) finestra.account = r.account; if (r.messaggio) finestra.avviso(r.messaggio) }
         }
     }
 
@@ -94,19 +100,74 @@ Finestra {
     Component {
         id: pAccount
         ColumnLayout {
-            spacing: 14
+            spacing: 12
             Titolo { text: I18n.t("Il tuo account") }
+            Testo { Layout.fillWidth: true; secondario: true; text: I18n.t("Nome e foto compaiono quando accendi il computer e nella schermata di blocco.") }
+            Testo {
+                Layout.fillWidth: true
+                visible: finestra.info.live === true
+                text: "ℹ️ " + I18n.t("Nella prova dalla chiavetta l'account è temporaneo: nome e password li scegli durante l'installazione e qui potrai cambiarli al primo avvio.")
+            }
             RowLayout {
-                spacing: 16
-                Rectangle { width: 72; height: 72; radius: 36; color: Tema.accento; Testo { anchors.centerIn: parent; color: "#FFFFFF"; font.pointSize: 26; text: finestra.info.nome ? finestra.info.nome.charAt(0).toUpperCase() : "?" } }
+                spacing: 18
+                enabled: !finestra.info.live && !finestra.accountInCorso
+                FotoAccount { lato: 84; account: finestra.account }
                 ColumnLayout {
-                    Titolo { livello: 2; text: finestra.info.nome || "" }
-                    Testo { secondario: true; text: I18n.t("Nome utente:") + " " + (finestra.info.utente || "") }
+                    spacing: 8
+                    RowLayout {
+                        CampoTesto {
+                            id: campoNome
+                            Layout.preferredWidth: 260
+                            text: finestra.account.nome || ""
+                            placeholderText: I18n.t("Nome e cognome")
+                            onAccepted: if (text.trim() && text.trim() !== finestra.account.nome) finestra.azioneAccount("accountNome", [text])
+                        }
+                        Pulsante {
+                            text: I18n.t("Salva nome")
+                            enabled: campoNome.text.trim() !== "" && campoNome.text.trim() !== finestra.account.nome
+                            onClicked: finestra.azioneAccount("accountNome", [campoNome.text])
+                        }
+                    }
+                    RowLayout {
+                        Pulsante { text: I18n.t("Scegli una foto…"); icona: "camera-photo"; onClicked: sceltaFoto.open() }
+                        Pulsante { text: I18n.t("Togli la foto"); visible: !!finestra.account.foto; onClicked: finestra.azioneAccount("accountTogliFoto", []) }
+                    }
+                    Testo { secondario: true; text: I18n.t("Nome utente:") + " " + (finestra.account.utente || "") }
                 }
             }
-            Testo { Layout.fillWidth: true; text: I18n.t("Altre persone usano questo computer? Ognuna può avere il proprio account con file e impostazioni separati.") }
-            Pulsante { text: I18n.t("Aggiungi un'altra persona"); icona: "list-add-user"; onClicked: ponte.chiama0("utenti") }
+            Separatore { Layout.fillWidth: true }
+            RigaImpostazione {
+                Layout.fillWidth: true
+                enabled: !finestra.info.live && !finestra.accountInCorso
+                titolo: I18n.t("Chiedi la password")
+                descrizione: chiedi.checked ? I18n.t("Serve per entrare all'accensione e per sbloccare lo schermo")
+                                            : I18n.t("Per entrare e sbloccare basta premere Invio: chiunque può usare il computer")
+                Interruttore {
+                    id: chiedi
+                    checked: finestra.account.password !== false
+                    onToggled: if (!checked && finestra.account.password) finestra.azioneAccount("accountSenzaPassword", [])
+                }
+            }
+            RowLayout {
+                visible: chiedi.checked && !finestra.info.live
+                enabled: !finestra.accountInCorso
+                spacing: 8
+                CampoTesto { id: pw1; Layout.preferredWidth: 200; echoMode: TextInput.Password; placeholderText: finestra.account.password ? I18n.t("Nuova password") : I18n.t("Scegli una password") }
+                CampoTesto { id: pw2; Layout.preferredWidth: 200; echoMode: TextInput.Password; placeholderText: I18n.t("Ripetila"); onAccepted: imposta.clicked() }
+                Pulsante {
+                    id: imposta
+                    principale: true
+                    text: finestra.account.password ? I18n.t("Cambia") : I18n.t("Imposta")
+                    enabled: pw1.text.length > 0
+                    onClicked: { finestra.azioneAccount("accountPassword", [pw1.text, pw2.text]); pw1.text = ""; pw2.text = "" }
+                }
+            }
+            Testo { Layout.fillWidth: true; visible: !finestra.info.live; secondario: true; text: I18n.t("Puoi cambiare tutto anche dopo, in Impostazioni › Utenti e account.") }
             Item { Layout.fillHeight: true }
+            RowLayout {
+                Testo { Layout.fillWidth: true; text: I18n.t("Altre persone usano questo computer? Ognuna può avere il proprio account con file e impostazioni separati.") }
+                Pulsante { text: I18n.t("Aggiungi un'altra persona"); icona: "list-add-user"; onClicked: ponte.chiama0("utenti") }
+            }
         }
     }
     Component {
@@ -264,5 +325,13 @@ Finestra {
         standardButtons: Dialog.Cancel | Dialog.Ok
         CampoTesto { id: campoPassword; echoMode: TextInput.Password; placeholderText: I18n.t("Password del Wi-Fi"); width: 300 }
         onAccepted: { ponte.avvia("connetti", [ssid, campoPassword.text], "connetti"); campoPassword.text = "" }
+    }
+
+    FileDialog {
+        id: sceltaFoto
+        title: I18n.t("Scegli la tua foto")
+        currentFolder: StandardPaths.writableLocation(StandardPaths.PicturesLocation)
+        nameFilters: [I18n.t("Immagini") + " (*.png *.jpg *.jpeg *.webp *.bmp *.heic)"]
+        onAccepted: finestra.azioneAccount("accountFoto", [selectedFile.toString()])
     }
 }

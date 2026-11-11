@@ -95,6 +95,11 @@ Finestra {
     }
     function ricarica() { ponte.avvia("elenco", [uri, nascosti], "elenco:" + uri) }
     function apriVoce(v) {
+        // Dispositivo della rete senza nulla da aprire (telefono, TV…): si mostra che cos'è
+        if (v.dispositivo && !v.dispositivo.uri) {
+            finestra.avviso(v.nome + " — " + v.dispositivo.descrizione + " · IP " + v.dispositivo.ip + (v.dispositivo.produttore ? " · " + v.dispositivo.produttore : ""))
+            return
+        }
         if (v.cartella) vai(v.uri, false)
         else ponte.chiama("apri", [v.uri])
     }
@@ -121,6 +126,16 @@ Finestra {
         else esito(ponte.chiama("cestino", [u]), u.length === 1 ? I18n.t("Spostato nel cestino") : u.length + " " + I18n.t("elementi spostati nel cestino"))
     }
     function menuVoce(v, x, y) {
+        if (v.dispositivo) {
+            var d = v.dispositivo, vd = []
+            if (d.cartelle) vd.push({ t: I18n.t("Apri le cartelle condivise"), f: function () { finestra.vai(d.uri, false) } })
+            if (d.uri && !d.cartelle) vd.push({ t: d.tipo === "modem" ? I18n.t("Apri la pagina del modem") : I18n.t("Apri nel browser"), f: function () { ponte.chiama("apri", [d.uri]) } })
+            vd.push({ t: I18n.t("Collegati come server…"), f: function () { collega.apri("smb://" + d.ip + "/", "") } })
+            vd.push({ t: I18n.t("Copia l'indirizzo IP") + "  (" + d.ip + ")", f: function () { ponte.chiama("copiaTesto", [d.ip]) } })
+            vd.push({ t: I18n.t("Cerca di nuovo i dispositivi"), f: function () { ponte.chiama0("aggiornaRete"); finestra.ricarica() } })
+            menu.mostra(vd, x, y)
+            return
+        }
         if (!scelti[v.uri]) { var n = {}; n[v.uri] = true; scelti = n }
         var u = uriScelti(), multi = u.length > 1
         var voci = []
@@ -153,7 +168,7 @@ Finestra {
         var voci = dati.cestino ? [{ t: I18n.t("Svuota il cestino"), f: function () { svuota.open() } }] : [
             { t: I18n.t("Visualizza"), sotto: vociVista() },
             { t: I18n.t("Ordina per"), sotto: vociOrdina() },
-            { t: I18n.t("Aggiorna") + "    F5", f: function () { finestra.ricarica() } },
+            { t: I18n.t("Aggiorna") + "    F5", f: function () { if (finestra.dati.rete) ponte.chiama0("aggiornaRete"); finestra.ricarica() } },
             { sep: true },
             { t: I18n.t("Incolla") + "    Ctrl+V", disattiva: !ponte.chiama0("appuntiPieni"), f: function () { finestra.incolla() } },
             { t: I18n.t("Nuovo"), sotto: vociNuovo() },
@@ -210,6 +225,7 @@ Finestra {
     Shortcut { sequence: "Shift+Delete"; onActivated: { var u = finestra.uriScelti(); if (u.length) eliminaDialogo.apri(u) } }
     Shortcut { sequence: "F2"; onActivated: if (finestra.elencoScelti.length === 1) finestra.inRinomina = finestra.elencoScelti[0].uri }
     Shortcut { sequence: StandardKey.SelectAll; onActivated: { var n = {}; finestra.voci.forEach(function (v) { n[v.uri] = true }); finestra.scelti = n } }
+    Shortcut { sequence: "F5"; onActivated: { if (finestra.dati.rete) ponte.chiama0("aggiornaRete"); finestra.ricarica() } }
     Shortcut { sequence: "Ctrl+H"; onActivated: { finestra.nascosti = !finestra.nascosti; finestra.ricarica() } }
     Shortcut { sequence: "Alt+Left"; onActivated: if (finestra.posizione > 0) { finestra.posizione--; finestra.vai(finestra.storia[finestra.posizione], true) } }
     Shortcut { sequence: "Alt+Right"; onActivated: if (finestra.posizione < finestra.storia.length - 1) { finestra.posizione++; finestra.vai(finestra.storia[finestra.posizione], true) } }
@@ -525,7 +541,7 @@ Finestra {
                     visible: finestra.voci.length === 0 && !finestra.caricamento
                     spacing: 8
                     Image { anchors.horizontalCenter: parent.horizontalCenter; width: 56; height: 56; sourceSize.width: 112; sourceSize.height: 112; opacity: 0.6; source: "image://icona/" + (finestra.dati.cestino ? "user-trash" : "folder") }
-                    Text { anchors.horizontalCenter: parent.horizontalCenter; text: finestra.risultati !== null ? I18n.t("Nessun risultato") : (finestra.dati.cestino ? I18n.t("Il cestino è vuoto") : I18n.t("Questa cartella è vuota")); color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 13 }
+                    Text { anchors.horizontalCenter: parent.horizontalCenter; text: finestra.risultati !== null ? I18n.t("Nessun risultato") : (finestra.dati.cestino ? I18n.t("Il cestino è vuoto") : (finestra.dati.vuoto || I18n.t("Questa cartella è vuota"))); color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 13 }
                 }
             }
             // Riquadro dei dettagli (Alt+P)
