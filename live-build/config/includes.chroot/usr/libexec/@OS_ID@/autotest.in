@@ -203,9 +203,39 @@ pkill -KILL -s "$pid" 2>/dev/null; pkill -KILL -u "$UTENTE" -f 'nucleo.apps.file
 come_utente bash -ic 'cd /etc; dir /b | head -3; DIR /b | head -2; ver; sw_vers; ipconfig | head -3; where ls; type ls; Get-ChildItem /usr | head -2; comandi | head -3' 2>&1 \
 	| grep -v 'no job control\|cannot set terminal' | head -30 | sed 's/^/AUTOTEST-TERM /' >"$USCITA"
 
+# ── Simbolo del Wi-Fi (ventaglio) a ogni livello, chiaro e scuro ─────────────
+cat >/usr/share/nucleo/qml/Shell/ProvaWifi.qml <<'FINE'
+import QtQuick
+import QtQuick.Window
+Window {
+    visible: true; width: 520; height: 150; color: "#20232B"; title: "Prova Wi-Fi"
+    Column {
+        anchors.centerIn: parent; spacing: 18
+        Repeater {
+            model: ["#FFFFFF", "#111111"]
+            Rectangle {
+                required property string modelData
+                width: 480; height: 46; radius: 8; color: modelData === "#FFFFFF" ? "#2B2F3A" : "#F2F2F5"
+                Row {
+                    anchors.centerIn: parent; spacing: 34
+                    Repeater {
+                        model: [[false, 0], [true, 10], [true, 30], [true, 60], [true, 90]]
+                        SegnaleWifi { required property var modelData; connesso: modelData[0]; percento: modelData[1]; colore: parent.parent.modelData; scale: 2 }
+                    }
+                }
+            }
+        }
+    }
+}
+FINE
+setsid runuser -u "$UTENTE" -- env "${AMBIENTE[@]}" python3 -c "from nucleo.qmlapp import esegui_app; esegui_app('prova-wifi', 'Shell/ProvaWifi.qml')" >/tmp/autotest-wifi.log 2>&1 &
+pid=$!; sleep 8; immagine wifi
+grep -aiE 'error|traceback|referenceerror|typeerror|not a type' /tmp/autotest-wifi.log | head -10 | sed 's/^/AUTOTEST-LOG wifi: /' >"$USCITA"
+pkill -KILL -s "$pid" 2>/dev/null; sleep 2
+
 # ── Schermata di blocco (ultima prova: dopo resta bloccato) ─────────────────
 come_utente python3 -m nucleo.blocco --prepara 2>&1 | head -5 | sed 's/^/AUTOTEST-BLOCCO /' >"$USCITA"
-come_utente bash -c 'cmd=$(python3 -m nucleo.blocco --prepara 2>/dev/null); $cmd' >/tmp/autotest-blocco.log 2>&1
+come_utente python3 -m nucleo.blocco >/tmp/autotest-blocco.log 2>&1
 sleep 6; immagine blocco
 head -c 1500 /tmp/autotest-blocco.log | sed 's/^/AUTOTEST-LOG blocco: /' >"$USCITA"
 pgrep -u "$UTENTE" -x gtklock >/dev/null && scrivi "AUTOTEST-BLOCCO gtklock attivo: OK" || scrivi "AUTOTEST-BLOCCO ERRORE: gtklock non è partito"

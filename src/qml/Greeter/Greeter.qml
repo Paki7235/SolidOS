@@ -80,7 +80,9 @@ Window {
             onTriggered: {
                 var d = new Date()
                 ora.text = Qt.formatTime(d, "HH:mm")
-                var g = Qt.formatDate(d, "dddd d MMMM")
+                // Nomi di giorno e mese nella lingua del sistema (italiano se non è impostata)
+                var lingua = Qt.locale().name === "C" || Qt.locale().name === "en_US" ? Qt.locale("it_IT") : Qt.locale()
+                var g = d.toLocaleDateString(lingua, "dddd d MMMM")
                 data.text = g.charAt(0).toUpperCase() + g.slice(1)
             }
         }
