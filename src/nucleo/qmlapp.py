@@ -15,8 +15,27 @@ if not CARTELLA_QML.is_dir():
     CARTELLA_QML = Path(__file__).resolve().parents[1] / "qml"
 
 
+SCALE_TESTO = {"9": 0.9, "10": 1.0, "11": 1.1, "12": 1.2, "14": 1.35}
+
+
+def _scala_testo() -> float:
+    """Impostazioni › Aspetto › Dimensione del testo (e Accessibilità › Testo grande)."""
+    try:
+        from .sistema import config_utente, leggi_json
+
+        return SCALE_TESTO.get(str(leggi_json(config_utente("aspetto.json"), {}).get("font_dimensione", "10")), 1.0)
+    except OSError:
+        return 1.0
+
+
 def prepara_ambiente(layer_shell: bool = False, software: bool | None = None) -> None:
     os.environ.setdefault("QT_QUICK_CONTROLS_STYLE", "Basic")
+    if not layer_shell:
+        scala = _scala_testo()
+        if abs(scala - 1.0) > 0.01:
+            os.environ["QT_SCALE_FACTOR"] = f"{scala:g}"
+        else:
+            os.environ.pop("QT_SCALE_FACTOR", None)
     if layer_shell:
         os.environ["QT_WAYLAND_SHELL_INTEGRATION"] = "layer-shell"
     if software is None:

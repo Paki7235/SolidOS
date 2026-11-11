@@ -164,6 +164,10 @@ pannelli_shell() { # PREFISSO
 	come_utente @OS_ID@-ctl controllo; sleep 3; immagine "$1-centro-controllo"; come_utente @OS_ID@-ctl controllo; sleep 1
 	come_utente @OS_ID@-ctl notifiche; sleep 3; immagine "$1-notifiche"; come_utente @OS_ID@-ctl notifiche; sleep 1
 }
+# Dimensione delle icone (Impostazioni › Barra e Dock): deve cambiare davvero
+lato() { come_utente python3 -c "from nucleo.impostazioni.pannelli_aspetto import PannelloPannello as Q; Q().imposta('dockLato', '$1')" >/dev/null 2>&1; sleep 4; }
+lato 56; immagine icone-grandi-mac; lato 40; immagine icone-piccole-mac; lato 48
+aspetto scuro windows; lato 56; immagine icone-grandi-windows; lato 40; immagine icone-piccole-windows; lato 48
 aspetto scuro windows; pannelli_shell scuro-windows
 aspetto chiaro windows; pannelli_shell chiaro-windows
 aspetto chiaro mac; pannelli_shell chiaro-mac

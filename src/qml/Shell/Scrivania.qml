@@ -35,7 +35,7 @@ Window {
     readonly property int cellaA: lato + 54
     readonly property bool stileWindows: Tema.stileBarra === "windows"
     readonly property int margineAlto: stileWindows ? 12 : 40
-    readonly property int margineBasso: stileWindows ? 60 : (Tema.dockLato || 48) + 44
+    readonly property int margineBasso: stileWindows ? (Tema.dockLato || 48) + 12 : (Tema.dockLato || 48) + 44
     readonly property int righe: Math.max(1, Math.floor((height - margineAlto - margineBasso) / cellaA))
     readonly property int colonne: Math.max(1, Math.floor((width - 24) / cellaL))
     readonly property var disposti: disponi(elementi, conf, righe, colonne)

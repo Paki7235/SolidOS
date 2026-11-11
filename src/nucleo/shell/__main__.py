@@ -63,7 +63,16 @@ class BackendShell(Backend):
             if su:
                 connesso = True
                 tipo = "wifi" if (iface / "wireless").exists() else (tipo or "ethernet")
-        return {"connesso": connesso, "reteTipo": tipo, "batteria": energia.batteria() or {},
+        # forza del segnale Wi-Fi (qualità del collegamento, 0-70 in /proc/net/wireless)
+        segnale = 0
+        try:
+            for riga in Path("/proc/net/wireless").read_text().splitlines()[2:]:
+                campi = riga.split()
+                if len(campi) > 2:
+                    segnale = max(segnale, min(100, round(float(campi[2].rstrip(".")) * 100 / 70)))
+        except (OSError, ValueError):
+            pass
+        return {"connesso": connesso, "reteTipo": tipo, "segnale": segnale, "batteria": energia.batteria() or {},
                 "muto": getattr(self, "_muto", False)}
 
     # ── Indicatore delle prestazioni (Super+P) ───────────────────────────────
@@ -380,8 +389,11 @@ class BackendShell(Backend):
         return schermo.imposta_luminosita(valore)
 
     def nonDisturbare(self, attivo: bool) -> bool:
+        from ..sistema import config_utente, scrivi_json
+
         if self.server:
             self.server.non_disturbare = bool(attivo)
+        scrivi_json(config_utente("notifiche.json"), {"non_disturbare": bool(attivo)})
         return bool(attivo)
 
     def luceNotturna(self, attiva: bool) -> dict:
@@ -539,6 +551,9 @@ def main() -> int:
     ponte = crea_ponte(backend)
     try:
         backend.server = ServerNotifiche(bus, backend.emetti)
+        from ..sistema import config_utente, leggi_json
+
+        backend.server.non_disturbare = bool(leggi_json(config_utente("notifiche.json"), {}).get("non_disturbare", False))
     except dbus.exceptions.NameExistsException:
         print(T("Un altro server di notifiche è già attivo: le notifiche non saranno gestite dalla shell."),
               file=sys.stderr)

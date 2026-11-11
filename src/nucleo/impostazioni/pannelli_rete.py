@@ -14,6 +14,17 @@ from .base import (Pannello, azione, campo, elenco, esito, info, interruttore, i
                    scelta)
 
 
+def _forza(segnale: int) -> str:
+    """Tacche e parole: si capisce subito se si è vicini o lontani dal modem."""
+    if segnale >= 75:
+        return "▂▄▆█  " + T("Segnale ottimo ({s}%) · vicino al modem", s=segnale)
+    if segnale >= 50:
+        return "▂▄▆_  " + T("Segnale buono ({s}%)", s=segnale)
+    if segnale >= 25:
+        return "▂▄__  " + T("Segnale debole ({s}%) · lontano dal modem", s=segnale)
+    return "▂___  " + T("Segnale molto debole ({s}%) · troppo lontano dal modem", s=segnale)
+
+
 class PannelloRete(Pannello):
     id = "rete"
     titolo = T("Wi-Fi e rete")
@@ -29,7 +40,7 @@ class PannelloRete(Pannello):
         elementi_reti = [{
             "id": r["ssid"], "titolo": r["ssid"],
             "sottotitolo": (T("Connessa") if r["connessa"] else "") + (" · " if r["connessa"] else "")
-                           + T("Segnale {s}%", s=r["segnale"]) + (" · 🔒" if r["protetta"] else ""),
+                           + _forza(r["segnale"]) + (" · 🔒" if r["protetta"] else ""),
             "icona": "network-wireless-signal-" + ("excellent" if r["segnale"] > 75 else "good" if r["segnale"] > 50 else "ok" if r["segnale"] > 25 else "weak"),
             "attivo": r["connessa"],
             "azioni": [{"id": "disconnetti", "testo": T("Disconnetti")}] if r["connessa"] else

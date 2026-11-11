@@ -105,7 +105,7 @@ QtObject {
         Loader {
             anchors.right: parent.right
             anchors.rightMargin: 10
-            y: radice.stileWindows ? parent.height - 58 - height : 34
+            y: radice.stileWindows ? parent.height - barraApplicazioni.altezza - 10 - height : 34
             active: controllo.visible
             sourceComponent: CentroControllo {
                 stato: radice.stato
@@ -133,7 +133,7 @@ QtObject {
             anchors.bottom: parent.bottom
             anchors.margins: 10
             anchors.topMargin: radice.stileWindows ? 10 : 34
-            anchors.bottomMargin: radice.stileWindows ? 58 : 84
+            anchors.bottomMargin: radice.stileWindows ? barraApplicazioni.altezza + 10 : 84
             width: 380
             active: centroNotifiche.visible
             sourceComponent: CentroNotifiche {
@@ -382,7 +382,7 @@ QtObject {
         MouseArea { anchors.fill: parent; onClicked: finestraStart.visible = false }
         Loader {
             x: radice.stileWindows ? Math.round((finestraStart.width - 640) / 2) : 8
-            y: radice.stileWindows ? finestraStart.height - 48 - 12 - 560 : 34
+            y: radice.stileWindows ? finestraStart.height - barraApplicazioni.altezza - 12 - 560 : 34
             active: finestraStart.visible
             sourceComponent: Start { onChiudi: finestraStart.visible = false }
         }
@@ -449,7 +449,7 @@ QtObject {
         MenuPopup {
             id: popupDock
             x: Math.max(6, Math.min(menuDock.width - width - 6, (radice.stileWindows ? 0 : (menuDock.width - dock.width) / 2) + menuDock.centroX - width / 2))
-            y: menuDock.height - (radice.stileWindows ? 54 : dock.altezza + 10) - height
+            y: menuDock.height - (radice.stileWindows ? barraApplicazioni.altezza + 6 : dock.altezza + 10) - height
             voci: {
                 var v = menuDock.voce, out = [{ titolo: v.nome || "" }]
                 if (v.cestino) {

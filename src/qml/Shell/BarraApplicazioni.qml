@@ -22,8 +22,10 @@ Window {
     property real spostamento: 0
     property bool appenaTrascinato: false
     readonly property int quanteFissate: voci.filter(function (v) { return v.fissata }).length
-    readonly property int lato: 26
-    readonly property int passo: 44
+    // Impostazioni › Barra e Dock › Dimensione delle icone: piccole / medie / grandi
+    readonly property int lato: (Tema.dockLato || 48) <= 40 ? 22 : ((Tema.dockLato || 48) >= 56 ? 32 : 26)
+    readonly property int altezza: lato + 22
+    readonly property int passo: lato + 18
     signal menu(var voce, real centroX)
     signal start()
     signal controllo()
@@ -70,10 +72,10 @@ Window {
     LayerShell.Window.scope: "barra-applicazioni"
     LayerShell.Window.layer: LayerShell.Window.LayerTop
     LayerShell.Window.anchors: LayerShell.Window.AnchorBottom | LayerShell.Window.AnchorLeft | LayerShell.Window.AnchorRight
-    LayerShell.Window.exclusionZone: 48
+    LayerShell.Window.exclusionZone: altezza
     LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityNone
     width: Screen.width
-    height: 48
+    height: altezza
     color: Tema.vetro
     visible: Tema.stileBarra === "windows"
     onVisibleChanged: if (visible) aggiorna()
@@ -102,14 +104,20 @@ Window {
 
         Tasto {
             id: tastoStart
-            width: 44; height: 40
+            width: barra.passo; height: barra.altezza - 8
             anchors.verticalCenter: parent.verticalCenter
             onPremuto: barra.start()
-            Image {
+            Rectangle {
                 anchors.centerIn: parent
-                width: 22; height: 22
-                sourceSize.width: 44; sourceSize.height: 44
-                source: "file:///usr/share/" + Tema.idSistema + (Tema.chiaro ? "/logo.svg" : "/logo-chiaro.svg")
+                width: barra.lato + 6; height: barra.lato + 6
+                radius: 8
+                color: tastoStart.area.pressed ? Qt.darker(Tema.accento, 1.2) : (tastoStart.area.containsMouse ? Qt.lighter(Tema.accento, 1.12) : Tema.accento)
+                Image {
+                    anchors.centerIn: parent
+                    width: barra.lato - 6; height: barra.lato - 6
+                    sourceSize.width: 64; sourceSize.height: 64
+                    source: "file:///usr/share/" + Tema.idSistema + "/logo-chiaro.svg"
+                }
             }
         }
 
@@ -121,7 +129,7 @@ Window {
                 required property int index
                 readonly property bool avvio: barra.inAvvio[modelData.id] !== undefined
                 width: barra.passo
-                height: 48
+                height: barra.altezza
                 z: barra.trascinaDa === index ? 2 : 1
                 transform: Translate {
                     x: barra.trascinaDa === cella.index ? barra.spostamento
@@ -131,7 +139,7 @@ Window {
                 }
                 Rectangle {
                     anchors.centerIn: parent
-                    width: 40; height: 40; radius: 6
+                    width: barra.passo - 4; height: barra.altezza - 8; radius: 6
                     color: area.pressed ? Tema.premuto : (area.containsMouse || cella.modelData.attiva ? Tema.sopra : "transparent")
                 }
                 Image {
@@ -189,7 +197,7 @@ Window {
         // Cestino: sempre presente, non si può togliere
         Tasto {
             id: tastoCestino
-            width: 44; height: 40
+            width: barra.passo; height: barra.altezza - 8
             anchors.verticalCenter: parent.verticalCenter
             color: dropCestino.containsDrag ? Tema.premuto : (area.pressed ? Tema.premuto : (area.containsMouse ? Tema.sopra : "transparent"))
             onPremuto: function (ev) {
@@ -223,7 +231,7 @@ Window {
 
         Tasto {
             visible: Tema.barraPrestazioni !== false
-            width: testoPrestazioni.implicitWidth + 16; height: 40
+            width: testoPrestazioni.implicitWidth + 16; height: barra.altezza - 8
             anchors.verticalCenter: parent.verticalCenter
             onPremuto: shell.chiama("apri", ["monitor"])
             Text {
@@ -235,18 +243,29 @@ Window {
         }
         // Rete, volume e batteria: un solo pulsante, apre il centro di controllo
         Tasto {
-            width: iconeStato.width + 20; height: 40
+            width: iconeStato.width + 20; height: barra.altezza - 8
             anchors.verticalCenter: parent.verticalCenter
             onPremuto: barra.controllo()
             Row {
                 id: iconeStato
                 anchors.centerIn: parent
                 spacing: 10
-                Image {
+                Item {
                     visible: barra.stato.connesso !== undefined
-                    width: 16; height: 16; sourceSize.width: 32; sourceSize.height: 32
+                    width: 18; height: 16
                     anchors.verticalCenter: parent.verticalCenter
-                    source: "image://icona/" + (barra.stato.reteTipo === "ethernet" ? "network-wired-symbolic" : (barra.stato.connesso ? "network-wireless-signal-excellent-symbolic" : "network-wireless-offline-symbolic")) + (Tema.chiaro ? "?c" : "")
+                    Image {
+                        visible: barra.stato.reteTipo === "ethernet"
+                        anchors.centerIn: parent
+                        width: 16; height: 16; sourceSize.width: 32; sourceSize.height: 32
+                        source: "image://icona/network-wired-symbolic" + (Tema.chiaro ? "?c" : "")
+                    }
+                    SegnaleWifi {
+                        visible: barra.stato.reteTipo !== "ethernet"
+                        anchors.centerIn: parent
+                        connesso: !!barra.stato.connesso
+                        percento: barra.stato.segnale || 0
+                    }
                 }
                 Image {
                     width: 16; height: 16; sourceSize.width: 32; sourceSize.height: 32
@@ -269,7 +288,7 @@ Window {
         }
         // Data e ora: apre le notifiche
         Tasto {
-            width: Math.max(testoOra.implicitWidth, testoData.implicitWidth) + 20; height: 40
+            width: Math.max(testoOra.implicitWidth, testoData.implicitWidth) + 20; height: barra.altezza - 8
             anchors.verticalCenter: parent.verticalCenter
             onPremuto: barra.notifiche()
             Column {
@@ -280,7 +299,7 @@ Window {
         }
         // Striscia «Mostra desktop» (come su Windows)
         Rectangle {
-            width: 10; height: 48
+            width: 10; height: barra.altezza
             color: mostraDesktop.containsMouse ? Tema.sopra : "transparent"
             Rectangle { anchors.left: parent.left; anchors.verticalCenter: parent.verticalCenter; width: 1; height: 20; color: Tema.separatore }
             MouseArea { id: mostraDesktop; anchors.fill: parent; hoverEnabled: true; onClicked: shell.chiama("appAttiva", ["scrivania"]) }

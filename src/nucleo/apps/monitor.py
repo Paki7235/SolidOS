@@ -16,7 +16,7 @@ from ..qmlapp import esegui_app
 NOMI = {
     "labwc": "Compositor grafico", "Xwayland": "Compatibilità X11", "pipewire": "Audio",
     "pipewire-pulse": "Audio (compatibilità)", "wireplumber": "Audio (sessione)",
-    "NetworkManager": "Gestore di rete", "lxqt-panel": "Barra e dock", "swaybg": "Sfondo",
+    "NetworkManager": "Gestore di rete", "lxqt-panel": "Pannello (vecchio)", "swaybg": "Sfondo",
     "firefox-esr": "Browser", "pcmanfm-qt": "File", "qterminal": "Terminale",
     "systemd": "Servizi di sistema", "dbus-daemon": "Bus di sistema", "greetd": "Accesso",
     "Xorg": "Server grafico", "bluetoothd": "Bluetooth", "avahi-daemon": "Rete locale",

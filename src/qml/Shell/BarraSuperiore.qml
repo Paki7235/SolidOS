@@ -107,9 +107,22 @@ Window {
         Pulsantino {
             visible: barra.stato.connesso !== undefined
             onPremuto: barra.controllo()
-            contenuto: Image {
-                y: 3; width: 16; height: 16; sourceSize.width: 32; sourceSize.height: 32
-                source: "image://icona/" + (barra.stato.reteTipo === "ethernet" ? "network-wired-symbolic" : (barra.stato.connesso ? "network-wireless-signal-excellent-symbolic" : "network-wireless-offline-symbolic"))
+            contenuto: Item {
+                visible: barra.stato.connesso !== undefined
+                width: 18; height: 16
+                y: 3
+                Image {
+                    visible: barra.stato.reteTipo === "ethernet"
+                    anchors.centerIn: parent
+                    width: 16; height: 16; sourceSize.width: 32; sourceSize.height: 32
+                    source: "image://icona/network-wired-symbolic" + (Tema.chiaro ? "?c" : "")
+                }
+                SegnaleWifi {
+                    visible: barra.stato.reteTipo !== "ethernet"
+                    anchors.centerIn: parent
+                    connesso: !!barra.stato.connesso
+                    percento: barra.stato.segnale || 0
+                }
             }
         }
         Pulsantino {

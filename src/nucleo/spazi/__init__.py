@@ -82,32 +82,16 @@ def _sfondo(percorso: str):
 
 
 def _app_pannello(app: list[str]):
-    file = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "lxqt" / "panel.conf"
-    file.parent.mkdir(parents=True, exist_ok=True)
-    if not file.exists() and Path("/etc/xdg/lxqt/panel.conf").exists():
-        shutil.copy("/etc/xdg/lxqt/panel.conf", file)
-    c = configparser.RawConfigParser(strict=False)
-    c.optionxform = str
-    c.read(file, encoding="utf-8")
-    if not c.has_section("quicklaunch"):
-        c.add_section("quicklaunch")
-    for chiave in list(c["quicklaunch"]):
-        if chiave.startswith("apps\\"):
-            c.remove_option("quicklaunch", chiave)
-    c.set("quicklaunch", "type", "quicklaunch")
-    trovate = 0
-    for desktop in app:
-        for base in (Path.home() / ".local/share/applications", Path("/usr/share/applications"),
-                     Path("/var/lib/flatpak/exports/share/applications")):
-            if (base / desktop).exists():
-                trovate += 1
-                c.set("quicklaunch", f"apps\\{trovate}\\desktop", str(base / desktop))
-                break
-    c.set("quicklaunch", "apps\\size", str(trovate))
-    with open(file, "w", encoding="utf-8") as f:
-        c.write(f, space_around_delimiters=False)
-    esegui(["pkill", "-x", "lxqt-panel"])
-    avvia(["lxqt-panel"])
+    """Le app dello spazio diventano quelle fissate nel Dock / nella barra."""
+    from ..dbusutil import chiama
+    from ..shell import dock
+    from ..sistema import config_utente, scrivi_json
+
+    fissate = [d.removesuffix(".desktop") for d in app if dock.info(d.removesuffix(".desktop"))]
+    if fissate:
+        scrivi_json(config_utente("dock.json"), {"fissate": fissate})
+        nome = branding.nome_dbus("Shell")
+        chiama(nome, branding.percorso_dbus("Shell"), nome, "Aggiorna", timeout=2)
 
 
 def _cartelle(cartelle: list[str]):

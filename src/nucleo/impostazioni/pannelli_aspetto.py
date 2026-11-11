@@ -40,8 +40,16 @@ def _salva_ini(c: configparser.RawConfigParser, file: Path) -> None:
 
 
 def riavvia_pannello() -> None:
-    esegui(["pkill", "-x", "lxqt-panel"])
-    avvia(["lxqt-panel"])
+    """Riavvia la shell (barra, Dock, scrivania) per ricaricare icone e impostazioni."""
+    esegui(["pkill", "-f", "python3 -m nucleo.shell$"])
+    stato = Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local/state")) / branding.id_os()
+    stato.mkdir(parents=True, exist_ok=True)
+    import subprocess
+
+    ambiente = {k: v for k, v in os.environ.items() if k not in ("QT_WAYLAND_SHELL_INTEGRATION", "QT_SCALE_FACTOR")}
+    with open(stato / "shell.log", "a") as registro:
+        subprocess.Popen([branding.comando("shell")], stdout=registro, stderr=registro, stdin=subprocess.DEVNULL,
+                         start_new_session=True, env=ambiente)
 
 
 class PannelloAspetto(Pannello):
@@ -150,20 +158,23 @@ class PannelloAspetto(Pannello):
             return esito(True, T("Aspetto aggiornato"))
         if voce == "font-dimensione":
             self._pref("font_dimensione", str(valore))
+            # anche le app non nostre (Qt) usano il carattere più grande
             file = _lxqt_conf()
             c = _ini(file)
             if not c.has_section("Qt"):
                 c.add_section("Qt")
             c.set("Qt", "font", f'"{branding.get("FONT_UI")},{valore},-1,5,50,0,0,0,0,0"')
             _salva_ini(c, file)
-            return esito()
+            return esito(True, T("Testo più grande nelle app che apri da ora (riapri quelle già aperte)"))
         if voce == "icone":
             file = _lxqt_conf()
             c = _ini(file)
+            if not c.has_section("General"):
+                c.add_section("General")
             c.set("General", "icon_theme", str(valore))
             _salva_ini(c, file)
             riavvia_pannello()
-            return esito()
+            return esito(True, T("Icone cambiate: le app aperte le useranno quando le riapri"))
         return None
 
     def _imposta_sfondo(self, percorso: str):
@@ -357,7 +368,7 @@ class PannelloAccessibilita(Pannello):
             return esito()
         if voce == "testo-grande":
             self._pref("testo_grande", valore)
-            return PannelloAspetto().imposta("font-dimensione", "13" if valore else branding.get("FONT_UI_DIMENSIONE", "10"))
+            return PannelloAspetto().imposta("font-dimensione", "12" if valore else branding.get("FONT_UI_DIMENSIONE", "10"))
         if voce == "cursore-grande":
             self._pref("cursore_grande", valore)
             labwc.imposta_ambiente({"XCURSOR_SIZE": "48" if valore else "24"})
