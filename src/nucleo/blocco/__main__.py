@@ -80,7 +80,8 @@ def prepara() -> list[str]:
 def _layout(nome: str, foto: str, serve_password: bool) -> str:
     e = html.escape
     testo_avatar = "" if foto else e(iniziali(nome))
-    suggerimento = "" if serve_password else e(T("Premi Invio per entrare"))
+    # GTK nasconde il testo d'aiuto del campo quando ha il cursore: lo ripetiamo sotto
+    suggerimento = e(T("Inserisci la password e premi Invio")) if serve_password else e(T("Premi Invio per entrare"))
     segnaposto = e(T("Inserisci la password"))
     pulsante = "→" if serve_password else e(T("Entra"))
     larghezza = 210 if serve_password else 1
