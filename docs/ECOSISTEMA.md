@@ -78,10 +78,34 @@ Come lo rendiamo leggero (obiettivo: avvio sotto i **600 MB di RAM** usati, sist
   Da Android: libertà di installare app e file, widget ovunque, launcher e gesti personalizzabili,
   doppia SIM e scheda SD, cartelle e File completi, registrazione chiamate dove è legale, app predefinite a scelta.
 
+## 3b. Solid ID e «Dov'è» (come Apple ID e Dov'è)
+
+Un account unico per tutti i dispositivi SolidOS (PC e telefono), su **Supabase**
+(autenticazione + database Postgres + tempo reale), nel piano gratuito.
+
+- **Creazione:** nella configurazione iniziale (e in Impostazioni › Solid ID): nome, email, password;
+  conferma con il codice ricevuto per email. Facoltativo: si può usare SolidOS anche senza.
+- **Dispositivi:** ogni PC/telefono collegato compare nell'elenco dell'account (nome, modello, ultima volta visto).
+- **Dov'è** (app identica su PC e telefono): mappa con la posizione dei propri dispositivi;
+  azioni **Fai suonare**, **Blocca e mostra un messaggio** (es. numero da chiamare), **Inizializza** (cancella i dati);
+  notifica quando un dispositivo torna in linea. Posizione: GPS sul telefono, Wi-Fi/IP sul PC.
+- **Sicurezza:** Row Level Security in Supabase (ogni utente vede solo i propri dispositivi);
+  nell'app c'è solo la chiave pubblica (anon), mai quella segreta; i comandi pericolosi
+  (inizializza) chiedono la password; la posizione si invia solo se l'utente attiva «Dov'è».
+- **Blocco di attivazione:** un dispositivo inizializzato da remoto chiede il Solid ID del proprietario
+  prima di poter essere riconfigurato (dove l'hardware lo permette).
+- **Altro con lo stesso account (dopo):** sincronizzazione di Note, preferiti di Vela, impostazioni;
+  associazione automatica dei propri dispositivi per l'ecosistema (niente QR tra dispositivi dello stesso ID).
+
+Tabelle previste: `dispositivi` (id, proprietario, nome, tipo, modello, ultimo_visto),
+`posizioni` (dispositivo, lat, lon, precisione, quando), `comandi` (dispositivo, tipo, messaggio, stato),
+ricevuti in tempo reale dal dispositivo.
+
 ## 4. Ordine di lavoro proposto
 
 | Fase | Cosa | Funziona con |
 |---|---|---|
+| ID | **Solid ID** (account su Supabase) e **Dov'è** su PC (poi sul telefono) | PC, telefono SolidOS; Android con app web |
 | E1 | **Collegamento telefono** in SolidOS PC: associazione con QR, notifiche, SMS, appunti, batteria, trova telefono, file. Nuova app «Telefono» e voce in Impostazioni | Android (app KDE Connect) |
 | E2 | **Chiamate sul PC** via Bluetooth vivavoce: suoneria, rispondi/rifiuta, audio su PC, rubrica | Android e iPhone |
 | E3 | **Continua qui** (Handoff), appunti universali con immagini, hotspot istantaneo, sblocco col telefono vicino | Android/SolidOS |
