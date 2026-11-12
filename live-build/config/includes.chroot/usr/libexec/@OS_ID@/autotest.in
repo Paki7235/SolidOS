@@ -222,8 +222,8 @@ Window {
     visible: true; width: 760; height: 480; title: "Prova mappa"
     Mappa {
         anchors.fill: parent; lat: 41.8986; lon: 12.4769; zoom: 14
-        segnaposti: [{ id: "a", lat: 41.8986, lon: 12.4769, nome: "Portatile di prova", icona: "computer-laptop", precisione: 120, scelto: true },
-                     { id: "b", lat: 41.9028, lon: 12.4964, nome: "Telefono", icona: "phone", precisione: 0, scelto: false }]
+        segnaposti: [{ id: "a", lat: 41.8986, lon: 12.4769, nome: "Portatile di prova", icona: ponte.chiama("iconaTipo", ["portatile"]), precisione: 120, scelto: true },
+                     { id: "b", lat: 41.9028, lon: 12.4964, nome: "Telefono", icona: ponte.chiama("iconaTipo", ["telefono"]), precisione: 0, scelto: false }]
     }
 }
 FINE

@@ -74,6 +74,22 @@ def _scarica_tessera(stile: str, z: int, x: int, y: int) -> str:
     return ""
 
 
+ICONE_TIPO = {
+    "telefono": ["phone", "smartphone", "phone-symbolic", "multimedia-player"],
+    "tablet": ["tablet", "pda", "computer-tablet", "phone"],
+    "portatile": ["computer-laptop", "laptop", "computer"],
+    "computer": ["computer", "computer-desktop", "video-display"],
+}
+
+
+def _icona_tipo(tipo: str) -> str:
+    """Prima icona del tipo che esiste davvero nel tema (i temi non hanno tutti gli stessi nomi)."""
+    from PyQt6.QtGui import QIcon
+
+    candidati = ICONE_TIPO.get(tipo, ICONE_TIPO["computer"])
+    return next((n for n in candidati if QIcon.hasThemeIcon(n)), candidati[-1])
+
+
 class BackendDove(Backend):
     def __init__(self):
         self._pool = ThreadPoolExecutor(max_workers=2)
@@ -112,7 +128,7 @@ class BackendDove(Backend):
         risultato = []
         for d in elenco:
             ha_pos = d.get("lat") is not None and d.get("lon") is not None
-            icona = {"telefono": "phone", "tablet": "tablet", "portatile": "computer-laptop"}.get(d.get("tipo"), "computer")
+            icona = _icona_tipo(d.get("tipo", "computer"))
             stato = [T("Questo computer") if d["id"] == questo else _quando(d.get("ultimo_visto", ""))]
             if d.get("batteria") is not None:
                 stato.append(f"{d['batteria']}%" + (" ⚡" if d.get("in_carica") else ""))
@@ -146,6 +162,9 @@ class BackendDove(Backend):
             return solidid.rimuovi_dispositivo(dispositivo)
         except solidid.ErroreSolidID as e:
             return {"ok": False, "messaggio": str(e)}
+
+    def iconaTipo(self, tipo: str) -> str:
+        return _icona_tipo(tipo)
 
     def indicazioni(self, lat: float, lon: float) -> None:
         from ..sistema import avvia
