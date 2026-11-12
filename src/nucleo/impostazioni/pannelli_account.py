@@ -69,7 +69,9 @@ class PannelloSolidID(Pannello):
             elementi = []
             for d in dispositivi:
                 questo = d["id"] == u["dispositivo"]
-                icona = {"telefono": "phone", "tablet": "tablet", "portatile": "computer-laptop"}.get(d["tipo"], "computer")
+                from ..apps.dove import _icona_tipo
+
+                icona = _icona_tipo(d["tipo"])
                 dettagli = [d.get("modello") or "", _quando(d.get("ultimo_visto", ""))]
                 if d.get("batteria") is not None:
                     dettagli.append(f"🔋 {d['batteria']}%")
