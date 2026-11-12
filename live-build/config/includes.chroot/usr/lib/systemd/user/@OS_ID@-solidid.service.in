@@ -1,0 +1,10 @@
+[Unit]
+Description=«Dov'è» di @OS_NAME@ (Solid ID): posizione e comandi a distanza
+After=network-online.target
+
+[Service]
+ExecStart=/usr/bin/@OS_ID@-solidid servizio
+Restart=on-failure
+RestartSec=120
+Nice=10
+MemoryMax=90M

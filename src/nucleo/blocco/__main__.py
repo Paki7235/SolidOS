@@ -71,13 +71,19 @@ def prepara() -> list[str]:
     base = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / branding.id_os() / "blocco"
     base.mkdir(parents=True, exist_ok=True)
     layout, stile = base / "layout.ui", base / "stile.css"
-    layout.write_text(_layout(nome, foto, serve_password), encoding="utf-8")
+    # Messaggio mandato da «Dov'è» (es. «Se lo trovi chiama il …»)
+    remoto = base / "messaggio-remoto"
+    messaggio = remoto.read_text(encoding="utf-8").strip()[:200] if remoto.exists() else ""
+    layout.write_text(_layout(nome, foto, serve_password, messaggio), encoding="utf-8")
     stile.write_text(_stile(sfondo, foto, accento, serve_password), encoding="utf-8")
-    return ["gtklock", "--daemonize", "--layout", str(layout), "--style", str(stile),
-            "--time-format", "%H:%M", "--date-format", "%A %-d %B", "--follow-focus"]
+    comando = ["gtklock", "--daemonize", "--layout", str(layout), "--style", str(stile),
+               "--time-format", "%H:%M", "--date-format", "%A %-d %B", "--follow-focus"]
+    if messaggio:
+        comando += ["--unlock-command", f"{branding.comando('solidid')} sbloccato"]
+    return comando
 
 
-def _layout(nome: str, foto: str, serve_password: bool) -> str:
+def _layout(nome: str, foto: str, serve_password: bool, messaggio: str = "") -> str:
     e = html.escape
     testo_avatar = "" if foto else e(iniziali(nome))
     # GTK nasconde il testo d'aiuto del campo quando ha il cursore: lo ripetiamo sotto
@@ -100,6 +106,19 @@ def _layout(nome: str, foto: str, serve_password: bool) -> str:
         <property name="halign">center</property>
         <property name="margin-top">64</property>
         <property name="orientation">vertical</property>
+        <child>
+          <object class="GtkLabel" id="messaggio-remoto">
+            <property name="name">messaggio-remoto</property>
+            <property name="label">{e(messaggio)}</property>
+            <property name="visible">{1 if messaggio else 0}</property>
+            <property name="no-show-all">{0 if messaggio else 1}</property>
+            <property name="wrap">1</property>
+            <property name="max-width-chars">50</property>
+            <property name="justify">center</property>
+            <property name="halign">center</property>
+            <property name="margin-bottom">18</property>
+          </object>
+        </child>
         <child>
           <object class="GtkBox" id="time-box">
             <property name="name">time-box</property>
@@ -276,6 +295,8 @@ window {{
   color: #FFFFFF; font-size: 36px; font-weight: 600;
   box-shadow: 0 4px 18px rgba(0,0,0,0.35);
 }}
+#messaggio-remoto {{ color: #FFFFFF; font-size: 16px; font-weight: 600; padding: 10px 18px;
+  background-color: rgba(0,0,0,0.45); border-radius: 14px; }}
 #nome-label {{ color: #FFFFFF; font-size: 17px; font-weight: 600; text-shadow: 0 1px 4px rgba(0,0,0,0.45); }}
 #campo {{
   background-color: rgba(255,255,255,0.22);

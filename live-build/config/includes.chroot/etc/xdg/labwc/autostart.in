@@ -18,6 +18,8 @@ swayidle -w timeout 600 '@OS_ID@-blocca' before-sleep '@OS_ID@-blocca' >/dev/nul
 
 # Servizi utente: Condivisione Vicina, Spazi, registro privacy
 systemctl --user start @OS_ID@-privacy.service >/dev/null 2>&1 &
+# «Dov'è» (Solid ID): solo se l'accesso è fatto (il servizio esce da solo se «Dov'è» è spento)
+[ -f "${XDG_CONFIG_HOME:-$HOME/.config}/@OS_ID@/solidid.json" ] && systemctl --user start @OS_ID@-solidid.service >/dev/null 2>&1 &
 # Condivisione Vicina: all'accesso solo se è visibile ad altri; altrimenti parte
 # da sola alla prima richiesta (attivazione D-Bus), così non occupa memoria.
 CONF_CONDIVISIONE="${XDG_CONFIG_HOME:-$HOME/.config}/@OS_ID@/condivisione.json"

@@ -1,5 +1,6 @@
 """App Impostazioni: un pannello per ogni area del sistema, con ricerca."""
 
+from .pannelli_account import PannelloSolidID
 from .pannelli_aspetto import (PannelloAccessibilita, PannelloAspetto, PannelloNotifiche,
                                PannelloPannello, PannelloSpazi)
 from .pannelli_dispositivi import (PannelloArchiviazione, PannelloAudio, PannelloEnergia,
@@ -11,6 +12,7 @@ from .pannelli_sistema import (PannelloAggiornamenti, PannelloAppPredefinite, Pa
                                PannelloSicurezza, PannelloSnapshot, PannelloUtenti)
 
 PANNELLI = [
+    PannelloSolidID,
     PannelloRete, PannelloBluetooth, PannelloCondivisione,
     PannelloSchermo, PannelloAudio, PannelloEnergia, PannelloTastiera, PannelloMouse, PannelloStampanti,
     PannelloAspetto, PannelloPannello, PannelloNotifiche, PannelloSpazi, PannelloAccessibilita,

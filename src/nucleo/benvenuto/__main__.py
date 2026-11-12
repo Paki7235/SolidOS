@@ -117,6 +117,9 @@ class BackendBenvenuto(Backend):
 
         return self._account(account.togli_foto())
 
+    def solidID(self) -> None:
+        avvia([branding.comando("dove")])
+
     def fine(self) -> None:
         config_utente("benvenuto-fatto").write_text("1")
 

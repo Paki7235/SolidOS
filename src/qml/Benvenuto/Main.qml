@@ -25,7 +25,7 @@ Finestra {
         id: passi
         anchors.fill: parent
         testoFine: I18n.t("Inizia a usare") + " " + Tema.nomeSistema
-        pagine: [pBenvenuto, pLingua, pWifi, pAccount, pAspetto, pStile, pWindows, pPrestazioni, pCondivisione, pFine]
+        pagine: [pBenvenuto, pLingua, pWifi, pAccount, pSolidID, pAspetto, pStile, pWindows, pPrestazioni, pCondivisione, pFine]
         onCambioPagina: function (i) { if (i === 2) ponte.avvia("reti", [], "reti") }
         onFinito: { ponte.chiama0("fine"); Qt.quit() }
     }
@@ -168,6 +168,21 @@ Finestra {
                 Testo { Layout.fillWidth: true; text: I18n.t("Altre persone usano questo computer? Ognuna può avere il proprio account con file e impostazioni separati.") }
                 Pulsante { text: I18n.t("Aggiungi un'altra persona"); icona: "list-add-user"; onClicked: ponte.chiama0("utenti") }
             }
+        }
+    }
+    Component {
+        id: pSolidID
+        ColumnLayout {
+            spacing: 14
+            Titolo { text: I18n.t("Solid ID") }
+            Testo { Layout.fillWidth: true; text: I18n.t("Un solo account per tutti i tuoi dispositivi SolidOS, come l'Apple ID. Con «Dov'è» ritrovi computer e telefoni sulla mappa, li fai suonare o li blocchi con un messaggio se li perdi.") }
+            Testo { Layout.fillWidth: true; secondario: true; text: I18n.t("È facoltativo: puoi crearlo o accedere anche più tardi, in Impostazioni › Solid ID.") }
+            RowLayout {
+                spacing: 10
+                Pulsante { principale: true; icona: "avatar-default"; text: I18n.t("Accedi o crea il Solid ID"); onClicked: ponte.chiama0("solidID") }
+                Pulsante { text: I18n.t("Più tardi"); onClicked: passi.avanti() }
+            }
+            Item { Layout.fillHeight: true }
         }
     }
     Component {
