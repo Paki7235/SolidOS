@@ -187,7 +187,7 @@ Finestra {
                             Rectangle {
                                 Layout.preferredWidth: 38; Layout.preferredHeight: 38; radius: 19
                                 color: modelData.posizione ? Tema.accento : (Tema.chiaro ? "#D5D5DB" : "#45474F")
-                                Icona { anchors.centerIn: parent; nome: modelData.icona; lato: 22 }
+                                IconaDispositivo { anchors.centerIn: parent; tipo: modelData.tipo; icona: modelData.icona; lato: 22; colore: "#FFFFFF" }
                             }
                             ColumnLayout {
                                 Layout.fillWidth: true; spacing: 1
@@ -216,7 +216,7 @@ Finestra {
                 id: mappa
                 anchors.fill: parent
                 segnaposti: finestra.dispositivi.filter(function (d) { return d.posizione }).map(function (d) {
-                    return { id: d.id, lat: d.lat, lon: d.lon, nome: d.nome, icona: d.icona, precisione: d.precisione, scelto: d.id === finestra.scelto }
+                    return { id: d.id, lat: d.lat, lon: d.lon, nome: d.nome, tipo: d.tipo, icona: d.icona, precisione: d.precisione, scelto: d.id === finestra.scelto }
                 })
                 onSegnapostoScelto: function (ident) { finestra.scegli(ident, false) }
             }

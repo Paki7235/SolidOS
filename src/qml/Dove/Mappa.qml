@@ -10,7 +10,7 @@ Item {
     property real lat: 41.9
     property real lon: 12.5
     property int zoom: 5
-    property var segnaposti: []          // [{id, lat, lon, nome, icona, precisione, scelto}]
+    property var segnaposti: []          // [{id, lat, lon, nome, tipo, icona, precisione, scelto}]
     signal segnapostoScelto(string ident)
 
     property var tessere: ({})           // "stile/z/x/y" → "file:///…"
@@ -126,7 +126,7 @@ Item {
                 border.color: modelData.scelto ? Tema.accento : "#33000000"
                 border.width: modelData.scelto ? 3 : 1
                 Behavior on width { NumberAnimation { duration: 120 } }
-                Icona { anchors.centerIn: parent; nome: modelData.icona; lato: parent.width * 0.55 }
+                IconaDispositivo { anchors.centerIn: parent; tipo: modelData.tipo || "computer"; icona: modelData.icona; lato: parent.width * 0.55 }
                 MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: mappa.segnapostoScelto(modelData.id) }
             }
             Rectangle {
