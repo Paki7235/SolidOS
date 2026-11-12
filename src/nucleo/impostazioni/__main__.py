@@ -22,7 +22,11 @@ class BackendImpostazioni(Backend):
     def __init__(self):
         self._pannelli = {cls.id: cls() for cls in PANNELLI}
         self._cache: dict[str, list[dict]] = {}
-        threading.Thread(target=self._precarica, daemon=True).start()
+        # Il precaricamento dei pannelli (per la ricerca) parte dopo che la finestra è comparsa:
+        # all'avvio contenderebbe il processore all'interfaccia e la finestra arriverebbe tardi
+        avvio = threading.Timer(4.0, self._precarica)
+        avvio.daemon = True
+        avvio.start()
 
     def _precarica(self):
         for ident in list(self._pannelli):

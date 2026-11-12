@@ -1,6 +1,6 @@
 """Dov'è: trova i tuoi dispositivi (come «Dov'è» di Apple).
 
-Mappa (dati OpenStreetMap, stile CARTO) con la posizione dei dispositivi del Solid ID, e per ognuno:
+Mappa OpenStreetMap con la posizione dei dispositivi del Solid ID, e per ognuno:
 Fai suonare, Blocca con un messaggio, Aggiorna posizione, Indicazioni.
 Le tessere della mappa si scaricano una volta e restano in ~/.cache/<os>/mappe.
 """
@@ -16,9 +16,10 @@ from .. import branding, solidid
 from ..i18n import T
 from ..ponte import Backend, crea_ponte
 
-# Mappe CARTO (dati OpenStreetMap): chiara «voyager» e scura «dark_all», seguono il tema
-TESSERE = "https://{s}.basemaps.cartocdn.com/rastertiles/{stile}/{z}/{x}/{y}.png"
-STILI = {"chiaro": "voyager", "scuro": "dark_all"}
+# Mappa OpenStreetMap (riserva: il server tedesco della comunità). Le regole d'uso chiedono
+# un programma riconoscibile con un contatto vero: un indirizzo segnaposto viene bloccato.
+SERVER = ["https://tile.openstreetmap.org/{z}/{x}/{y}.png", "https://tile.openstreetmap.de/{z}/{x}/{y}.png"]
+CONTATTO = "https://github.com/Paki7235/SolidOS"
 
 
 def _cartella_mappe() -> Path:
@@ -49,23 +50,28 @@ def _quando(iso: str) -> str:
 
 
 def _scarica_tessera(stile: str, z: int, x: int, y: int) -> str:
-    stile = STILI.get(stile, "voyager")
-    f = _cartella_mappe() / stile / str(z) / str(x) / f"{y}.png"
+    f = _cartella_mappe() / str(z) / str(x) / f"{y}.png"
     if f.exists() and f.stat().st_size > 0:
         return str(f)
     f.parent.mkdir(parents=True, exist_ok=True)
-    # Programma riconoscibile, poche richieste insieme, tessere tenute in cache
-    req = urllib.request.Request(TESSERE.format(s="abcd"[(x + y) % 4], stile=stile, z=z, x=x, y=y), headers={
-        "User-Agent": f"{branding.nome()}-Dove/{branding.get('OS_VERSION', '')} (+{branding.get('OS_HOME_URL', '')})"})
-    try:
-        with urllib.request.urlopen(req, timeout=15) as r:
-            dati = r.read()
-    except OSError:
-        return ""
-    tmp = f.with_suffix(".tmp")
-    tmp.write_bytes(dati)
-    tmp.replace(f)
-    return str(f)
+    agente = f"{branding.nome()}-Dove/{branding.get('OS_VERSION', '')} (+{CONTATTO})"
+    for server in SERVER:
+        req = urllib.request.Request(server.format(z=z, x=x, y=y), headers={"User-Agent": agente})
+        try:
+            with urllib.request.urlopen(req, timeout=15) as r:
+                dati = r.read()
+                tipo = r.headers.get("Content-Type", "")
+                bloccata = bool(r.headers.get("X-Blocked"))
+        except OSError:
+            continue
+        # Tessera «Access blocked» (intestazione X-Blocked): non si salva, si prova l'altro server
+        if bloccata or not tipo.startswith("image/") or len(dati) < 120:
+            continue
+        tmp = f.with_suffix(".tmp")
+        tmp.write_bytes(dati)
+        tmp.replace(f)
+        return str(f)
+    return ""
 
 
 class BackendDove(Backend):

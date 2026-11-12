@@ -1,4 +1,4 @@
-// Mappa leggera (dati OpenStreetMap, stile CARTO chiaro o scuro col tema): tessere 256×256 scaricate dal backend (ponte.tessere),
+// Mappa OpenStreetMap leggera: tessere 256×256 scaricate dal backend (ponte.tessere),
 // trascinamento con il mouse, rotellina e pulsanti per lo zoom, segnaposto dei dispositivi
 // con il cerchio della precisione.
 import QtQuick
@@ -14,7 +14,7 @@ Item {
     signal segnapostoScelto(string ident)
 
     property var tessere: ({})           // "stile/z/x/y" → "file:///…"
-    readonly property string stile: Tema.chiaro ? "chiaro" : "scuro"
+    readonly property string stile: "osm"
     property var richieste: ({})
     readonly property real lato: 256
     readonly property real mondo: Math.pow(2, zoom) * lato
@@ -79,6 +79,8 @@ Item {
             source: mappa.tessere[modelData.chiave] || ""
             asynchronous: true
             smooth: true
+            // Col tema scuro la mappa si attenua un po' per non abbagliare
+            opacity: Tema.chiaro ? 1 : 0.86
         }
     }
 
@@ -155,7 +157,7 @@ Item {
     }
     Text {
         anchors.left: parent.left; anchors.bottom: parent.bottom; anchors.margins: 4
-        text: "© OpenStreetMap · © CARTO"
+        text: "© OpenStreetMap"
         color: "#99000000"; font.pixelSize: 10
         Rectangle { anchors.fill: parent; anchors.margins: -2; z: -1; color: "#B3FFFFFF"; radius: 3 }
     }
