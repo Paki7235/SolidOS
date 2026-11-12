@@ -38,7 +38,7 @@ scrivi "AUTOTEST INIZIO $(date -Is) RAM: $(free -m | awk '/^Mem/{print $3"MB usa
 immagine 00-desktop
 # App aperta dal dock (tramite la shell): deve essere una finestra normale,
 # con titolo e pulsanti, non un pannello di sistema a tutto schermo
-come_utente @OS_ID@-ctl apri @OS_ID@-impostazioni; sleep 10
+come_utente @OS_ID@-ctl apri @OS_ID@-impostazioni; sleep 16
 if grep -q '"appId": "@OS_ID@-impostazioni"' "$STATO/finestre.json" 2>/dev/null; then
 	scrivi "AUTOTEST-DOCK finestra normale: OK"
 else

@@ -1,4 +1,4 @@
-// Mappa OpenStreetMap leggera: tessere 256×256 scaricate dal backend (ponte.tessere),
+// Mappa leggera (dati OpenStreetMap, stile CARTO chiaro o scuro col tema): tessere 256×256 scaricate dal backend (ponte.tessere),
 // trascinamento con il mouse, rotellina e pulsanti per lo zoom, segnaposto dei dispositivi
 // con il cerchio della precisione.
 import QtQuick
@@ -13,7 +13,8 @@ Item {
     property var segnaposti: []          // [{id, lat, lon, nome, icona, precisione, scelto}]
     signal segnapostoScelto(string ident)
 
-    property var tessere: ({})           // "z/x/y" → "file:///…"
+    property var tessere: ({})           // "stile/z/x/y" → "file:///…"
+    readonly property string stile: Tema.chiaro ? "chiaro" : "scuro"
     property var richieste: ({})
     readonly property real lato: 256
     readonly property real mondo: Math.pow(2, zoom) * lato
@@ -41,7 +42,7 @@ Item {
         for (var ty = y0; ty <= y1; ty++)
             for (var tx = x0; tx <= x1; tx++) {
                 var xr = ((tx % n) + n) % n
-                elenco.push({ chiave: zoom + "/" + xr + "/" + ty, z: zoom, x: xr, y: ty,
+                elenco.push({ chiave: stile + "/" + zoom + "/" + xr + "/" + ty, z: zoom, x: xr, y: ty,
                               sx: tx * lato - cx + width / 2, sy: ty * lato - cy + height / 2 })
             }
         return elenco
@@ -56,7 +57,7 @@ Item {
                 var t = mappa.visibili[i]
                 if (!mappa.tessere[t.chiave] && !mappa.richieste[t.chiave]) { mancanti.push([t.z, t.x, t.y]); mappa.richieste[t.chiave] = true }
             }
-            if (mancanti.length) ponte.avvia("tessere", [mancanti], "tessere")
+            if (mancanti.length) ponte.avvia("tessere", [mancanti, mappa.stile], "tessere")
         }
     }
     Connections {
@@ -78,8 +79,6 @@ Item {
             source: mappa.tessere[modelData.chiave] || ""
             asynchronous: true
             smooth: true
-            // Col tema scuro la mappa si scurisce un po' per non abbagliare
-            opacity: Tema.chiaro ? 1 : 0.88
         }
     }
 
@@ -156,7 +155,7 @@ Item {
     }
     Text {
         anchors.left: parent.left; anchors.bottom: parent.bottom; anchors.margins: 4
-        text: "© OpenStreetMap"
+        text: "© OpenStreetMap · © CARTO"
         color: "#99000000"; font.pixelSize: 10
         Rectangle { anchors.fill: parent; anchors.margins: -2; z: -1; color: "#B3FFFFFF"; radius: 3 }
     }

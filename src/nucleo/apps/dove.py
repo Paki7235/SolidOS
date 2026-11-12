@@ -1,6 +1,6 @@
 """Dov'è: trova i tuoi dispositivi (come «Dov'è» di Apple).
 
-Mappa OpenStreetMap con la posizione dei dispositivi del Solid ID, e per ognuno:
+Mappa (dati OpenStreetMap, stile CARTO) con la posizione dei dispositivi del Solid ID, e per ognuno:
 Fai suonare, Blocca con un messaggio, Aggiorna posizione, Indicazioni.
 Le tessere della mappa si scaricano una volta e restano in ~/.cache/<os>/mappe.
 """
@@ -16,7 +16,9 @@ from .. import branding, solidid
 from ..i18n import T
 from ..ponte import Backend, crea_ponte
 
-TESSERE = "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+# Mappe CARTO (dati OpenStreetMap): chiara «voyager» e scura «dark_all», seguono il tema
+TESSERE = "https://{s}.basemaps.cartocdn.com/rastertiles/{stile}/{z}/{x}/{y}.png"
+STILI = {"chiaro": "voyager", "scuro": "dark_all"}
 
 
 def _cartella_mappe() -> Path:
@@ -46,13 +48,14 @@ def _quando(iso: str) -> str:
     return t.astimezone().strftime("%d/%m/%Y")
 
 
-def _scarica_tessera(z: int, x: int, y: int) -> str:
-    f = _cartella_mappe() / str(z) / str(x) / f"{y}.png"
+def _scarica_tessera(stile: str, z: int, x: int, y: int) -> str:
+    stile = STILI.get(stile, "voyager")
+    f = _cartella_mappe() / stile / str(z) / str(x) / f"{y}.png"
     if f.exists() and f.stat().st_size > 0:
         return str(f)
     f.parent.mkdir(parents=True, exist_ok=True)
-    # Regole d'uso di OpenStreetMap: programma riconoscibile e niente scaricamenti in massa
-    req = urllib.request.Request(TESSERE.format(z=z, x=x, y=y), headers={
+    # Programma riconoscibile, poche richieste insieme, tessere tenute in cache
+    req = urllib.request.Request(TESSERE.format(s="abcd"[(x + y) % 4], stile=stile, z=z, x=x, y=y), headers={
         "User-Agent": f"{branding.nome()}-Dove/{branding.get('OS_VERSION', '')} (+{branding.get('OS_HOME_URL', '')})"})
     try:
         with urllib.request.urlopen(req, timeout=15) as r:
@@ -144,13 +147,13 @@ class BackendDove(Backend):
         avvia(["xdg-open", f"https://www.openstreetmap.org/directions?to={lat:.6f}%2C{lon:.6f}#map=16/{lat:.5f}/{lon:.5f}"])
 
     # ── Mappa ────────────────────────────────────────────────────────────
-    def tessere(self, elenco) -> dict:
-        """[[z, x, y], …] → {"z/x/y": "file:///…"} (scaricate se mancano)."""
+    def tessere(self, elenco, stile: str = "chiaro") -> dict:
+        """[[z, x, y], …] → {"stile/z/x/y": "file:///…"} (scaricate se mancano)."""
         richieste = [(int(t[0]), int(t[1]), int(t[2])) for t in list(elenco)[:48]]
         risultato = {}
-        for (z, x, y), percorso in zip(richieste, self._pool.map(lambda t: _scarica_tessera(*t), richieste)):
+        for (z, x, y), percorso in zip(richieste, self._pool.map(lambda t: _scarica_tessera(stile, *t), richieste)):
             if percorso:
-                risultato[f"{z}/{x}/{y}"] = "file://" + percorso
+                risultato[f"{stile}/{z}/{x}/{y}"] = "file://" + percorso
         return risultato
 
 
