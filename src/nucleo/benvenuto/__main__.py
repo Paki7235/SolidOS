@@ -78,7 +78,7 @@ class BackendBenvenuto(Backend):
             return {}
 
     def installa(self) -> None:
-        avvia(["sh", "-c", "sudo -E calamares >/tmp/calamares.log 2>&1"])
+        avvia([f"/usr/libexec/{branding.id_os()}/installa-sistema"])
 
     def utenti(self) -> None:
         avvia([branding.comando("impostazioni"), "utenti"])

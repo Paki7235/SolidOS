@@ -5,12 +5,15 @@ export DEBIAN_FRONTEND=noninteractive
 registro() { echo "[@OS_ID@/componenti] $*"; }
 
 # ── Wine a 32 bit (molti programmi Windows sono ancora a 32 bit) ──────────────
-if ! dpkg --print-foreign-architectures | grep -qx i386; then
-	dpkg --add-architecture i386
-	apt-get update -qq || true
+# (solo sui PC Intel/AMD: su ARM i programmi Windows x86 non girano con Wine)
+if [ "$(dpkg --print-architecture)" = amd64 ]; then
+	if ! dpkg --print-foreign-architectures | grep -qx i386; then
+		dpkg --add-architecture i386
+		apt-get update -qq || true
+	fi
+	apt-get install -y -qq --no-install-recommends wine32:i386 >/dev/null 2>&1 \
+		&& registro "wine32 installato" || registro "wine32 non disponibile (solo programmi a 64 bit)"
 fi
-apt-get install -y -qq --no-install-recommends wine32:i386 >/dev/null 2>&1 \
-	&& registro "wine32 installato" || registro "wine32 non disponibile (solo programmi a 64 bit)"
 
 # ── Firewall: Condivisione Vicina ammessa nelle reti di casa/lavoro e nell'hotspot ──
 if command -v firewall-offline-cmd >/dev/null; then

@@ -43,7 +43,7 @@ systemctl disable unattended-upgrades.service 2>/dev/null || true
 # ── Avvio UEFI con Secure Boot (shim firmato Debian) ─────────────────────────
 if [ -d /sys/firmware/efi ] && [ -d /boot/efi/EFI ] && dpkg -s shim-signed >/dev/null 2>&1; then
 	registro "installazione del bootloader firmato per Secure Boot"
-	grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id="$ID" \
+	grub-install --target="$(case $(dpkg --print-architecture) in arm64) echo arm64-efi ;; *) echo x86_64-efi ;; esac)" --efi-directory=/boot/efi --bootloader-id="$ID" \
 		--uefi-secure-boot --force-extra-removable 2>/dev/null \
 		&& efibootmgr -q 2>/dev/null; true
 fi

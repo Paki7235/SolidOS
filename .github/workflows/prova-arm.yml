@@ -1,9 +1,0 @@
-# Prova veloce: i runner ARM64 di GitHub sono disponibili per questo repository?
-name: Prova runner ARM
-on: workflow_dispatch
-jobs:
-  arm:
-    runs-on: ubuntu-24.04-arm
-    timeout-minutes: 10
-    steps:
-      - run: uname -m && nproc && free -h && df -h /

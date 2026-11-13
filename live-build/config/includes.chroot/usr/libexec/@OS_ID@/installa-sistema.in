@@ -1,0 +1,25 @@
+#!/bin/sh
+# Avvia l'installatore di @OS_NAME@ (Calamares) dalla sessione di prova, come amministratore.
+# Passa all'installatore lo schermo dell'utente (Wayland) e, se qualcosa va storto,
+# lo dice con una notifica invece di non fare nulla. Registro: /tmp/calamares.log
+LOG=/tmp/calamares.log
+pgrep -x calamares >/dev/null && exit 0
+avviso() { notify-send --app-name="@OS_NAME@" --icon=dialog-error --urgency=critical "$1" "$2" 2>/dev/null || true; }
+
+# Percorso completo dello schermo: l'amministratore non ha una cartella di runtime sua
+SCHERMO="${WAYLAND_DISPLAY:-wayland-0}"
+case $SCHERMO in /*) ;; *) SCHERMO="$XDG_RUNTIME_DIR/$SCHERMO" ;; esac
+set -- env WAYLAND_DISPLAY="$SCHERMO" XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" XDG_SESSION_TYPE=wayland \
+	QT_QPA_PLATFORM="wayland;xcb" DISPLAY="${DISPLAY:-}" LANG="${LANG:-@LOCALE@}" \
+	QT_QUICK_BACKEND="${QT_QUICK_BACKEND:-}" calamares -d
+
+if sudo -n true 2>/dev/null; then
+	sudo -n "$@" >"$LOG" 2>&1
+else
+	pkexec "$@" >"$LOG" 2>&1
+fi
+codice=$?
+if [ "$codice" -ne 0 ] && [ "$codice" -ne 126 ]; then
+	avviso "L'installazione non è partita" "Qualcosa è andato storto (codice $codice). I dettagli sono in $LOG."
+fi
+exit "$codice"

@@ -116,7 +116,7 @@ else
 	cp "$CHROOT/usr/share/backgrounds/$OS_ID/notte.png" "$CHROOT/usr/share/$OS_ID/sfondo-predefinito.png"
 	rendi_png "$GRAFICA_TMP/avvio-grub.svg" 1280 720 "$BINARY/boot/grub/$OS_ID/sfondo.png"
 	rendi_png "$GRAFICA_TMP/avvio-grub.svg" 1280 720 "$CHROOT/usr/share/$OS_ID/grub-sfondo.png"
-	rendi_png "$GRAFICA_TMP/avvio-bios.svg" 640 480 "$BINARY/isolinux/splash.png"
+	[[ ${ARCH:-amd64} == amd64 ]] && rendi_png "$GRAFICA_TMP/avvio-bios.svg" 640 480 "$BINARY/isolinux/splash.png"
 	echo "  immagini PNG create"
 fi
 rm -rf "$GRAFICA_TMP"

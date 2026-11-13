@@ -53,9 +53,11 @@ menuentry "@T_AVVIO_SALVATAGGIO@" --id salvataggio {
 }
 
 if [ "$grub_platform" = "efi" ]; then
-	menuentry "@T_AVVIO_MEMTEST@" --id memtest {
-		chainloader /boot/memtest/memtest.efi
-	}
+	if [ -f /boot/memtest/memtest.efi ]; then
+		menuentry "@T_AVVIO_MEMTEST@" --id memtest {
+			chainloader /boot/memtest/memtest.efi
+		}
+	fi
 	menuentry "@T_AVVIO_DISCO@" --id disco {
 		exit
 	}

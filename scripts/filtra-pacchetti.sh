@@ -6,13 +6,15 @@
 #
 # - riga "nome"   → obbligatorio: se manca, errore e build fermata;
 # - riga "?nome"  → facoltativo: se manca, avviso e pacchetto saltato.
-# Deve girare su un sistema Debian 13 amd64 con apt aggiornato (il contenitore di build).
+# - riga "nome @amd64" o "nome @arm64" → solo per quell'architettura.
+# Deve girare su un sistema Debian 13 della stessa architettura della ISO (il contenitore di build).
 set -euo pipefail
 
 ALBERO=${1:?Uso: filtra-pacchetti.sh ALBERO}
 LISTA="$ALBERO/config/package-lists/sistema.list.chroot"
 mkdir -p "$(dirname "$LISTA")"
 
+ARCHITETTURA=$(dpkg --print-architecture 2>/dev/null || echo amd64)
 esiste() { [[ -n $(apt-cache policy "$1" 2>/dev/null | awk '/Candidate:/ { print $2 }' | grep -v '(none)') ]]; }
 
 mancanti_obbligatori=()
@@ -26,6 +28,11 @@ for elenco in "$ALBERO"/pacchetti/*.txt; do
 		riga=${riga%%#*}
 		riga=$(echo "$riga" | xargs)
 		[[ -z $riga ]] && continue
+		if [[ $riga == *" @"* ]]; then
+			solo=${riga##* @}
+			riga=${riga%% @*}
+			[[ $solo == "$ARCHITETTURA" ]] || continue
+		fi
 		facoltativo=0
 		if [[ $riga == \?* ]]; then
 			facoltativo=1

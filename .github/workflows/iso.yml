@@ -1,7 +1,7 @@
-# Build della ISO su runner x86_64 di GitHub.
-# La ISO viene pubblicata in una Release (le Release non consumano lo spazio
-# degli artefatti); è divisa in parti da 1,9 GB perché ogni file di una Release
-# può pesare al massimo 2 GB. Per ricomporla: cat solidos-*.iso.parte-* > solidos.iso
+# Build delle ISO su GitHub: amd64 (PC Intel/AMD) e arm64 (macchine virtuali su Mac
+# Apple Silicon e PC ARM), ognuna sul proprio runner nativo.
+# Ogni ISO è pubblicata come UN SOLO FILE nella Release «build-N» (limite di GitHub:
+# 2 GiB per file; la build si ferma con un errore chiaro se la ISO lo supera).
 name: Build ISO
 
 on:
@@ -19,10 +19,40 @@ concurrency:
   group: build-iso
   cancel-in-progress: true
 
+env:
+  TAG: build-${{ github.run_number }}
+
 jobs:
-  iso:
+  # La Release nasce come bozza: diventa pubblica solo se almeno una ISO è pronta
+  rilascio:
     runs-on: ubuntu-24.04
+    steps:
+      - name: Crea la Release (bozza)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$TAG" --repo "${{ github.repository }}" --target "${{ github.sha }}" --draft \
+            --title "SolidOS $TAG" --notes "SolidOS compilato da ${{ github.sha }}.
+
+          - **solidos-…-amd64.iso**: PC Intel/AMD (anche Mac Intel). Scrivila su una chiavetta (Crea chiavetta, balenaEtcher, Rufus in modalità DD) oppure usala in una macchina virtuale.
+          - **solidos-…-arm64.iso**: macchine virtuali sui Mac con Apple Silicon (UTM, Parallels, VMware Fusion) e PC ARM con UEFI.
+
+          Ogni ISO è un file unico, pronto da usare. Verifica (facoltativa): \`shasum -a 256 FILE.iso\` deve dare il valore nel file .sha256 corrispondente."
+
+  iso:
+    needs: rilascio
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 240
+    env:
+      ARCH: ${{ matrix.arch }}
     steps:
       - name: Libera spazio sul disco del runner
         run: |
@@ -35,41 +65,53 @@ jobs:
           fetch-depth: 1
 
       - name: Controlli statici
+        if: matrix.arch == 'amd64'
         run: ./scripts/controlla.sh
 
-      - name: Build della ISO
+      - name: Build della ISO ${{ matrix.arch }}
         run: ./build.sh
 
-      - name: Prepara i file della Release
+      - name: Controlla la dimensione (un file unico deve stare sotto i 2 GiB)
         run: |
           cd dist
           ISO=$(ls *.iso)
-          sha256sum "$ISO" > "$ISO.sha256"
-          split -b 1900M -d -a 2 "$ISO" "$ISO.parte-"
+          DIM=$(stat -c %s "$ISO")
+          echo "$ISO: $DIM byte"
+          if [ "$DIM" -ge 2147483648 ]; then
+            echo "::error::$ISO pesa $DIM byte: supera i 2 GiB per file di GitHub. Togli qualche pacchetto."
+            exit 1
+          fi
+          mv licenze-pacchetti.tsv "licenze-pacchetti-$ARCH.tsv"
           ls -lh
-          echo "ISO=$ISO" >> "$GITHUB_ENV"
 
-      - name: Pubblica la Release
+      - name: Carica la ISO nella Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="build-${{ github.run_number }}"
           cd dist
-          gh release create "$TAG" --title "ISO $TAG" --notes "ISO compilata da ${{ github.sha }}.
+          gh release upload "$TAG" --repo "${{ github.repository }}" --clobber \
+            *.iso *.iso.sha256 *.build.log *.pacchetti.txt "licenze-pacchetti-$ARCH.tsv"
 
-          Ricomponi le parti:
-          - macOS/Linux: \`cat ${ISO}.parte-* > ${ISO}\`
-          - Windows: \`copy /b ${ISO}.parte-00 + ${ISO}.parte-01 ${ISO}\` (aggiungi le altre parti se presenti)
+      - name: Registro della build (in caso di errore)
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd dist 2>/dev/null && ls *.build.log >/dev/null 2>&1 \
+            && gh release upload "$TAG" --repo "${{ github.repository }}" --clobber *.build.log || true
 
-          Verifica: \`shasum -a 256 ${ISO}\` deve dare il valore in ${ISO}.sha256." \
-            "$ISO".parte-* "$ISO.sha256" *.build.log licenze-pacchetti.tsv *.pacchetti.txt
-
-      - name: Registro della build (anche in caso di errore)
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: registro-build
-          path: |
-            dist/*.build.log
-          retention-days: 7
-          if-no-files-found: ignore
+  pubblica:
+    needs: iso
+    if: always()
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Pubblica la Release (o la elimina se non c'è nessuna ISO)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$TAG" --repo "${{ github.repository }}" --json assets -q '.assets[].name' | grep -q '\.iso$'; then
+            gh release edit "$TAG" --repo "${{ github.repository }}" --draft=false --latest
+          else
+            gh release delete "$TAG" --repo "${{ github.repository }}" --yes --cleanup-tag || true
+            exit 1
+          fi

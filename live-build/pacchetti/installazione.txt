@@ -7,10 +7,10 @@ snapper
 btrfs-progs
 os-prober
 efibootmgr
-grub-pc-bin
-grub-efi-amd64-bin
+grub-pc-bin @amd64
+grub-efi-amd64-bin @amd64
 grub2-common
-?grub-efi-amd64-signed
+?grub-efi-amd64-signed @amd64
 ?shim-signed
 ?mokutil
 cryptsetup
@@ -18,3 +18,5 @@ cryptsetup
 rsync
 firewalld
 ?python3-firewall
+grub-efi-arm64-bin @arm64
+?grub-efi-arm64-signed @arm64

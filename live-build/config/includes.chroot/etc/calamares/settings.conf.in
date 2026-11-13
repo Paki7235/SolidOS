@@ -1,6 +1,6 @@
 # Installer di @OS_NAME@ (Calamares)
 ---
-modules-search: [ local, /usr/lib/x86_64-linux-gnu/calamares/modules ]
+modules-search: [ local, /usr/lib/@ARCH_TRIPLETTA@/calamares/modules ]
 
 instances:
 - id:       pulizia-live

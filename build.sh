@@ -10,7 +10,9 @@
 #    ./build.sh --nativo            build direttamente su un host Debian 13 amd64 (come root)
 #    ./build.sh --solo-albero       genera solo l'albero live-build in build/albero (controllo)
 #
-#  Risultato in dist/: <id>-<versione>-amd64.iso, .sha256, elenco pacchetti,
+#    ARCH=arm64 ./build.sh          ISO ARM64 (macchine virtuali su Mac Apple Silicon: UTM, Parallels, VMware)
+#
+#  Risultato in dist/: <id>-<versione>-<arch>.iso, .sha256, elenco pacchetti,
 #  licenze-pacchetti.tsv, build.log.
 #
 #  Su macOS (anche Apple Silicon) serve un motore di contenitori con emulazione
@@ -63,8 +65,8 @@ export SOURCE_DATE_EPOCH
 
 prepara_host_debian() {
 	[[ $(id -u) -eq 0 ]] || errore "la build richiede root (nel contenitore lo è già; su host usa sudo)"
-	[[ $(dpkg --print-architecture 2>/dev/null) == amd64 ]] \
-		|| errore "serve un ambiente amd64 (trovato: $(dpkg --print-architecture 2>/dev/null || uname -m))"
+	[[ $(dpkg --print-architecture 2>/dev/null) == "$ARCH" ]] \
+		|| errore "per la ISO $ARCH serve un ambiente $ARCH (trovato: $(dpkg --print-architecture 2>/dev/null || uname -m))"
 	grep -q 'trixie' /etc/os-release || avviso "l'host non è Debian 13: risultato non garantito"
 
 	local sorgenti=/etc/apt/sources.list.d/debian.sources
@@ -81,10 +83,16 @@ prepara_host_debian() {
 	info "Installazione degli strumenti di build"
 	export DEBIAN_FRONTEND=noninteractive
 	apt-get update -qq
+	local per_arch
+	if [[ $ARCH == amd64 ]]; then
+		per_arch="isolinux syslinux-common syslinux-utils grub-efi-amd64-bin grub-pc-bin"
+	else
+		per_arch="grub-efi-arm64-bin"
+	fi
+	# shellcheck disable=SC2086
 	apt-get install -y -qq --no-install-recommends \
-		live-build debootstrap squashfs-tools xorriso cpio zstd \
-		isolinux syslinux-common syslinux-utils \
-		grub-common grub-efi-amd64-bin grub-pc-bin mtools dosfstools \
+		live-build debootstrap squashfs-tools xorriso cpio zstd $per_arch \
+		grub-common mtools dosfstools \
 		librsvg2-bin fonts-inter fonts-league-spartan python3-fonttools perl ca-certificates file >/dev/null
 	info "live-build $(dpkg-query -W -f='${Version}' live-build)"
 }
@@ -176,16 +184,16 @@ avvia_contenitore() {
 	fi
 
 	mkdir -p "$RADICE/dist"
-	local volume="${OS_ID}-build-cache"
-	info "Build nel contenitore ($motore, debian:trixie amd64, volume $volume)"
+	local volume="${OS_ID}-build-cache-$ARCH"
+	info "Build nel contenitore ($motore, debian:trixie $ARCH, volume $volume)"
 
 	local tty=()
 	[[ -t 1 ]] && tty=(-t)
-	"$motore" run --rm ${tty[@]+"${tty[@]}"} --privileged --platform linux/amd64 \
+	"$motore" run --rm ${tty[@]+"${tty[@]}"} --privileged --platform "linux/$ARCH" \
 		-v "$RADICE:/sorgente:ro" \
 		-v "$volume:/lavoro" \
 		-v "$RADICE/dist:/uscita" \
-		-e SOURCE_DATE_EPOCH -e PULISCI -e SNAPSHOT \
+		-e SOURCE_DATE_EPOCH -e PULISCI -e SNAPSHOT -e ARCH \
 		-e UID_HOST="$(id -u)" -e GID_HOST="$(id -g)" \
 		"$IMMAGINE_CONTENITORE" \
 		bash /sorgente/build.sh --nel-contenitore

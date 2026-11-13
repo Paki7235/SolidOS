@@ -45,8 +45,8 @@ bzip2
 flatpak
 distrobox
 podman
-wine
-wine64
+wine @amd64
+wine64 @amd64
 ?libfuse2t64
 ?rpm
 alien

@@ -10,10 +10,10 @@ MIRROR_SICUREZZA="${SNAPSHOT_MIRROR_SECURITY:-http://security.debian.org/debian-
 lb config noauto \
 	--mode debian \
 	--distribution trixie \
-	--architecture amd64 \
+	--architecture @ARCH@ \
 	--archive-areas "main contrib non-free non-free-firmware" \
-	--linux-flavours amd64 \
-	--bootloaders "syslinux,grub-efi" \
+	--linux-flavours @ARCH@ \
+	--bootloaders "@BOOTLOADER_LIVE@" \
 	--debian-installer none \
 	--firmware-binary false \
 	--firmware-chroot false \

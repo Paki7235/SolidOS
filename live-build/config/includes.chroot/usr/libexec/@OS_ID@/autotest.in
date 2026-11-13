@@ -49,6 +49,20 @@ immagine 02-dal-dock
 pkill -u "$UTENTE" -f 'nucleo.impostazioni' 2>/dev/null; sleep 2
 
 pkill -u "$UTENTE" -f 'nucleo.benvenuto' 2>/dev/null; sleep 2   # la finestra di benvenuto coprirebbe la scrivania
+
+# ── Installatore del sistema dalla sessione di prova (come il pulsante «Installa») ──
+scrivi "AUTOTEST-INSTALLA sudo senza password: $(come_utente sudo -n true 2>&1 && echo si || echo NO)"
+scrivi "AUTOTEST-INSTALLA avvio: $(grep -m1 '^Exec=' /usr/share/applications/@OS_ID@-installa-sistema.desktop)"
+setsid runuser -u "$UTENTE" -- env "${AMBIENTE[@]}" sh -c "$(grep -m1 '^Exec=' /usr/share/applications/@OS_ID@-installa-sistema.desktop | cut -d= -f2-)" >/tmp/autotest-installa.log 2>&1 &
+sleep 30
+immagine installatore
+scrivi "AUTOTEST-INSTALLA processo: $(pgrep -x calamares >/dev/null && echo attivo || echo chiuso)"
+for f in /tmp/calamares.log /tmp/autotest-installa.log /root/.cache/calamares/session.log /home/$UTENTE/.cache/calamares/session.log; do
+	[ -s "$f" ] || continue
+	grep -aiE "error|errore|fail|cannot|could not|not found|missing|denied|abort|warning" "$f" | head -30 | sed "s|^|AUTOTEST-LOG installa $(basename "$f"): |" >"$USCITA"
+	tail -n 15 "$f" | sed "s|^|AUTOTEST-CODA installa $(basename "$f"): |" >"$USCITA"
+done
+pkill -KILL -x calamares 2>/dev/null; sleep 2
 # ── Scrivania con clic veri: il mouse virtuale di QEMU esegue le richieste «AUTOTEST-MOUSE» ──
 mouse() { scrivi "AUTOTEST-MOUSE $*"; sleep 4; }
 come_utente python3 -c "from nucleo.shell import scrivania; print(scrivania.aggiungi_collegamento('@OS_ID@-calcolatrice'))" >/dev/null 2>&1

@@ -60,12 +60,19 @@ carica_branding() {
 
 	# Nome del volume ISO: massimo 32 caratteri
 	ISO_VOLUME=$(printf '%s %s' "$OS_NAME" "$OS_VERSION" | cut -c1-32)
-	ISO_NOME_FILE="${OS_ID}-${OS_VERSION}-amd64"
+	# Architettura: amd64 (PC Intel/AMD) o arm64 (macchine virtuali su Mac Apple Silicon, PC ARM)
+	ARCH=${ARCH:-amd64}
+	case $ARCH in
+		amd64) ARCH_TRIPLETTA=x86_64-linux-gnu; GRUB_EFI_TARGET=x86_64-efi; BOOTLOADER_LIVE="syslinux,grub-efi" ;;
+		arm64) ARCH_TRIPLETTA=aarch64-linux-gnu; GRUB_EFI_TARGET=arm64-efi; BOOTLOADER_LIVE="grub-efi" ;;
+		*) _errore_branding "architettura non supportata: $ARCH (amd64 o arm64)" ;;
+	esac
+	ISO_NOME_FILE="${OS_ID}-${OS_VERSION}-${ARCH}"
 	# Parametri del kernel comuni a tutte le voci live
 	KERNEL_PARAMETRI_LIVE="boot=live components quiet splash"
 	TEMA_ICONE=${TEMA_ICONE:-$OS_ID}
-	export ISO_VOLUME ISO_NOME_FILE KERNEL_PARAMETRI_LIVE TEMA_ICONE
-	VARIABILI_BRANDING+=(OS_ID ISO_VOLUME ISO_NOME_FILE KERNEL_PARAMETRI_LIVE)
+	export ISO_VOLUME ISO_NOME_FILE KERNEL_PARAMETRI_LIVE TEMA_ICONE ARCH ARCH_TRIPLETTA GRUB_EFI_TARGET BOOTLOADER_LIVE
+	VARIABILI_BRANDING+=(OS_ID ISO_VOLUME ISO_NOME_FILE KERNEL_PARAMETRI_LIVE ARCH ARCH_TRIPLETTA GRUB_EFI_TARGET BOOTLOADER_LIVE)
 
 	local v
 	while read -r v; do VARIABILI_BRANDING+=("$v"); done < <(_variabili_da_file "$conf"; _variabili_da_file "$testi")
