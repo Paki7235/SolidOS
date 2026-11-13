@@ -94,7 +94,7 @@ Rectangle {
                         clip: true
                         Image {
                             anchors.fill: parent; anchors.margins: 3
-                            source: "file:///usr/share/backgrounds/" + Tema.idSistema + "/" + parent.modelData + (tel.chiaro ? "-chiaro" : "") + ".png"
+                            source: "file://" + tel.sfondi + "/" + parent.modelData + (tel.chiaro ? "-chiaro" : "") + ".png"
                             sourceSize.height: 160
                             fillMode: Image.PreserveAspectCrop
                             asynchronous: true

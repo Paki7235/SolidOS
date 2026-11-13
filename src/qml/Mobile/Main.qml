@@ -72,11 +72,27 @@ Window {
         else if (a.schermata === "notifiche") notifiche = true
         else if (a.schermata === "personalizza") personalizza = true
     }
+    // --foto=PERCORSO: salva una foto della schermata ed esce (prova automatica)
+    Timer {
+        interval: 2500
+        running: ponte.chiama0("avvio").foto !== undefined
+        onTriggered: tel.contentItem.grabToImage(function (r) { r.saveToFile(ponte.chiama0("avvio").foto); Qt.quit() })
+    }
 
     // ── Sfondo: gli stessi sfondi di SolidOS per PC (variante chiara col tema chiaro) ──
+    // Riserva se l'immagine manca: gli stessi colori dello sfondo «Notte»
+    Rectangle {
+        anchors.fill: parent
+        gradient: Gradient {
+            GradientStop { position: 0.0; color: tel.chiaro ? "#eef1ff" : "#0b1230" }
+            GradientStop { position: 0.6; color: tel.chiaro ? "#c9d4ff" : "#2a3d9e" }
+            GradientStop { position: 1.0; color: tel.chiaro ? "#e5d6ff" : "#5b34b0" }
+        }
+    }
+    readonly property string sfondi: ponte.chiama0("cartellaSfondi")
     Image {
         anchors.fill: parent
-        source: "file:///usr/share/backgrounds/" + Tema.idSistema + "/" + tel.imp.sfondo + (tel.chiaro ? "-chiaro" : "") + ".png"
+        source: "file://" + tel.sfondi + "/" + tel.imp.sfondo + (tel.chiaro ? "-chiaro" : "") + ".png"
         fillMode: Image.PreserveAspectCrop
         asynchronous: true
         sourceSize.height: 1080

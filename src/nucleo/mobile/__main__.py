@@ -56,9 +56,12 @@ def _impostazioni_file() -> Path:
     return config_utente("mobile.json")
 
 
-def _app_installate() -> list[dict]:
-    from ..shell.dock import CARTELLE as CARTELLE_DESKTOP
+CARTELLE_DESKTOP = [Path.home() / ".local/share/applications", Path("/usr/share/applications"),
+                    Path("/var/lib/flatpak/exports/share/applications"),
+                    Path.home() / ".local/share/flatpak/exports/share/applications"]
 
+
+def _app_installate() -> list[dict]:
     viste, app = set(), []
     for cartella in CARTELLE_DESKTOP:
         if not Path(cartella).is_dir():
@@ -121,7 +124,12 @@ class BackendMobile(Backend):
                 risultato["schermata"] = a.split("=", 1)[1]
             elif a.startswith("--tema="):
                 risultato["tema"] = a.split("=", 1)[1]
+            elif a.startswith("--foto="):
+                risultato["foto"] = a.split("=", 1)[1]
         return risultato
+
+    def cartellaSfondi(self) -> str:
+        return os.environ.get("NUCLEO_SFONDI", f"/usr/share/backgrounds/{branding.id_os()}")
 
     def schermoIntero(self) -> bool:
         return "--schermo-intero" in sys.argv
@@ -250,7 +258,15 @@ class BackendMobile(Backend):
 def main() -> int:
     from ..qmlapp import esegui_app
 
-    return esegui_app("mobile", "Mobile/Main.qml", lambda app: {"ponte": crea_ponte(BackendMobile())})
+    def contesto(app):
+        # Tema di icone (fuori da SolidOS, es. nella prova su GitHub: NUCLEO_TEMA_ICONE=Papirus-Dark)
+        if os.environ.get("NUCLEO_TEMA_ICONE"):
+            from PyQt6.QtGui import QIcon
+
+            QIcon.setThemeName(os.environ["NUCLEO_TEMA_ICONE"])
+        return {"ponte": crea_ponte(BackendMobile())}
+
+    return esegui_app("mobile", "Mobile/Main.qml", contesto)
 
 
 if __name__ == "__main__":
