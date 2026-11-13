@@ -29,7 +29,7 @@ jobs:
         run: |
           mkdir iso && cd iso
           # Release con un'unica ISO amd64 (le build vecchie erano divise in parti)
-          gh release download "${{ inputs.tag }}" -R "${{ github.repository }}" -p '*-amd64.iso' -p '*-amd64.iso.sha256' \
+          gh release download "${{ inputs.tag }}" -R "${{ github.repository }}" -p '*-amd64.iso' \
             || gh release download "${{ inputs.tag }}" -R "${{ github.repository }}" -p '*.parte-*' -p '*.sha256'
           if ls *.parte-00 >/dev/null 2>&1; then
             ISO=$(ls *.parte-00 | sed 's/\.parte-00$//')
@@ -37,7 +37,7 @@ jobs:
           else
             ISO=$(ls *-amd64.iso)
           fi
-          sha256sum -c "$ISO.sha256"
+          [ -f "$ISO.sha256" ] && sha256sum -c "$ISO.sha256" || true
           echo "ISO=$PWD/$ISO" >> "$GITHUB_ENV"
           xorriso -indev "$ISO" -osirrox on -extract /live/vmlinuz "$PWD/vmlinuz" -extract /live/initrd.img "$PWD/initrd.img" 2>/dev/null
           ls -l

@@ -37,7 +37,7 @@ jobs:
           - **solidos-…-amd64.iso**: PC Intel/AMD (anche Mac Intel). Scrivila su una chiavetta (Crea chiavetta, balenaEtcher, Rufus in modalità DD) oppure usala in una macchina virtuale.
           - **solidos-…-arm64.iso**: macchine virtuali sui Mac con Apple Silicon (UTM, Parallels, VMware Fusion) e PC ARM con UEFI.
 
-          Ogni ISO è un file unico, pronto da usare. Verifica (facoltativa): \`shasum -a 256 FILE.iso\` deve dare il valore nel file .sha256 corrispondente."
+          Ogni ISO è un file unico, pronto da usare: scaricala e basta."
 
   iso:
     needs: rilascio
@@ -81,7 +81,6 @@ jobs:
             echo "::error::$ISO pesa $DIM byte: supera i 2 GiB per file di GitHub. Togli qualche pacchetto."
             exit 1
           fi
-          mv licenze-pacchetti.tsv "licenze-pacchetti-$ARCH.tsv"
           ls -lh
 
       - name: Carica la ISO nella Release
@@ -89,16 +88,22 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           cd dist
-          gh release upload "$TAG" --repo "${{ github.repository }}" --clobber \
-            *.iso *.iso.sha256 *.build.log *.pacchetti.txt "licenze-pacchetti-$ARCH.tsv"
+          # Solo la ISO: impronta SHA-256 aggiunta al testo della Release (niente file in più)
+          gh release upload "$TAG" --repo "${{ github.repository }}" --clobber *.iso
+          ISO=$(ls *.iso)
+          NOTE=$(gh release view "$TAG" --repo "${{ github.repository }}" --json body -q .body)
+          gh release edit "$TAG" --repo "${{ github.repository }}" --notes "$NOTE
+          
+          SHA-256 di $ISO: \`$(sha256sum "$ISO" | cut -d' ' -f1)\`"
 
-      - name: Registro della build (in caso di errore)
+      - name: Registro della build (in caso di errore, tra gli artefatti per 3 giorni)
         if: failure()
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          cd dist 2>/dev/null && ls *.build.log >/dev/null 2>&1 \
-            && gh release upload "$TAG" --repo "${{ github.repository }}" --clobber *.build.log || true
+        uses: actions/upload-artifact@v4
+        with:
+          name: registro-build-${{ matrix.arch }}
+          path: dist/*.build.log
+          retention-days: 3
+          if-no-files-found: ignore
 
   pubblica:
     needs: iso
