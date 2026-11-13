@@ -59,7 +59,8 @@ carica_branding() {
 	done
 
 	# Nome del volume ISO: massimo 32 caratteri
-	ISO_VOLUME=$(printf '%s %s' "$OS_NAME" "$OS_VERSION" | cut -c1-32)
+	# (è il nome che si vede quando si collega la chiavetta: «SolidOS installer»)
+	ISO_VOLUME=$(printf '%s installer' "$OS_NAME" | cut -c1-32)
 	# Architettura: amd64 (PC Intel/AMD) o arm64 (macchine virtuali su Mac Apple Silicon, PC ARM)
 	ARCH=${ARCH:-amd64}
 	case $ARCH in
