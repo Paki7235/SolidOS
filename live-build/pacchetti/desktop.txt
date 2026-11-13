@@ -39,5 +39,6 @@ firefox-esr
 papirus-icon-theme
 breeze-cursor-theme
 fonts-inter
+?fonts-league-spartan
 fonts-noto-core
 ?fonts-noto-color-emoji

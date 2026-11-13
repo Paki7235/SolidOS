@@ -246,6 +246,16 @@ pid=$!; sleep 15; immagine mappa
 grep -aiE 'error|traceback|referenceerror|typeerror|not a type' /tmp/autotest-mappa.log | head -10 | sed 's/^/AUTOTEST-LOG mappa: /' >"$USCITA"
 pkill -KILL -s "$pid" 2>/dev/null; sleep 2
 
+# ── SolidOS Mobile: ogni schermata, tema scuro e chiaro ─────────────────────
+for tema in scuro chiaro; do
+	for sch in blocco home libreria controllo notifiche personalizza; do
+		setsid runuser -u "$UTENTE" -- env "${AMBIENTE[@]}" @OS_ID@-mobile --schermata=$sch --tema=$tema >/tmp/autotest-mobile.log 2>&1 &
+		pid=$!; sleep 7; immagine "mobile-$tema-$sch"
+		grep -aiE 'error|traceback|referenceerror|typeerror|not a type|is not defined|cannot assign' /tmp/autotest-mobile.log | head -8 | sed "s/^/AUTOTEST-LOG mobile-$sch: /" >"$USCITA"
+		pkill -KILL -s "$pid" 2>/dev/null; pkill -KILL -u "$UTENTE" -f 'nucleo.mobile' 2>/dev/null; sleep 1
+	done
+done
+
 # ── Simbolo del Wi-Fi (ventaglio) a ogni livello, chiaro e scuro ─────────────
 cat >/usr/share/nucleo/qml/Shell/ProvaWifi.qml <<'FINE'
 import QtQuick

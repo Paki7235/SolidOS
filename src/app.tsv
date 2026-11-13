@@ -34,4 +34,5 @@ file	nucleo.apps.file	File	system-file-manager	System;FileManager;Utility;	Sfogl
 note	nucleo.apps.note	Note	accessories-notes	Office;Utility;	Appunti veloci, liste di cose da fare e idee, come su iPhone e Mac	no	
 dove	nucleo.apps.dove	Dov'è	find-location	Utility;Network;	Trova i tuoi dispositivi: posizione sulla mappa, fai suonare, blocca	no	
 solidid	nucleo.solidid
+mobile	nucleo.mobile	@OS_NAME@ Mobile	@OS_ID@-logo	Utility;	Anteprima dell'interfaccia per telefoni: blocco, Home, Libreria app, Centro di controllo e Personalizza	no	
 web	nucleo.apps.web	Vela	epiphany	Network;WebBrowser;	Naviga in internet: schede, preferiti, download e finestra privata	no	text/html;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;
