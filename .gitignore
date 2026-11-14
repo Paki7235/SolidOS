@@ -9,3 +9,5 @@
 
 # App non legata al sistema desktop (vedi docs/STRUTTURA.md)
 /app di sistema/
+__pycache__/
+*.pyc
