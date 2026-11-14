@@ -279,10 +279,85 @@ class BackendFile(Backend):
             return False
         return bool(app and app.launch([_f(uri)], None))
 
-    def terminaleQui(self, uri: str) -> None:
-        percorso = _f(uri).get_path()
+    def terminaleQui(self, uri: str) -> dict:
+        """Terminale nella cartella. Per le cartelle di rete la collega prima (GVFS le rende
+        visibili anche ai programmi normali); per i server SSH apre direttamente «ssh»."""
+        f = _f(uri)
+        percorso = f.get_path()
+        if not percorso and not uri.startswith("file:"):
+            r = self.collega(uri)
+            if not r.get("ok") and r.get("password"):
+                return {"ok": False, "password": True, "uri": uri, "errore": r.get("errore", "")}
+            percorso = _f(uri).get_path()
         if percorso:
             subprocess.Popen(["qterminal", "-w", percorso], start_new_session=True)
+            return {"ok": True}
+        if uri.startswith(("sftp://", "ssh://")):
+            ospite = uri.split("://", 1)[1].split("/", 1)[0]
+            return self.terminaleDispositivo(ospite.split("@")[-1], ospite.split("@")[0] if "@" in ospite else "")
+        return {"ok": False, "errore": T("Questa posizione non si può aprire nel terminale")}
+
+    @staticmethod
+    def _porta_aperta(ip: str, porta: int, attesa: float = 1.5) -> bool:
+        import socket
+
+        try:
+            with socket.create_connection((ip, porta), timeout=attesa):
+                return True
+        except OSError:
+            return False
+
+    def terminaleDispositivo(self, ip: str, nome: str = "", utente: str = "") -> dict:
+        """Terminale collegato a un computer della rete con SSH (Mac, Linux, Windows con OpenSSH)."""
+        import shlex
+
+        if not self._porta_aperta(ip, 22):
+            return {"ok": False, "info": True, "errore": T(
+                "«{n}» non accetta collegamenti dal terminale (SSH). Per attivarli:\n"
+                "• Mac: Impostazioni di Sistema › Generali › Condivisione › Accesso remoto\n"
+                "• Windows: Impostazioni › Sistema › Funzionalità facoltative › Server OpenSSH\n"
+                "• Linux: installa «openssh-server»", n=nome or ip)}
+        if utente:
+            comando = f"ssh {shlex.quote(utente + '@' + ip)}"
+        else:
+            domanda = shlex.quote(T("Nome utente su {n}: ", n=nome or ip))
+            comando = f"read -r -p {domanda} u; ssh \"$u@{ip}\""
+        script = comando + "; echo; read -r -p " + shlex.quote(T("Premi Invio per chiudere")) + " _"
+        subprocess.Popen(["qterminal", "-e", "bash", "-c", script], start_new_session=True)
+        return {"ok": True}
+
+    def apriDispositivo(self, d: dict) -> dict:
+        """Apre un dispositivo della rete: cartelle condivise (SMB/SFTP) se ci sono, altrimenti
+        spiega che cosa attivare sul dispositivo. Prova anche quando il dispositivo non le annuncia."""
+        ip, nome = d.get("ip", ""), d.get("nome", "")
+        candidati = []
+        if d.get("uri") and d.get("cartelle"):
+            candidati.append(d["uri"])
+        if ip and self._porta_aperta(ip, 445):
+            candidati.append(f"smb://{ip}/")
+        ultimo = None
+        for uri in dict.fromkeys(candidati):
+            r = self.collega(uri)
+            if r.get("ok"):
+                return {"ok": True, "uri": uri}
+            if r.get("password"):
+                return {"ok": False, "password": True, "uri": uri, "errore": T("Serve l'accesso: scrivi nome utente e password del dispositivo")}
+            ultimo = (uri, r.get("errore", ""))
+        if ultimo:
+            # Molti server non si lasciano elencare senza accesso: si chiedono le credenziali
+            return {"ok": False, "password": True, "uri": ultimo[0], "errore": ultimo[1]}
+        if d.get("uri") and not d.get("cartelle"):
+            self.apri(d["uri"])
+            return {"ok": True, "uri": ""}
+        if ip and self._porta_aperta(ip, 22):
+            return {"ok": False, "password": True, "uri": f"sftp://{ip}/",
+                    "errore": T("«{n}» accetta SSH: scrivi nome utente e password per vedere i suoi file", n=nome or ip)}
+        return {"ok": False, "info": True, "errore": T(
+            "«{n}» è collegato alla rete ma non condivide cartelle.\n"
+            "• Mac: Impostazioni di Sistema › Generali › Condivisione › Condivisione file "
+            "(in «Opzioni» attiva «Condividi file e cartelle usando SMB»)\n"
+            "• Windows: Esplora file › clic destro su una cartella › Proprietà › Condivisione\n"
+            "• Per mandare file al volo usa Condivisione Vicina.", n=nome or ip)}
 
     # ── Operazioni ─────────────────────────────────────────────────────────
     def nuovoFile(self, uri: str, nome: str) -> dict:

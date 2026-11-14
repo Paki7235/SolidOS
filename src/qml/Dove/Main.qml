@@ -110,9 +110,9 @@ Finestra {
             spacing: 12
             Rectangle {
                 Layout.alignment: Qt.AlignHCenter
-                width: 76; height: 76; radius: 38
-                color: Tema.accento
-                Icona { anchors.centerIn: parent; nome: "find-location"; lato: 40 }
+                width: 76; height: 76
+                color: "transparent"
+                Icona { anchors.centerIn: parent; nome: "nucleo-dove"; lato: 76 }
             }
             Titolo { Layout.alignment: Qt.AlignHCenter; text: accesso.modo === "accedi" ? I18n.t("Accedi al Solid ID") : I18n.t("Crea il tuo Solid ID") }
             Testo {

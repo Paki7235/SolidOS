@@ -135,6 +135,8 @@ if [[ -d $SRC ]]; then
 	rsync_semplice "$SRC/nucleo" "$CHROOT/usr/lib/python3/dist-packages/nucleo"
 	rsync_semplice "$SRC/qml" "$CHROOT/usr/share/nucleo/qml"
 	[[ -d $SRC/dati ]] && rsync_semplice "$SRC/dati" "$CHROOT/usr/share/nucleo"
+	# Icone proprie anche nel tema standard (per i programmi che non sono di Qt)
+	[[ -d $SRC/dati/icone/hicolor ]] && rsync_semplice "$SRC/dati/icone/hicolor" "$CHROOT/usr/share/icons/hicolor"
 	# Strumento per esportare le reti Wi-Fi da Windows, nella radice della chiavetta
 	if [[ -d $SRC/dati/windows ]]; then
 		mkdir -p "$BINARY/windows"

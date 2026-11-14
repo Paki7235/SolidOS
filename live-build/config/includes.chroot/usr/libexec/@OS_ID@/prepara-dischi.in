@@ -1,0 +1,36 @@
+#!/bin/sh
+# Prepara i dischi prima dell'installatore di @OS_NAME@ (gira come amministratore).
+# Toglie di mezzo quello che di solito blocca Calamares e costringe a fare le
+# partizioni a mano: dischi montati in automatico, swap attivo, volumi LVM, RAID
+# e cifrature lasciate aperte. Non cancella niente: libera solo i dischi.
+# Non tocca la chiavetta da cui sta girando il sistema di prova.
+
+LIVE=$(findmnt -n -o SOURCE /run/live/medium 2>/dev/null)
+LIVE_DISCO=""
+[ -n "$LIVE" ] && LIVE_DISCO=$(lsblk -no PKNAME "$LIVE" 2>/dev/null | head -n1)
+
+# Partizioni montate (dal file manager o all'avvio), tranne quelle del sistema di prova
+findmnt -rn -o TARGET,SOURCE | while read -r punto sorgente; do
+	case $sorgente in /dev/sd*|/dev/nvme*|/dev/mmcblk*|/dev/vd*|/dev/mapper/*) ;; *) continue ;; esac
+	case $punto in /|/run/live*|/lib/live*|/usr/lib/live*) continue ;; esac
+	disco=$(lsblk -no PKNAME "$sorgente" 2>/dev/null | head -n1)
+	[ -n "$LIVE_DISCO" ] && [ "$disco" = "$LIVE_DISCO" ] && continue
+	umount "$punto" 2>/dev/null || umount -l "$punto" 2>/dev/null
+done
+
+# Swap su disco (la zram del sistema di prova resta)
+for s in $(swapon --noheadings --show=NAME 2>/dev/null); do
+	case $s in /dev/zram*) ;; *) swapoff "$s" 2>/dev/null ;; esac
+done
+
+# Volumi LVM, RAID software e cifrature aperte da un sistema precedente
+command -v vgchange >/dev/null && vgchange -an >/dev/null 2>&1
+command -v mdadm >/dev/null && mdadm --stop --scan >/dev/null 2>&1
+for m in /dev/mapper/*; do
+	[ -e "$m" ] || continue
+	case $m in */control) continue ;; esac
+	cryptsetup close "$m" 2>/dev/null || dmsetup remove "$m" 2>/dev/null
+done
+
+udevadm settle 2>/dev/null
+exit 0

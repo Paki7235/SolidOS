@@ -412,10 +412,45 @@ command_not_found_handle() {
 }
 
 # ══ Elenco ════════════════════════════════════════════════════════════════════
-comandi() {
+# «comandi» = tutto; «comandi linux», «comandi windows», «comandi mac» = solo una parte
+__nc_linux() {
 	cat <<'FINE'
-Nel Terminale puoi usare i comandi che conosci da Windows e dal Mac, oltre a quelli di Linux.
-
+ LINUX (i comandi di questo sistema)
+ File e cartelle
+   ls -lh             elenco con dimensioni        ls -A        anche i file nascosti
+   cd CARTELLA        entra   (cd .. sali, cd ~ casa, cd - torna dov'eri)
+   pwd                dove sono                    tree         albero delle cartelle
+   mkdir -p A/B       crea cartelle                touch FILE   crea un file vuoto
+   cp -r A B          copia                        mv A B       sposta o rinomina
+   rm FILE            elimina (rm -r CARTELLA)     ln -s A B    collegamento
+   cat FILE           mostra                       less FILE    sfoglia (q per uscire)
+   head / tail -f     inizio / fine (e segui)      nano FILE    modifica nel terminale
+   find . -name '*.pdf'   cerca file              grep -ri testo .   cerca dentro i file
+   du -sh *           quanto occupano              df -h        spazio sui dischi
+   chmod +x FILE      rendi eseguibile             chown utente FILE   cambia proprietario
+   tar -xf A.tar.gz   estrai (tar -czf A.tar.gz CARTELLA per comprimere)   unzip A.zip
+ Programmi
+   sudo apt update && sudo apt upgrade     aggiorna tutto
+   sudo apt install NOME / remove NOME     installa / togli     apt search PAROLA
+   flatpak install flathub ID              app dallo Store      xdg-open FILE   apri con l'app giusta
+ Sistema
+   top / htop         processi                     ps aux       elenco processi
+   kill PID / pkill NOME   chiudi un programma     free -h      memoria
+   uname -a           kernel                       lsblk        dischi e partizioni
+   lsusb / lspci      dispositivi collegati        sensors      temperature
+   systemctl status SERVIZIO   (start, stop, restart, enable)   journalctl -b -p err   errori
+   sudo reboot / poweroff      riavvia / spegni    history      comandi già scritti
+ Rete
+   ip a               indirizzi                    nmcli dev wifi   reti Wi-Fi
+   ping SITO          prova la rete                ss -tunap    connessioni aperte
+   curl -O URL        scarica un file              ssh utente@PC   entra in un altro computer
+   scp FILE utente@PC:   copia su un altro computer
+ Trucchi: Tab completa i nomi · ↑ ripete l'ultimo comando · Ctrl+C ferma · Ctrl+R cerca
+          comando --help o man comando spiegano ogni comando
+FINE
+}
+__nc_windows() {
+	cat <<'FINE'
  WINDOWS (Prompt dei comandi)            LINUX equivalente
  dir  dir /a  dir /s                     ls -lh   ls -A   ls -R
  cd..  cd  md  rd /s                     cd ..    cd      mkdir   rm -r (nel Cestino)
@@ -437,20 +472,33 @@ Nel Terminale puoi usare i comandi che conosci da Windows e dal Mac, oltre a que
  Rename-Item  New-Item -ItemType Directory  Get-Process  Stop-Process -Name
  Clear-Host  Test-Connection  Get-NetIPAddress  Invoke-WebRequest  Select-String
  Restart-Computer  Stop-Computer  Get-Date  Get-Help  Get-ComputerInfo
-
+FINE
+}
+__nc_mac() {
+	cat <<'FINE'
  MAC (Terminale di macOS)
  open FILE   open -a Safari   open -R FILE   pbcopy   pbpaste   say "ciao"
  sw_vers  system_profiler  diskutil list|info|eject  caffeinate  ditto  mdfind
  softwareupdate -l|-ia   brew install|search|upgrade   networksetup   ifconfig
  afplay  screencapture  pmset sleepnow  launchctl  dscacheutil -flushcache  md5
-
- LINUX: tutti i comandi di sempre (ls, cp, mv, rm, grep, apt, sudo, systemctl…)
 FINE
 }
-alias aiuto-comandi='comandi' help.exe='comandi'
+comandi() {
+	case "$(__nc_min "${1:-tutti}")" in
+		linux) __nc_linux ;;
+		windows|win|powershell) __nc_windows ;;
+		mac|macos) __nc_mac ;;
+		*)
+			echo "Nel Terminale funzionano i comandi di Linux e anche quelli che conosci da Windows e dal Mac."
+			echo "Solo una parte:  comandi linux  ·  comandi windows  ·  comandi mac"
+			echo
+			__nc_linux; echo; __nc_windows; echo; __nc_mac ;;
+	esac
+}
+alias aiuto-comandi='comandi' aiuto='comandi' help.exe='comandi'
 
 # Al primo Terminale aperto, una riga per far sapere che esistono
 if [ ! -e "${XDG_CONFIG_HOME:-$HOME/.config}/.comandi-visti" ] && [ -d "${XDG_CONFIG_HOME:-$HOME/.config}" ]; then
-	printf '\033[2mPuoi usare anche i comandi di Windows (dir, cls, ipconfig…) e del Mac (open, pbcopy…). Scrivi «comandi» per l’elenco.\033[0m\n'
+	printf '\033[2mCi sono i comandi di Linux e anche quelli di Windows (dir, cls, ipconfig…) e del Mac (open, pbcopy…). Scrivi «comandi» per l’elenco (o «comandi linux»).\033[0m\n'
 	: > "${XDG_CONFIG_HOME:-$HOME/.config}/.comandi-visti" 2>/dev/null
 fi

@@ -256,6 +256,7 @@ def cerca(attesa: float = 2.5) -> list[dict]:
                 "nome": nome, "ip": ip, "mac": mac, "produttore": produttore, "modello": a.get("modello", ""),
                 "tipo": tipo, "descrizione": descrizione, "icona": icona, "uri": uri,
                 "cartelle": apertura in ("smb", "sftp", "afp"), "dettagli": " · ".join(dettagli),
+                "ssh": any(sv in ("_ssh._tcp", "_sftp-ssh._tcp") for sv, _p in a.get("servizi", [])),
             })
         ordine = ["modem", "computer", "nas", "stampante", "scanner", "tv", "altoparlante", "telefono", "casa", ""]
         dispositivi.sort(key=lambda d: (ordine.index(d["tipo"]) if d["tipo"] in ordine else 99, d["nome"].lower()))

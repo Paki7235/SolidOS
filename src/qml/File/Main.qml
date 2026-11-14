@@ -95,13 +95,24 @@ Finestra {
     }
     function ricarica() { ponte.avvia("elenco", [uri, nascosti], "elenco:" + uri) }
     function apriVoce(v) {
-        // Dispositivo della rete senza nulla da aprire (telefono, TV…): si mostra che cos'è
-        if (v.dispositivo && !v.dispositivo.uri) {
-            finestra.avviso(v.nome + " — " + v.dispositivo.descrizione + " · IP " + v.dispositivo.ip + (v.dispositivo.produttore ? " · " + v.dispositivo.produttore : ""))
-            return
-        }
+        // Dispositivo della rete: si collega alle sue cartelle (chiedendo l'accesso se serve)
+        // oppure si spiega che cosa attivare sul dispositivo
+        if (v.dispositivo) { apriDispositivo(v.dispositivo); return }
         if (v.cartella) vai(v.uri, false)
         else ponte.chiama("apri", [v.uri])
+    }
+    function apriDispositivo(d) {
+        caricamento = true
+        ponte.avvia("apriDispositivo", [d], "dispositivo")
+    }
+    function terminale(u) { ponte.avvia("terminaleQui", [u], "terminale") }
+    function terminaleDispositivo(d) { ponte.avvia("terminaleDispositivo", [d.ip, d.nome, ""], "terminale") }
+    // Esito di «apri dispositivo» e «terminale»: cartelle, richiesta di accesso o spiegazione
+    function esitoRete(r) {
+        caricamento = false
+        if (r.ok) { if (r.uri) vai(r.uri, false); return }
+        if (r.password) { collega.apri(r.uri, r.errore || ""); collega.chiediPassword = true; return }
+        if (r.errore) info.mostra(r.errore)
     }
     function seleziona(indice, modificatori) {
         var v = voci[indice], nuovi = {}
@@ -128,7 +139,8 @@ Finestra {
     function menuVoce(v, x, y) {
         if (v.dispositivo) {
             var d = v.dispositivo, vd = []
-            if (d.cartelle) vd.push({ t: I18n.t("Apri le cartelle condivise"), f: function () { finestra.vai(d.uri, false) } })
+            vd.push({ t: d.cartelle ? I18n.t("Apri le cartelle condivise") : I18n.t("Apri"), f: function () { finestra.apriDispositivo(d) } })
+            if (d.tipo === "computer" || d.tipo === "nas" || d.ssh) vd.push({ t: I18n.t("Apri nel terminale (SSH)"), f: function () { finestra.terminaleDispositivo(d) } })
             if (d.uri && !d.cartelle) vd.push({ t: d.tipo === "modem" ? I18n.t("Apri la pagina del modem") : I18n.t("Apri nel browser"), f: function () { ponte.chiama("apri", [d.uri]) } })
             vd.push({ t: I18n.t("Collegati come server…"), f: function () { collega.apri("smb://" + d.ip + "/", "") } })
             vd.push({ t: I18n.t("Copia l'indirizzo IP") + "  (" + d.ip + ")", f: function () { ponte.chiama("copiaTesto", [d.ip]) } })
@@ -145,7 +157,7 @@ Finestra {
         } else {
             voci.push({ t: v.cartella ? I18n.t("Apri") : I18n.t("Apri"), f: function () { finestra.apriVoce(v) } })
             if (!v.cartella && !multi) voci.push({ t: I18n.t("Apri con…"), f: function () { apriCon.apri(v) } })
-            if (v.cartella && !multi) voci.push({ t: I18n.t("Apri nel terminale"), f: function () { ponte.chiama("terminaleQui", [v.uri]) } })
+            if (v.cartella && !multi) voci.push({ t: I18n.t("Apri nel terminale"), f: function () { finestra.terminale(v.uri) } })
             voci.push({ sep: true })
             voci.push({ t: I18n.t("Taglia") + "    Ctrl+X", f: function () { ponte.chiama("copia", [u, true]) } })
             voci.push({ t: I18n.t("Copia") + "    Ctrl+C", f: function () { ponte.chiama("copia", [u, false]) } })
@@ -173,7 +185,7 @@ Finestra {
             { t: I18n.t("Incolla") + "    Ctrl+V", disattiva: !ponte.chiama0("appuntiPieni"), f: function () { finestra.incolla() } },
             { t: I18n.t("Nuovo"), sotto: vociNuovo() },
             { sep: true },
-            { t: I18n.t("Apri nel terminale"), f: function () { ponte.chiama("terminaleQui", [finestra.uri]) } },
+            { t: I18n.t("Apri nel terminale"), f: function () { finestra.terminale(finestra.uri) } },
             { t: I18n.t("Aggiungi ai Preferiti"), f: function () { ponte.chiama("aggiungiSegnalibro", [finestra.uri]); finestra.luoghi = ponte.chiama0("luoghi") } },
             { sep: true },
             { t: I18n.t("Proprietà"), f: function () { proprieta.apri(finestra.uri) } }]
@@ -209,6 +221,7 @@ Finestra {
                 finestra.esito(r, r.fatti === 0 && r.ok ? "" : testo)
             }
             else if (id === "cerca") { finestra.caricamento = false; finestra.risultati = r }
+            else if (id === "dispositivo" || id === "terminale") finestra.esitoRete(r)
             else if (id === "contenuto") proprieta.contenuto = r.testo
             else if (id === "collega") {
                 finestra.caricamento = false
@@ -867,6 +880,20 @@ Finestra {
             }
             Text { anchors.centerIn: parent; visible: apriCon.app.length === 0; text: I18n.t("Nessuna app per questo tipo di file"); color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 13 }
         }
+    }
+
+    // ── Spiegazioni (dispositivo senza cartelle condivise, SSH spento…) ──────
+    Dialog {
+        id: info
+        property string testo: ""
+        function mostra(t) { testo = t; open() }
+        anchors.centerIn: parent
+        width: 480
+        modal: true
+        title: I18n.t("Rete")
+        standardButtons: Dialog.Ok
+        background: Rectangle { color: Tema.superficie; radius: 12; border.color: Tema.bordo }
+        Text { width: parent.width; wrapMode: Text.Wrap; text: info.testo; color: Tema.testo; font.family: Tema.font; font.pixelSize: 13; lineHeight: 1.25 }
     }
 
     // ── Connetti a un server / posizione protetta ────────────────────────────

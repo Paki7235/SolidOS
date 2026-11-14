@@ -11,7 +11,9 @@ SCHERMO="${WAYLAND_DISPLAY:-wayland-0}"
 case $SCHERMO in /*) ;; *) SCHERMO="$XDG_RUNTIME_DIR/$SCHERMO" ;; esac
 set -- env WAYLAND_DISPLAY="$SCHERMO" XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" XDG_SESSION_TYPE=wayland \
 	QT_QPA_PLATFORM="wayland;xcb" DISPLAY="${DISPLAY:-}" LANG="${LANG:-@LOCALE@}" \
-	QT_QUICK_BACKEND="${QT_QUICK_BACKEND:-}" calamares -d
+	QT_QUICK_BACKEND="${QT_QUICK_BACKEND:-}" \
+	sh -c '/usr/libexec/@OS_ID@/prepara-dischi; exec calamares -d'
+# (prima libera i dischi: niente partizioni da sistemare a mano)
 
 if sudo -n true 2>/dev/null; then
 	sudo -n "$@" >"$LOG" 2>&1
