@@ -1,0 +1,24 @@
+#!/bin/sh
+# Avvia la schermata di accesso di @OS_NAME@ nel compositor kiosk «cage».
+# Come la sessione: senza GPU 3D (macchine virtuali, schede video vecchie o non
+# supportate, voce «grafica sicura») si usa il disegno software, altrimenti cage
+# si ferma con «Unable to create the wlroots renderer» e resta lo schermo nero.
+SOFTWARE=0
+grep -qw '@OS_ID@.grafica=sicura' /proc/cmdline && SOFTWARE=1
+ls /dev/dri/renderD* >/dev/null 2>&1 || SOFTWARE=1
+case "$(systemd-detect-virt 2>/dev/null)" in
+	oracle|vmware|qemu|kvm|microsoft|parallels|apple) SOFTWARE=1 ;;
+esac
+# Schede video virtuali o di base senza 3D (VirtualBox/VMware, QEMU, firmware)
+for d in /sys/class/drm/card*/device/driver; do
+	case "$(basename "$(readlink -f "$d")" 2>/dev/null)" in
+		vmwgfx|vboxvideo|bochs-drm|bochs|cirrus|cirrus-qemu|qxl|simpledrm|efifb|vesafb) SOFTWARE=1 ;;
+	esac
+done
+if [ "$SOFTWARE" = 1 ]; then
+	export WLR_RENDERER=pixman
+	export WLR_NO_HARDWARE_CURSORS=1
+	export QT_QUICK_BACKEND=software
+	export LIBGL_ALWAYS_SOFTWARE=1
+fi
+exec cage -s -d -- /usr/bin/@OS_ID@-greeter

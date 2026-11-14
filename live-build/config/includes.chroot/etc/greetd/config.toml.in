@@ -7,7 +7,7 @@
 vt = 7
 
 [default_session]
-command = "cage -s -d -- /usr/bin/@OS_ID@-greeter"
+command = "/usr/libexec/@OS_ID@/greeter-avvio"
 user = "_greetd"
 
 [initial_session]
