@@ -37,6 +37,11 @@ menuentry "@T_AVVIO_PROVA@" --id prova {
 	initrd /live/%INITRD%
 }
 
+menuentry "@T_AVVIO_INSTALLA@" --id installa {
+	linux /live/%KERNEL% @KERNEL_PARAMETRI_LIVE@ @OS_ID@.installa=1
+	initrd /live/%INITRD%
+}
+
 menuentry "@T_AVVIO_PERSISTENTE@" --id persistente {
 	linux /live/%KERNEL% @KERNEL_PARAMETRI_LIVE@ persistence persistence-label=persistence
 	initrd /live/%INITRD%

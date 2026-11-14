@@ -14,6 +14,26 @@ Controlli statici: `./scripts/controlla.sh`.
 Documenti: [Architettura](docs/ARCHITETTURA.md) · [Condivisione Vicina](docs/CONDIVISIONE-VICINA.md) ·
 [Struttura](docs/STRUTTURA.md) · [Roadmap](docs/ROADMAP.md) · [Licenze](docs/LICENZE.md) · [Stato](docs/STATO.md)
 
+## Creare la chiavetta (Windows, con Rufus)
+
+1. Scarica la ISO **x86_64** dalle [Releases](https://github.com/Paki7235/SolidOS/releases) (un solo file `.iso`).
+2. Apri **Rufus**, scegli la chiavetta e la ISO.
+3. Scegli come vuoi usarla:
+   - **Solo per installare o provare**: premi *Avvia* e, se Rufus chiede la modalità, scegli
+     **Scrivi in modalità immagine ISO** (consigliata) oppure *DD*.
+   - **SolidOS sempre con te sulla chiavetta, con i tuoi file salvati**: sposta il cursore
+     **«Dimensione partizione persistente»** (per esempio 8 GB) e scegli la modalità **ISO**
+     (la modalità DD non permette il salvataggio).
+4. Avvia il PC dalla chiavetta (F12, F11 o Esc all'accensione). Nel menu scegli:
+   - **Prova SolidOS**: parte senza toccare il computer; dopo qualche secondo ti chiede
+     *«Installa adesso»* o *«Continua a provarlo»*;
+   - **Installa SolidOS sul computer**: si apre subito l'installatore;
+   - **SolidOS con salvataggio dei dati (chiavetta)**: come un sistema installato sulla chiavetta,
+     i file e le impostazioni restano anche dopo lo spegnimento (serve la partizione persistente).
+
+L'installatore prepara da solo i dischi: si sceglie solo dove installare (tutto il disco o accanto
+a un altro sistema), le partizioni giuste (EFI o BIOS) le crea lui.
+
 ## Compilare la ISO
 
 La build gira in un contenitore Debian 13 amd64, su qualsiasi sistema.
