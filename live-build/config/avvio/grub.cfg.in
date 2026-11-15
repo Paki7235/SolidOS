@@ -32,46 +32,22 @@ else
 	set menu_color_highlight=black/light-gray
 fi
 
-menuentry "@T_AVVIO_PROVA@" --id prova {
-	linux /live/%KERNEL% @KERNEL_PARAMETRI_LIVE@
-	initrd /live/%INITRD%
-}
-
 menuentry "@T_AVVIO_INSTALLA@" --id installa {
 	linux /live/%KERNEL% @KERNEL_PARAMETRI_LIVE@ @OS_ID@.installa=1
 	initrd /live/%INITRD%
 }
 
-menuentry "@T_AVVIO_PERSISTENTE@" --id persistente {
-	linux /live/%KERNEL% @KERNEL_PARAMETRI_LIVE@ persistence persistence-label=persistence
-	initrd /live/%INITRD%
-}
-
-menuentry "@T_AVVIO_GRAFICA_SICURA@" --id grafica-sicura {
-	linux /live/%KERNEL% @KERNEL_PARAMETRI_LIVE@ @OS_ID@.grafica=sicura
-	initrd /live/%INITRD%
-}
-
-menuentry "@T_AVVIO_SALVATAGGIO@" --id salvataggio {
-	linux /live/%KERNEL% @KERNEL_PARAMETRI_LIVE@ @OS_ID@.modalita=salvataggio
+menuentry "@T_AVVIO_INSTALLA_SICURA@" --id installa-sicura {
+	linux /live/%KERNEL% @KERNEL_PARAMETRI_LIVE@ @OS_ID@.installa=1 @OS_ID@.grafica=sicura
 	initrd /live/%INITRD%
 }
 
 if [ "$grub_platform" = "efi" ]; then
-	if [ -f /boot/memtest/memtest.efi ]; then
-		menuentry "@T_AVVIO_MEMTEST@" --id memtest {
-			chainloader /boot/memtest/memtest.efi
-		}
-	fi
 	menuentry "@T_AVVIO_DISCO@" --id disco {
 		exit
 	}
 	menuentry "@T_AVVIO_FIRMWARE@" --id firmware {
 		fwsetup
-	}
-else
-	menuentry "@T_AVVIO_MEMTEST@" --id memtest {
-		linux16 /boot/memtest/memtest.bin
 	}
 fi
 

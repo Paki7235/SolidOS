@@ -3,7 +3,7 @@
 UI vesamenu.c32
 PROMPT 0
 TIMEOUT @TIMEOUT_MENU_AVVIO@0
-DEFAULT prova
+DEFAULT installa
 
 MENU TITLE
 MENU BACKGROUND splash.png
@@ -30,42 +30,20 @@ MENU COLOR tabmsg       31;40   #90ffffff #00000000 none
 MENU COLOR timeout_msg  37;40   #b0ffffff #00000000 none
 MENU COLOR timeout      1;37;40 #ffffffff #00000000 none
 
-LABEL prova
-	MENU LABEL @T_AVVIO_PROVA@
-	MENU DEFAULT
-	LINUX /live/%KERNEL%
-	INITRD /live/%INITRD%
-	APPEND @KERNEL_PARAMETRI_LIVE@
-
 LABEL installa
 	MENU LABEL @T_AVVIO_INSTALLA@
+	MENU DEFAULT
 	LINUX /live/%KERNEL%
 	INITRD /live/%INITRD%
 	APPEND @KERNEL_PARAMETRI_LIVE@ @OS_ID@.installa=1
 
-LABEL persistente
-	MENU LABEL @T_AVVIO_PERSISTENTE@
+LABEL installa-sicura
+	MENU LABEL @T_AVVIO_INSTALLA_SICURA@
 	LINUX /live/%KERNEL%
 	INITRD /live/%INITRD%
-	APPEND @KERNEL_PARAMETRI_LIVE@ persistence persistence-label=persistence
-
-LABEL grafica-sicura
-	MENU LABEL @T_AVVIO_GRAFICA_SICURA@
-	LINUX /live/%KERNEL%
-	INITRD /live/%INITRD%
-	APPEND @KERNEL_PARAMETRI_LIVE@ @OS_ID@.grafica=sicura
-
-LABEL salvataggio
-	MENU LABEL @T_AVVIO_SALVATAGGIO@
-	LINUX /live/%KERNEL%
-	INITRD /live/%INITRD%
-	APPEND @KERNEL_PARAMETRI_LIVE@ @OS_ID@.modalita=salvataggio
+	APPEND @KERNEL_PARAMETRI_LIVE@ @OS_ID@.installa=1 @OS_ID@.grafica=sicura
 
 MENU SEPARATOR
-
-LABEL memtest
-	MENU LABEL @T_AVVIO_MEMTEST@
-	LINUX /boot/memtest/memtest.bin
 
 LABEL disco
 	MENU LABEL @T_AVVIO_DISCO@

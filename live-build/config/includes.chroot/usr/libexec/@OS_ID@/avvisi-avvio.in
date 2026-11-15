@@ -6,21 +6,12 @@ if grep -qw '@OS_ID@.modalita=salvataggio' /proc/cmdline; then
 	exec @OS_ID@-salvataggio
 fi
 
-# Chiavetta: voce «Installa» del menu → l'installatore parte subito.
-# Avvio normale in prova (senza salvataggio dei dati) → si chiede se installare adesso.
-if [ -d /run/live/medium ]; then
-	if grep -qw '@OS_ID@.installa=1' /proc/cmdline; then
-		exec /usr/libexec/@OS_ID@/installa-sistema
-	fi
-	if ! grep -qw 'persistence' /proc/cmdline && ! grep -qw '@OS_ID@.autotest' /proc/cmdline; then
-		scelta=$(notify-send --app-name="@OS_NAME@" --icon=@OS_ID@-logo-chiaro --urgency=critical --wait \
-			--action=installa="@T_SCELTA_INSTALLA@" --action=prova="@T_SCELTA_PROVA@" \
-			"@T_SCELTA_TITOLO@" "@T_SCELTA_TESTO@" 2>/dev/null)
-		[ "$scelta" = installa ] && /usr/libexec/@OS_ID@/installa-sistema &
-	fi
+# Chiavetta di installazione: l'installatore si apre da solo
+if [ -d /run/live/medium ] && ! grep -qw '@OS_ID@.autotest' /proc/cmdline; then
+	/usr/libexec/@OS_ID@/installa-sistema &
 fi
 
 if [ "${GRAFICA_SICURA:-0}" = 1 ]; then
 	notify-send --app-name="@OS_NAME@" --icon=@OS_ID@-logo-chiaro --urgency=low \
-		"@T_AVVIO_GRAFICA_SICURA@" "@T_GRAFICA_SICURA_ATTIVA@"
+		"@T_AVVIO_INSTALLA_SICURA@" "@T_GRAFICA_SICURA_ATTIVA@"
 fi
