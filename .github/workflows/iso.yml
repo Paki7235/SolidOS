@@ -116,6 +116,10 @@ jobs:
         run: |
           if gh release view "$TAG" --repo "${{ github.repository }}" --json assets -q '.assets[].name' | grep -q '\.iso$'; then
             gh release edit "$TAG" --repo "${{ github.repository }}" --draft=false --latest
+            # Resta solo l'ultima ISO: le build precedenti si tolgono
+            gh release list --repo "${{ github.repository }}" --limit 200 --json tagName -q '.[].tagName' \
+              | grep '^build-' | grep -vx "$TAG" \
+              | while read -r vecchia; do gh release delete "$vecchia" --repo "${{ github.repository }}" --yes --cleanup-tag; done
           else
             gh release delete "$TAG" --repo "${{ github.repository }}" --yes --cleanup-tag || true
             exit 1
