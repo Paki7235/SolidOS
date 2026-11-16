@@ -2,7 +2,7 @@
 componentName: @OS_ID@
 welcomeStyleCalamares: false
 welcomeExpandingLogo: true
-windowExpanding: normal
+windowExpanding: fullscreen
 windowSize: 900px,620px
 windowPlacement: center
 sidebar: widget

@@ -1,0 +1,22 @@
+#!/usr/bin/python3
+"""Finestra mostrata quando l'installatore si chiude senza riavviare: dalla chiavetta
+si deve sempre poter ripartire o uscire. Stampa: riapri | riavvia | spegni."""
+import sys
+
+from PyQt6.QtWidgets import QApplication, QMessageBox
+
+app = QApplication(sys.argv)
+titolo = sys.argv[1] if len(sys.argv) > 1 else "Installatore chiuso"
+testo = sys.argv[2] if len(sys.argv) > 2 else ""
+m = QMessageBox()
+m.setWindowTitle("@OS_NAME@")
+m.setIcon(QMessageBox.Icon.Question)
+m.setText(titolo)
+m.setInformativeText(testo)
+riapri = m.addButton("Riapri l'installatore", QMessageBox.ButtonRole.AcceptRole)
+riavvia = m.addButton("Riavvia", QMessageBox.ButtonRole.ActionRole)
+spegni = m.addButton("Spegni", QMessageBox.ButtonRole.DestructiveRole)
+m.setDefaultButton(riapri)
+m.exec()
+scelto = m.clickedButton()
+print("riavvia" if scelto == riavvia else "spegni" if scelto == spegni else "riapri")

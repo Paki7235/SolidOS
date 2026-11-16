@@ -1,0 +1,19 @@
+#!/bin/sh
+# L'installatore di @OS_NAME@ a tutto schermo nel compositor kiosk «cage».
+# Senza GPU 3D (macchine virtuali, voce «grafica sicura») si disegna in software.
+export XDG_SESSION_TYPE=wayland
+SOFTWARE=0
+grep -qw '@OS_ID@.grafica=sicura' /proc/cmdline && SOFTWARE=1
+ls /dev/dri/renderD* >/dev/null 2>&1 || SOFTWARE=1
+case "$(systemd-detect-virt 2>/dev/null)" in
+	oracle|vmware|qemu|kvm|microsoft|parallels|apple) SOFTWARE=1 ;;
+esac
+for d in /sys/class/drm/card*/device/driver; do
+	case "$(basename "$(readlink -f "$d")" 2>/dev/null)" in
+		vmwgfx|vboxvideo|bochs-drm|bochs|cirrus|cirrus-qemu|qxl|simpledrm|efifb|vesafb) SOFTWARE=1 ;;
+	esac
+done
+if [ "$SOFTWARE" = 1 ]; then
+	export WLR_RENDERER=pixman WLR_NO_HARDWARE_CURSORS=1 QT_QUICK_BACKEND=software LIBGL_ALWAYS_SOFTWARE=1
+fi
+exec cage -s -d -- /usr/libexec/@OS_ID@/installa-sistema

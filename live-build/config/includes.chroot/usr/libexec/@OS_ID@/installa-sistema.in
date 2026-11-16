@@ -32,14 +32,12 @@ while :; do
 		testo="Puoi riaprire l'installatore oppure riavviare o spegnere il computer (togli la chiavetta per avviare @OS_NAME@ installato)."
 	fi
 	# Dalla chiavetta di installazione si deve sempre poter ripartire o uscire
-	scelta=$(notify-send --app-name="@OS_NAME@" --icon=@OS_ID@-logo-chiaro --urgency=critical --wait \
-		--action=riapri="Riapri l'installatore" --action=riavvia="Riavvia" --action=spegni="Spegni" \
-		"$titolo" "$testo" 2>/dev/null)
+	# (finestra propria: funziona anche nell'installazione a tutto schermo, senza desktop)
+	scelta=$(/usr/libexec/@OS_ID@/scelta-installatore "$titolo" "$testo" 2>/dev/null)
 	case $scelta in
-		riapri) continue ;;
-		riavvia) systemctl reboot; break ;;
-		spegni) systemctl poweroff; break ;;
-		*) break ;;
+		riavvia) systemctl reboot; sleep 30 ;;
+		spegni) systemctl poweroff; sleep 30 ;;
+		*) continue ;;
 	esac
 done
 exit "$codice"

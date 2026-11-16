@@ -11,5 +11,5 @@ command = "/usr/libexec/@OS_ID@/greeter-avvio"
 user = "_greetd"
 
 [initial_session]
-command = "/usr/bin/@OS_ID@-sessione"
+command = "/usr/libexec/@OS_ID@/sessione-iniziale"
 user = "@OS_ID@"

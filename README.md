@@ -20,7 +20,8 @@ Documenti: [Architettura](docs/ARCHITETTURA.md) · [Condivisione Vicina](docs/CO
 2. Apri **Rufus**, scegli la chiavetta e la ISO e premi *Avvia*. Se Rufus chiede la modalità,
    scegli **Scrivi in modalità immagine DD**.
 3. Avvia il PC dalla chiavetta (F12, F11 o Esc all'accensione).
-4. Parte direttamente **Installa SolidOS sul computer** e si apre l'installatore. Se lo schermo
+4. Come con Windows si apre **solo l'installatore, a tutto schermo** (niente desktop di prova).
+   Puoi installare SolidOS sul disco del PC **o su un'altra chiavetta/disco USB** collegato. Se lo schermo
    resta nero o la grafica non va, riavvia e scegli **Installa SolidOS (grafica sicura)**.
 
 L'installatore chiede **solo il disco**: si sceglie dove installare (tutto il disco o accanto a un

@@ -1,0 +1,8 @@
+#!/bin/sh
+# Prima sessione della chiavetta: come l'installazione di Windows, si apre SOLO
+# l'installatore a tutto schermo (niente desktop di prova). La prova automatica
+# su GitHub (@OS_ID@.autotest) usa invece il desktop completo.
+if [ -d /run/live/medium ] && ! grep -qw '@OS_ID@.autotest' /proc/cmdline; then
+	exec /usr/libexec/@OS_ID@/sessione-installazione
+fi
+exec /usr/bin/@OS_ID@-sessione
