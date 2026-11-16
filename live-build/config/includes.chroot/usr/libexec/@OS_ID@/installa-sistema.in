@@ -15,13 +15,31 @@ set -- env WAYLAND_DISPLAY="$SCHERMO" XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" XDG_SES
 	sh -c '/usr/libexec/@OS_ID@/prepara-dischi; exec calamares -d'
 # (prima libera i dischi: niente partizioni da sistemare a mano)
 
-if sudo -n true 2>/dev/null; then
-	sudo -n "$@" >"$LOG" 2>&1
-else
-	pkexec "$@" >"$LOG" 2>&1
-fi
-codice=$?
-if [ "$codice" -ne 0 ] && [ "$codice" -ne 126 ]; then
-	avviso "L'installazione non è partita" "Qualcosa è andato storto (codice $codice). I dettagli sono in $LOG."
-fi
+while :; do
+	if sudo -n true 2>/dev/null; then
+		sudo -n "$@" >"$LOG" 2>&1
+	else
+		pkexec "$@" >"$LOG" 2>&1
+	fi
+	codice=$?
+	# Fuori dalla chiavetta (prove, sistema installato) non c'è altro da chiedere
+	[ -d /run/live/medium ] || break
+	if [ "$codice" -ne 0 ] && [ "$codice" -ne 126 ]; then
+		titolo="L'installazione non è partita"
+		testo="Qualcosa è andato storto (codice $codice). I dettagli sono in $LOG."
+	else
+		titolo="Installatore chiuso"
+		testo="Puoi riaprire l'installatore oppure riavviare o spegnere il computer (togli la chiavetta per avviare @OS_NAME@ installato)."
+	fi
+	# Dalla chiavetta di installazione si deve sempre poter ripartire o uscire
+	scelta=$(notify-send --app-name="@OS_NAME@" --icon=@OS_ID@-logo-chiaro --urgency=critical --wait \
+		--action=riapri="Riapri l'installatore" --action=riavvia="Riavvia" --action=spegni="Spegni" \
+		"$titolo" "$testo" 2>/dev/null)
+	case $scelta in
+		riapri) continue ;;
+		riavvia) systemctl reboot; break ;;
+		spegni) systemctl poweroff; break ;;
+		*) break ;;
+	esac
+done
 exit "$codice"

@@ -3,6 +3,15 @@
 
 calamares
 ?calamares-extensions
+# Strumenti che l'installatore usa davvero: estrarre il sistema (unsquashfs) e creare e
+# formattare le partizioni (EFI in FAT, ext4, btrfs, tabelle GPT)
+squashfs-tools
+dosfstools
+mtools
+e2fsprogs
+fdisk
+gdisk
+parted
 snapper
 btrfs-progs
 os-prober
