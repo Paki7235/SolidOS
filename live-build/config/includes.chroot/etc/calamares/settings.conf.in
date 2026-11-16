@@ -9,14 +9,15 @@ instances:
 - id:       sistema
   module:   shellprocess
   config:   shellprocess_sistema.conf
+- id:       utente
+  module:   shellprocess
+  config:   shellprocess_utente.conf
 
+# Si sceglie solo il disco: lingua, tastiera e fuso orario sono già quelli del sistema,
+# l'account si crea da solo e si personalizza al primo avvio (Benvenuto)
 sequence:
 - show:
-  - welcome
-  - locale
-  - keyboard
   - partition
-  - users
   - summary
 - exec:
   - partition
@@ -24,12 +25,9 @@ sequence:
   - unpackfs
   - machineid
   - fstab
-  - locale
-  - keyboard
-  - localecfg
-  - users
   - networkcfg
   - hwclock
+  - shellprocess@utente
   - shellprocess@pulizia-live
   - initramfscfg
   - initramfs

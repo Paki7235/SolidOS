@@ -1,12 +1,11 @@
 #!/bin/sh
-# Mostra il Benvenuto al primo accesso di ogni utente (e sempre nella sessione live).
+# Mostra il Benvenuto al primo accesso di ogni utente del sistema installato.
 ID=$(. /etc/os-release && echo "$ID")
 FATTO="${XDG_CONFIG_HOME:-$HOME/.config}/$ID/benvenuto-fatto"
 grep -qw "$ID.modalita=salvataggio" /proc/cmdline && exit 0
-if [ -d /run/live/medium ]; then
-	[ -f "$FATTO" ] || exec "$ID-benvenuto" --live
-	exit 0
-fi
+# Chiavetta di installazione: si apre solo l'installatore; il Benvenuto arriva al primo
+# avvio del sistema installato (nome, password, Wi-Fi, Solid ID…)
+[ -d /run/live/medium ] && exit 0
 [ -f "$FATTO" ] && exit 0
 sleep 2
 exec "$ID-benvenuto"

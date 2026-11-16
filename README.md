@@ -23,8 +23,12 @@ Documenti: [Architettura](docs/ARCHITETTURA.md) · [Condivisione Vicina](docs/CO
 4. Parte direttamente **Installa SolidOS sul computer** e si apre l'installatore. Se lo schermo
    resta nero o la grafica non va, riavvia e scegli **Installa SolidOS (grafica sicura)**.
 
-L'installatore prepara da solo i dischi: si sceglie solo dove installare (tutto il disco o accanto
-a un altro sistema), le partizioni giuste (EFI o BIOS) le crea lui.
+L'installatore chiede **solo il disco**: si sceglie dove installare (tutto il disco o accanto a un
+altro sistema), si conferma, e fa tutto lui (partizioni EFI o BIOS comprese). Lingua, tastiera e fuso
+orario sono già italiani.
+
+Al primo avvio del PC installato si entra premendo **Invio** e parte **Benvenuto**, che chiede le cose
+iniziali: lingua, Wi-Fi, **nome e password** (o nessuna password), Solid ID, aspetto e prestazioni.
 
 ## Compilare la ISO
 

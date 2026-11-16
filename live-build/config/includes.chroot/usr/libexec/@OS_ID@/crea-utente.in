@@ -1,0 +1,38 @@
+#!/bin/sh
+# Eseguito dall'installatore nel sistema appena installato (chroot).
+# L'installatore chiede solo il disco: qui si crea l'account, senza password, che si
+# personalizza al primo avvio con Benvenuto (nome, foto, password, Wi-Fi, Solid ID).
+# Lingua, tastiera e fuso orario sono già quelli del sistema (@LOCALE@, @TASTIERA@, @FUSO_ORARIO@).
+set -u
+registro() { echo "[crea-utente] $*"; }
+
+UTENTE=utente
+NOME="Utente"
+
+if ! id "$UTENTE" >/dev/null 2>&1; then
+	registro "creo l'account $UTENTE"
+	useradd --create-home --shell /bin/bash --comment "$NOME" "$UTENTE"
+fi
+for g in users sudo audio video plugdev netdev bluetooth lpadmin scanner render input; do
+	getent group "$g" >/dev/null && usermod -aG "$g" "$UTENTE"
+done
+
+# Senza password finché non la sceglie in Benvenuto: all'accesso basta premere Invio
+passwd -d "$UTENTE" >/dev/null
+chage -d -1 "$UTENTE" 2>/dev/null || true
+mkdir -p /var/lib/nucleo/senza-password
+touch "/var/lib/nucleo/senza-password/$UTENTE"
+
+# Nome del computer
+echo "@OS_ID@-pc" >/etc/hostname
+if grep -q '^127\.0\.1\.1' /etc/hosts; then
+	sed -i "s/^127\.0\.1\.1.*/127.0.1.1\t@OS_ID@-pc/" /etc/hosts
+else
+	printf '127.0.1.1\t@OS_ID@-pc\n' >>/etc/hosts
+fi
+
+# La password vuota deve valere anche per lo sblocco e per le richieste di amministratore
+grep -q 'pam_unix.so.*nullok' /etc/pam.d/common-auth 2>/dev/null \
+	|| sed -i 's/\(pam_unix\.so.*\)$/\1 nullok/' /etc/pam.d/common-auth
+registro "fatto"
+exit 0

@@ -1,0 +1,6 @@
+# Crea l'account nel sistema installato (nome e password si scelgono al primo avvio)
+---
+dontChroot: false
+timeout: 300
+script:
+    - "/usr/libexec/@OS_ID@/crea-utente"
