@@ -304,6 +304,14 @@ def cmd_aggiorna_ora():
     sys.exit(esegui(["systemctl", "start", "--no-block", "nucleo-aggiornamenti.service"]))
 
 
+def cmd_aggiorna_solidos():
+    """Nuova versione di SolidOS (vedi /usr/libexec/nucleo/aggiorna-solidos)."""
+    r = subprocess.run(["/usr/libexec/nucleo/aggiorna-solidos"], capture_output=True, text=True, check=False)
+    if r.returncode != 0:
+        errore((r.stdout + r.stderr).strip() or "aggiornamento non riuscito")
+    print(r.stdout.strip())
+
+
 def cmd_condivisione_porta(azione: str, porta: str, protocollo: str = "tcp"):
     """Apre/chiude una porta solo per la sessione (non permanente)."""
     if azione not in ("apri", "chiudi") or not porta.isdigit() or protocollo not in ("tcp", "udp"):
@@ -391,6 +399,7 @@ COMANDI = {
     "utente-crea": cmd_utente_crea, "utente-elimina": cmd_utente_elimina, "utente-password": cmd_utente_password,
     "utente-nome": cmd_utente_nome, "utente-senza-password": cmd_utente_senza_password, "utente-foto": cmd_utente_foto,
     "profilo-leggero": cmd_profilo_leggero, "aggiorna-ora": cmd_aggiorna_ora,
+    "aggiorna-solidos": cmd_aggiorna_solidos,
     "condivisione-porta": cmd_condivisione_porta, "persistenza": cmd_persistenza,
 }
 

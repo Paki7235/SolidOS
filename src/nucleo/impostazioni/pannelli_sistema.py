@@ -194,9 +194,22 @@ class PannelloAggiornamenti(Pannello):
     chiavi = "update aggiorna sistema sicurezza automatici"
 
     def voci(self):
+        from .. import aggiornamento
+
         stato = leggi_json(Path("/var/lib/nucleo/aggiornamenti.json"), {})
         disponibili = uscita(["apt-get", "-s", "-o", "Debug::NoLocking=1", "upgrade"], timeout=60).count("\nInst ")
-        return [
+        so = aggiornamento.controlla()
+        voci_solidos = [info("versione", T("Versione di {s}", s=branding.nome()),
+                             T("build {n}", n=so["installata"]) if so["installata"] else T("non indicata"))]
+        if so["nuova"]:
+            voci_solidos.append(azione("solidos", T("Nuova versione: build {n}", n=so["disponibile"]),
+                                       T("Installa"), so["novita"] or T("Shell, app e impostazioni aggiornate."),
+                                       ))
+        elif so["disponibile"] is not None:
+            voci_solidos.append(info("solidos-ok", T("Nuove versioni"), T("Hai l'ultima versione")))
+        else:
+            voci_solidos.append(info("solidos-ok", T("Nuove versioni"), T("Impossibile controllare: sei connesso a internet?")))
+        return voci_solidos + [
             info("stato", T("Stato"), T("{n} aggiornamenti disponibili", n=disponibili) if disponibili
                  else T("Il sistema è aggiornato")),
             info("ultimo", T("Ultimo aggiornamento"), stato.get("ultimo", T("mai"))),
@@ -210,6 +223,9 @@ class PannelloAggiornamenti(Pannello):
     def azione(self, voce, elemento, az, dati):
         if voce == "ora":
             return _esito_helper(helper("aggiorna-ora"), T("Aggiornamento avviato in background: riceverai una notifica"))
+        if voce == "solidos":
+            return _esito_helper(helper("aggiorna-solidos", timeout=1800),
+                                 T("Nuova versione installata: esci e rientra (o riavvia) per usarla"))
         return None
 
 

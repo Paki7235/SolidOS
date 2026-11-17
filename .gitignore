@@ -11,3 +11,6 @@
 /app di sistema/
 __pycache__/
 *.pyc
+
+# Numero della build (scritto dalla build stessa)
+/src/dati/versione

@@ -1,0 +1,97 @@
+#!/usr/bin/python3
+"""Installa l'ultima versione di SolidOS pubblicata (eseguito come root).
+
+1. legge la scheda versione.json della build più recente;
+2. se è più nuova di quella installata: scarica il pacchetto e ne verifica la somma SHA-256;
+3. crea un punto di ripristino (se c'è la Linea del Tempo);
+4. copia i file nuovi sopra quelli vecchi (solo dentro le cartelle di SolidOS: niente
+   configurazioni dell'installazione, come l'accesso o l'installatore);
+5. aggiorna il numero di versione. Le modifiche valgono dal prossimo accesso.
+
+Uso: aggiorna-solidos [--forza]
+Esce con 0 anche quando non c'è niente da fare; scrive una riga di esito su stdout.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+import subprocess
+import sys
+import tarfile
+import tempfile
+import urllib.request
+from pathlib import Path
+
+sys.path.insert(0, "/usr/lib/python3/dist-packages")
+from nucleo import aggiornamento  # noqa: E402
+
+# Solo queste parti del sistema possono essere sostituite dal pacchetto
+CONSENTITI = ("usr/", "etc/xdg/", "etc/systemd/", "etc/polkit-1/", "etc/fonts/", "etc/gtk-3.0/",
+              "etc/swaylock/", "etc/sysctl.d/", "etc/udisks2/", "etc/default/earlyoom", "etc/apt/apt.conf.d/",
+              "etc/firefox-esr/", "etc/snapper/")
+# …tranne queste, che l'installazione personalizza o che servono solo sulla chiavetta
+ESCLUSI = ("etc/greetd/", "etc/calamares/", "etc/live/", "usr/lib/live/", "etc/snapper/configs/")
+
+
+def esito(messaggio: str, codice: int = 0):
+    print(messaggio)
+    sys.exit(codice)
+
+
+def ammesso(nome: str) -> bool:
+    nome = nome.lstrip("./")
+    if ".." in Path(nome).parts or nome.startswith("/"):
+        return False
+    return nome.startswith(CONSENTITI) and not nome.startswith(ESCLUSI)
+
+
+def main():
+    if os.geteuid() != 0:
+        esito("serve l'amministratore", 1)
+    forza = "--forza" in sys.argv[1:]
+    scheda = aggiornamento.scheda_remota(timeout=30)
+    if scheda is None:
+        esito("Impossibile contattare il server degli aggiornamenti di SolidOS", 2)
+    nuova, installata = int(scheda["versione"]), aggiornamento.versione_installata()
+    if nuova <= installata and not forza:
+        esito(f"SolidOS è già aggiornato (versione {installata})")
+    file_nome = str(scheda.get("file", ""))
+    atteso = str(scheda.get("sha256", "")).lower()
+    if "/" in file_nome or not file_nome.endswith(".tar.xz") or len(atteso) != 64:
+        esito("Scheda dell'aggiornamento non valida", 3)
+
+    with tempfile.TemporaryDirectory(prefix="aggiorna-solidos-") as cartella:
+        pacchetto = Path(cartella) / file_nome
+        richiesta = urllib.request.Request(f"{aggiornamento.url_base()}/{file_nome}",
+                                           headers={"User-Agent": "SolidOS-Aggiornamenti"})
+        h = hashlib.sha256()
+        try:
+            with urllib.request.urlopen(richiesta, timeout=120) as r, open(pacchetto, "wb") as f:
+                while blocco := r.read(1 << 20):
+                    h.update(blocco)
+                    f.write(blocco)
+        except OSError as e:
+            esito(f"Download non riuscito: {e}", 4)
+        if h.hexdigest() != atteso:
+            esito("Il file scaricato è danneggiato (somma di controllo diversa): riprova più tardi", 5)
+
+        if Path("/etc/snapper/configs/root").is_file():
+            subprocess.run(["snapper", "-c", "root", "create", "-c", "number",
+                            "-d", f"Prima di SolidOS versione {nuova}"], check=False)
+
+        with tarfile.open(pacchetto) as t:
+            membri = [m for m in t.getmembers() if (m.isfile() or m.isdir() or m.issym()) and ammesso(m.name)]
+            t.extractall("/", members=membri, filter="tar")
+
+    aggiornamento.FILE_VERSIONE.write_text(f"{nuova}\n")
+    # Servizi o regole cambiati: si ricaricano (le app e la shell si aggiornano al prossimo accesso)
+    subprocess.run(["systemctl", "daemon-reload"], check=False)
+    subprocess.run(["glib-compile-schemas", "/usr/share/glib-2.0/schemas"], check=False, capture_output=True)
+    subprocess.run(["update-desktop-database", "-q", "/usr/share/applications"], check=False, capture_output=True)
+    esito(f"SolidOS aggiornato alla versione {nuova}")
+
+
+if __name__ == "__main__":
+    main()

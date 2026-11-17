@@ -40,6 +40,13 @@ if [ "$DISPONIBILI" -gt 0 ]; then
 		notifica_utenti "Aggiornamento non riuscito" "$ESITO"
 	fi
 fi
+# Nuova versione di SolidOS (shell, app, impostazioni), pubblicata da ogni build
+SOLIDOS=$(/usr/libexec/nucleo/aggiorna-solidos 2>&1) || true
+case "$SOLIDOS" in
+	"SolidOS aggiornato"*)
+		ESITO="$ESITO · $SOLIDOS"
+		notifica_utenti "Nuova versione di SolidOS installata" "Esci e rientra (o riavvia) per usarla." ;;
+esac
 command -v flatpak >/dev/null && flatpak update --system -y --noninteractive >/dev/null 2>&1 || true
 
 scrivi_stato "$ESITO"
