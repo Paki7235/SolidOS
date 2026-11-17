@@ -1,0 +1,18 @@
+#!/bin/sh
+# Eseguito dall'installatore nel sistema appena installato (chroot): toglie ciò che serve
+# solo alla chiavetta. È uno script a parte perché Calamares, nei comandi scritti nella
+# sua configurazione, scambia ogni «$…» per una sua variabile (es. il «$d» di sed).
+registro() { echo "[pulizia-live] $*"; }
+
+apt-get purge -y calamares live-boot live-config live-config-systemd live-tools || registro "purge non riuscito"
+apt-get autoremove -y || true
+rm -f /etc/polkit-1/rules.d/49-@OS_ID@-live.rules
+rm -f /etc/live/config.conf.d/branding.conf
+rm -f /usr/share/applications/@OS_ID@-installa-sistema.desktop
+# Niente più accesso automatico della chiavetta: dal sistema installato si entra dalla
+# schermata di accesso (o dal Benvenuto, al primo avvio)
+if [ -f /etc/greetd/config.toml ]; then
+	sed -i '/^\[initial_session\]/,$d' /etc/greetd/config.toml
+fi
+registro "fatto"
+exit 0
