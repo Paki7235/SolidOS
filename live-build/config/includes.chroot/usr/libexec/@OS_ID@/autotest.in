@@ -46,6 +46,26 @@ else
 	scrivi "AUTOTEST-DOCK ERRORE: l'app aperta dal dock non è una finestra normale"
 fi
 immagine 02-dal-dock
+# Dock in stile Mac: con l'app ingrandita deve sparire (e lasciare lo spazio all'app)
+come_utente python3 - >"$USCITA" 2>&1 <<'PY'
+import time
+from nucleo.shell.finestre import Finestre
+f = Finestre(lambda e: None)
+for _ in range(3):
+    f.display.roundtrip()
+stati = lambda: [(x["appId"], "ingrandita" if x["massimizzata"] else "normale") for x in f.elenco()]
+print("AUTOTEST-DOCK prima:", stati())
+w = [x for x in f.elenco() if x["appId"] == "@OS_ID@-impostazioni"]
+if w:
+    f.massimizza(w[0]["id"])
+    for _ in range(10):
+        time.sleep(0.3)
+        f.display.roundtrip()
+print("AUTOTEST-DOCK dopo:", stati())
+PY
+sleep 4
+immagine 03-dock-app-ingrandita
+grep -a "dock:" "$STATO/shell.log" | tail -5 | sed 's/^/AUTOTEST-DOCK shell: /' >"$USCITA"
 pkill -u "$UTENTE" -f 'nucleo.impostazioni' 2>/dev/null; sleep 2
 
 pkill -u "$UTENTE" -f 'nucleo.benvenuto' 2>/dev/null; sleep 2   # la finestra di benvenuto coprirebbe la scrivania

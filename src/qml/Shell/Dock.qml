@@ -21,6 +21,7 @@ Window {
     // Come su Mac: con un'app ingrandita o a tutto schermo il Dock si nasconde e
     // riappare portando il mouse sul bordo in basso (lo stile Windows resta fisso).
     property bool coperta: false
+    onCopertaChanged: console.log("dock: app ingrandita sullo schermo =", coperta)
     property bool tenuta: false          // menu del tasto destro aperto: resta visibile
     property bool rivelata: false
     readonly property bool mostrata: !coperta || rivelata || tenuta || trascinaDa >= 0
