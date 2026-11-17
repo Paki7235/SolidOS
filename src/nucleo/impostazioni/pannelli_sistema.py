@@ -26,7 +26,7 @@ class PannelloUtenti(Pannello):
     titolo = T("Utenti e account")
     icona = "system-users"
     gruppo = T("Sistema")
-    chiavi = "account password amministratore nuovo utente famiglia"
+    chiavi = "account password amministratore nuovo utente famiglia foto profilo immagine avatar"
 
     def voci(self):
         io = pwd.getpwuid(os.getuid()).pw_name
@@ -43,10 +43,18 @@ class PannelloUtenti(Pannello):
                         azioni.append({"id": "senza-password", "testo": T("Entra senza password")})
                 if u.pw_name != io:
                     azioni.append({"id": "elimina", "testo": T("Elimina"), "pericolosa": True})
+                faccia = Path(u.pw_dir) / ".face"
                 utenti.append({"id": u.pw_name, "titolo": (u.pw_gecos.split(",")[0] or u.pw_name) + (f" ({T('tu')})" if u.pw_name == io else ""),
                                "sottotitolo": T("Amministratore") if u.pw_name in amministratori else T("Utente standard"),
-                               "icona": "user-identity", "attivo": u.pw_name == io, "azioni": azioni})
-        return [
+                               "icona": str(faccia) if u.pw_name == io and faccia.is_file() else "user-identity",
+                               "attivo": u.pw_name == io, "azioni": azioni})
+        ha_foto = (Path.home() / ".face").is_file()
+        foto = [azione("foto", T("Foto del profilo"), T("Cambia foto") if ha_foto else T("Scegli una foto"),
+                       T("Si vede all'accesso, nella schermata di blocco e accanto al tuo nome. "
+                         "Va bene qualsiasi immagine: viene ritagliata quadrata al centro."), file=True)]
+        if ha_foto:
+            foto.append(azione("togli-foto", T("Togli la foto"), T("Togli"), T("Torna l'iniziale del nome")))
+        return foto + [
             elenco("utenti", T("Utenti"), utenti),
             azione("nuovo", T("Aggiungi un utente"), T("Aggiungi"), T("La password verrà scelta al primo accesso"),
                    richiede=[{"id": "nome", "etichetta": T("Nome e cognome")},
@@ -64,6 +72,12 @@ class PannelloUtenti(Pannello):
         from .. import account
 
         io = pwd.getpwuid(os.getuid()).pw_name
+        if voce == "foto":
+            r = account.imposta_foto(dati.get("file", ""))
+            return esito(r["ok"], r["messaggio"])
+        if voce == "togli-foto":
+            r = account.togli_foto()
+            return esito(r["ok"], r["messaggio"])
         if voce == "utenti" and elemento == io and az in ("nome", "senza-password", "password"):
             if az == "nome":
                 r = account.imposta_nome(dati.get("nome", ""))
