@@ -30,8 +30,11 @@ Finestra {
     Connections {
         target: ponte
         function onCompletato(id, r) {
-            if (id === "prepara") {
+            if (id === "vetrina") finestra.vetrina = r
+            else if (id === "prepara") {
                 finestra.preparando = false
+                // Solo le app che esistono per questo computer (su ARM alcune non ci sono)
+                if (r.ok) ponte.avvia("vetrinaDisponibile", [], "vetrina")
                 if (!r.ok) finestra.avviso(r.messaggio)
                 else if (ricerca.text.length >= 2) finestra.cerca(ricerca.text)
             }
@@ -39,6 +42,7 @@ Finestra {
             else if (id === "installate") finestra.installate = r
             else if (id === "installa" || id === "rimuovi" || id === "aggiorna") {
                 finestra.occupata = ""
+                ponte.avvia("vetrinaDisponibile", [], "vetrina")
                 finestra.avviso(r.ok ? (r.messaggio || I18n.t("Fatto")) : (r.messaggio || I18n.t("Operazione non riuscita")))
                 finestra.aggiornaInstallate()
                 if (ricerca.text) finestra.cerca(ricerca.text)

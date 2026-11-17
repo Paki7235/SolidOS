@@ -25,6 +25,24 @@ def vetrina() -> list[dict]:
         return []
 
 
+def vetrina_disponibile() -> list[dict]:
+    """La vetrina con solo le app che esistono per il processore di questo computer
+    (su ARM, per esempio, Spotify, Discord e Steam non ci sono). Controllo locale sul
+    catalogo di Flathub già scaricato: veloce e senza rete."""
+    elenco = vetrina()
+    if not esiste("flatpak"):
+        return elenco
+    installati = set(installate_id())
+    risultato = []
+    for a in elenco:
+        if a.get("origine") != "flatpak":
+            risultato.append(a)
+            continue
+        if esegui(["flatpak", "remote-info", "--user", "flathub", a["id"]], timeout=30).returncode == 0:
+            risultato.append({**a, "installata": a["id"] in installati})
+    return risultato
+
+
 def cerca(testo: str) -> list[dict]:
     testo = testo.strip()
     if len(testo) < 2:

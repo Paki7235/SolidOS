@@ -6,7 +6,7 @@ import sys
 
 from ..ponte import Backend, crea_ponte
 from ..qmlapp import esegui_app
-from . import aggiornamenti_flatpak, cerca, installa, installate, rimuovi, vetrina
+from . import aggiornamenti_flatpak, cerca, installa, installate, rimuovi, vetrina, vetrina_disponibile
 
 
 class BackendStore(Backend):
@@ -18,6 +18,9 @@ class BackendStore(Backend):
 
     def vetrina(self):
         return vetrina()
+
+    def vetrinaDisponibile(self):
+        return vetrina_disponibile()
 
     def prepara(self) -> dict:
         """All'apertura: Flathub e il suo catalogo (la prima volta lo scarica, un minuto circa)."""
