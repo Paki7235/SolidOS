@@ -311,6 +311,14 @@ class BackendShell(Backend):
                         "massimizzata": f.get("massimizzata", False)}
         return {}
 
+    def finestraGrande(self) -> bool:
+        """C'è un'app ingrandita o a tutto schermo (non ridotta nel Dock)? Con il Dock
+        in stile Mac, in quel caso il Dock si nasconde e riappare portando il mouse in basso."""
+        if not self.finestre:
+            return False
+        return any((f.get("massimizzata") or f.get("schermoIntero")) and not f.get("minimizzata")
+                   for f in self.finestre.elenco())
+
     def appAttiva(self, azione: str) -> bool:
         """Comandi del menu dell'app (barra in alto) e delle scorciatoie tipo Mac:
         nascondi · ingrandisci · chiudi (finestra) · esci (tutte le finestre dell'app)."""

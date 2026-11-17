@@ -18,6 +18,20 @@ Window {
     property bool appenaTrascinato: false
     readonly property int quanteFissate: voci.filter(function (v) { return v.fissata }).length
     property bool cestinoPieno: false
+    // Come su Mac: con un'app ingrandita o a tutto schermo il Dock si nasconde e
+    // riappare portando il mouse sul bordo in basso (lo stile Windows resta fisso).
+    property bool coperta: false
+    property bool tenuta: false          // menu del tasto destro aperto: resta visibile
+    property bool rivelata: false
+    readonly property bool mostrata: !coperta || rivelata || tenuta || trascinaDa >= 0
+    readonly property int pieno: altezza + etichetta
+    property real scostamento: mostrata ? 0 : pieno
+    Behavior on scostamento { enabled: Tema.animazioni; NumberAnimation { duration: dock.mostrata ? 260 : 200; easing.type: dock.mostrata ? Easing.OutCubic : Easing.InCubic } }
+    HoverHandler {
+        id: passaggio
+        onHoveredChanged: if (hovered) { nascondi.stop(); dock.rivelata = true } else nascondi.restart()
+    }
+    Timer { id: nascondi; interval: 700; onTriggered: if (!passaggio.hovered) dock.rivelata = false }
     signal menu(var voce, real centroX)
     function aggiornaCestino() { cestinoPieno = shell.chiama0("cestinoPieno") }
 
@@ -43,6 +57,7 @@ Window {
 
     function aggiorna() {
         voci = shell.chiama0("dock")
+        coperta = Tema.stileBarra !== "windows" && shell.chiama0("finestraGrande") === true
         aggiornaCestino()
         var nuovi = {}
         for (var k in inAvvio) {
@@ -64,10 +79,11 @@ Window {
     LayerShell.Window.scope: "dock"
     LayerShell.Window.layer: LayerShell.Window.LayerTop
     LayerShell.Window.anchors: LayerShell.Window.AnchorBottom
-    LayerShell.Window.exclusionZone: altezza
+    LayerShell.Window.exclusionZone: coperta ? 0 : altezza
     LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityNone
     width: Math.max(200, fila.width + 24)
-    height: altezza + etichetta
+    // Nascosto resta solo una striscia di 4 px sul bordo, che non copre i clic dell'app
+    height: (mostrata || scostamento < pieno - 0.5) ? pieno : 4
     color: "transparent"
     visible: Tema.stileBarra !== "windows"
 
@@ -80,6 +96,7 @@ Window {
         x: Math.max(0, Math.min(dock.width - width, etichettaX - width / 2))
         property real etichettaX: 0
         id: nuvola
+        transform: Translate { y: dock.scostamento }
         width: testoNuvola.implicitWidth + 20
         height: 24
         radius: 7
@@ -91,6 +108,7 @@ Window {
     // Fondo del dock
     Rectangle {
         id: fondo
+        transform: Translate { y: dock.scostamento }
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
         anchors.bottomMargin: 6
