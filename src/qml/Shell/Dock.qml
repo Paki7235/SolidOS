@@ -27,8 +27,11 @@ Window {
     readonly property int pieno: altezza + etichetta
     property real scostamento: mostrata ? 0 : pieno
     Behavior on scostamento { enabled: Tema.animazioni; NumberAnimation { duration: dock.mostrata ? 260 : 200; easing.type: dock.mostrata ? Easing.OutCubic : Easing.InCubic } }
+    // Il gestore sta sul contenuto della finestra (un HoverHandler messo direttamente
+    // nella Window non ha un elemento a cui agganciarsi e non vede mai il mouse)
     HoverHandler {
         id: passaggio
+        parent: dock.contentItem
         onHoveredChanged: if (hovered) { nascondi.stop(); dock.rivelata = true } else nascondi.restart()
     }
     Timer { id: nascondi; interval: 700; onTriggered: if (!passaggio.hovered) dock.rivelata = false }
