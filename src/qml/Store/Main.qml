@@ -14,6 +14,7 @@ Finestra {
     property int scheda: 0
     property string occupata: ""
     property bool cercando: false
+    property bool preparando: true        // all'apertura scarica il catalogo di Flathub
 
     function cerca(t) { if (t.length < 2) { risultati = []; return } cercando = true; ponte.avvia("cerca", [t], "cerca") }
     function aggiornaInstallate() { ponte.avvia("installate", [], "installate") }
@@ -21,6 +22,7 @@ Finestra {
     function rimuovi(app) { occupata = app.id; ponte.avvia("rimuovi", [app.id, app.origine, app.sistema === true], "rimuovi") }
 
     Component.onCompleted: {
+        ponte.avvia("prepara", [], "prepara")
         aggiornaInstallate()
         var iniziale = ponte.chiama0("ricercaIniziale")
         if (iniziale) { ricerca.text = iniziale; cerca(iniziale) }
@@ -28,11 +30,16 @@ Finestra {
     Connections {
         target: ponte
         function onCompletato(id, r) {
-            if (id === "cerca") { finestra.risultati = r; finestra.cercando = false }
+            if (id === "prepara") {
+                finestra.preparando = false
+                if (!r.ok) finestra.avviso(r.messaggio)
+                else if (ricerca.text.length >= 2) finestra.cerca(ricerca.text)
+            }
+            else if (id === "cerca") { finestra.risultati = r; finestra.cercando = false }
             else if (id === "installate") finestra.installate = r
             else if (id === "installa" || id === "rimuovi" || id === "aggiorna") {
                 finestra.occupata = ""
-                finestra.avviso(r.ok ? I18n.t("Fatto") : (r.messaggio || I18n.t("Operazione non riuscita")))
+                finestra.avviso(r.ok ? (r.messaggio || I18n.t("Fatto")) : (r.messaggio || I18n.t("Operazione non riuscita")))
                 finestra.aggiornaInstallate()
                 if (ricerca.text) finestra.cerca(ricerca.text)
             }
@@ -66,7 +73,14 @@ Finestra {
                 Pulsante { text: I18n.t("Aggiorna tutto"); icona: "system-software-update"; onClicked: { finestra.occupata = "*"; ponte.avvia("aggiorna", [], "aggiorna") } }
             }
         }
-        BarraProgresso { Layout.fillWidth: true; indeterminate: true; visible: finestra.cercando || finestra.occupata !== "" }
+        BarraProgresso { Layout.fillWidth: true; indeterminate: true; visible: finestra.preparando || finestra.cercando || finestra.occupata !== "" }
+        Testo {
+            visible: finestra.preparando || finestra.occupata !== ""
+            Layout.fillWidth: true; Layout.leftMargin: 16; Layout.topMargin: 6
+            secondario: true
+            text: finestra.occupata !== "" ? I18n.t("Download e installazione in corso: può volerci qualche minuto…")
+                                           : I18n.t("Preparo il catalogo delle app (la prima volta può volerci un minuto)…")
+        }
         GridView {
             id: griglia
             Layout.fillWidth: true
@@ -110,7 +124,8 @@ Finestra {
                 anchors.centerIn: parent
                 visible: griglia.count === 0 && !finestra.cercando
                 secondario: true
-                text: finestra.scheda === 1 ? I18n.t("Nessuna app installata dallo store") : I18n.t("Nessun risultato")
+                text: finestra.scheda === 1 ? I18n.t("Nessuna app installata dallo store")
+                      : (finestra.preparando ? I18n.t("Catalogo in preparazione…") : I18n.t("Nessun risultato: prova con un'altra parola"))
             }
         }
     }

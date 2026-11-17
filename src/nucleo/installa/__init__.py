@@ -152,8 +152,18 @@ def _appimage(percorso, avanzamento):
     return {"ok": True, "messaggio": T("Installato in {c}", c=str(CARTELLA_APPIMAGE))}
 
 
-def prepara_flathub() -> None:
+def prepara_flathub(catalogo: bool = True) -> None:
+    """Flathub per l'utente e il suo catalogo (appstream). Senza catalogo «flatpak search»
+    non trova niente: si scarica la prima volta e si aggiorna se ha più di un giorno."""
     esegui(["flatpak", "remote-add", "--user", "--if-not-exists", "flathub", FLATHUB], timeout=120)
+    if not catalogo:
+        return
+    import time
+
+    base = Path.home() / ".local/share/flatpak/appstream/flathub"
+    file = sorted(base.glob("*/active/appstream.xml*")) if base.is_dir() else []
+    if not file or time.time() - file[0].stat().st_mtime > 86400:
+        esegui(["flatpak", "update", "--user", "--appstream", "flathub"], timeout=600)
 
 
 def _flatpak(percorso, avanzamento):

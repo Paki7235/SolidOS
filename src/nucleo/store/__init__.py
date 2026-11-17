@@ -78,7 +78,24 @@ def installa(ident: str, origine: str) -> dict:
         r = helper("apt-installa", ident, timeout=3600)
     else:
         return {"ok": False, "messaggio": T("Origine sconosciuta")}
-    return {"ok": r.returncode == 0, "messaggio": "" if r.returncode == 0 else (r.stderr.strip()[-300:] or T("Installazione annullata"))}
+    if r.returncode == 0:
+        return {"ok": True, "messaggio": T("Installata: la trovi nel menu delle app")}
+    return {"ok": False, "messaggio": spiega_errore(r.stderr or r.stdout or "")}
+
+
+def spiega_errore(testo: str) -> str:
+    """Gli errori di Flatpak e apt in parole semplici (il testo originale resta in fondo)."""
+    t = testo.lower()
+    if "no remote refs" in t or "nothing matches" in t or "no matches found" in t:
+        return T("Questa app non è disponibile per questo computer (tipo di processore). Cerca un'alternativa.")
+    if "could not resolve" in t or "unable to connect" in t or "network" in t or "timed out" in t:
+        return T("Nessuna connessione a Internet: collegati alla rete e riprova.")
+    if "no space" in t or "not enough" in t:
+        return T("Spazio su disco esaurito: libera un po' di spazio e riprova.")
+    if "unable to locate package" in t:
+        return T("Pacchetto non trovato: prova ad aggiornare l'elenco dei programmi e riprova.")
+    righe = [r for r in testo.strip().splitlines() if r.strip()]
+    return T("Installazione non riuscita") + (": " + righe[-1][-200:] if righe else "")
 
 
 def rimuovi(ident: str, origine: str, sistema: bool = False) -> dict:

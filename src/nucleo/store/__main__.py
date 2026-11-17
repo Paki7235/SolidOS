@@ -19,6 +19,16 @@ class BackendStore(Backend):
     def vetrina(self):
         return vetrina()
 
+    def prepara(self) -> dict:
+        """All'apertura: Flathub e il suo catalogo (la prima volta lo scarica, un minuto circa)."""
+        from ..installa import prepara_flathub
+        from ..sistema import esiste
+
+        if not esiste("flatpak"):
+            return {"ok": False, "messaggio": "Flatpak non è installato"}
+        prepara_flathub()
+        return {"ok": True}
+
     def cerca(self, testo):
         return cerca(testo)
 
