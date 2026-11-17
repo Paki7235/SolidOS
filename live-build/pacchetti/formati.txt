@@ -47,6 +47,8 @@ distrobox
 podman
 wine @amd64
 wine64 @amd64
+# Su ARM: Box64 fa girare i programmi per Intel/AMD (Wine x86-64 arriva dal gancio 0200)
+?box64 @arm64
 ?libfuse2t64
 ?rpm
 alien

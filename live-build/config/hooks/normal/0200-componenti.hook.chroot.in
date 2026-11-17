@@ -5,7 +5,7 @@ export DEBIAN_FRONTEND=noninteractive
 registro() { echo "[@OS_ID@/componenti] $*"; }
 
 # ── Wine a 32 bit (molti programmi Windows sono ancora a 32 bit) ──────────────
-# (solo sui PC Intel/AMD: su ARM i programmi Windows x86 non girano con Wine)
+# (sui PC Intel/AMD; su ARM c'è il blocco successivo con Box64)
 if [ "$(dpkg --print-architecture)" = amd64 ]; then
 	if ! dpkg --print-foreign-architectures | grep -qx i386; then
 		dpkg --add-architecture i386
@@ -13,6 +13,44 @@ if [ "$(dpkg --print-architecture)" = amd64 ]; then
 	fi
 	apt-get install -y -qq --no-install-recommends wine32:i386 >/dev/null 2>&1 \
 		&& registro "wine32 installato" || registro "wine32 non disponibile (solo programmi a 64 bit)"
+fi
+
+# ── Wine su ARM: Wine per Intel/AMD (64 e 32 bit, «wow64») eseguito da Box64 ──
+# Box64 traduce le istruzioni Intel per il processore ARM e si registra nel kernel
+# (binfmt), così «wine» si usa come sui PC Intel/AMD: stessi passaggi, solo più lento.
+if [ "$(dpkg --print-architecture)" = arm64 ] && command -v box64 >/dev/null; then
+	WINE_VERSIONE=11.0
+	WINE_SHA256=39574efa1132c3ca0d5c77dd2eddbe4a49cca0d6cc2c290ff4924493a1c40314
+	# librerie native che Box64 usa al posto di quelle Intel (grafica, caratteri, suoni, rete sicura)
+	apt-get install -y -qq --no-install-recommends libfreetype6 libfontconfig1 libx11-6 libxext6 libxrender1 \
+		libxrandr2 libxi6 libxcursor1 libxinerama1 libxcomposite1 libgl1 libvulkan1 libgnutls30t64 \
+		libasound2t64 libpulse0 libdbus-1-3 >/dev/null 2>&1 || registro "alcune librerie per Wine su ARM non disponibili"
+	if python3 - "$WINE_VERSIONE" "$WINE_SHA256" <<'PY'
+import hashlib, sys, tarfile, urllib.request, shutil, os
+versione, atteso = sys.argv[1], sys.argv[2]
+url = f"https://github.com/Kron4ek/Wine-Builds/releases/download/{versione}/wine-{versione}-amd64-wow64.tar.xz"
+file = "/tmp/wine-x86_64.tar.xz"
+with urllib.request.urlopen(url, timeout=300) as r, open(file, "wb") as f:
+    shutil.copyfileobj(r, f)
+if hashlib.sha256(open(file, "rb").read()).hexdigest() != atteso:
+    sys.exit("somma di controllo sbagliata")
+with tarfile.open(file) as t:
+    radice = t.getnames()[0].split("/")[0]
+    t.extractall("/opt", filter="tar")
+os.replace(f"/opt/{radice}", "/opt/wine-x86_64")
+os.remove(file)
+PY
+	then
+		# piccoli lanciatori (non collegamenti): Wine trova i suoi file dal percorso vero
+		for f in /opt/wine-x86_64/bin/*; do
+			printf '#!/bin/sh\nexec %s "$@"\n' "$f" >"/usr/local/bin/$(basename "$f")"
+			chmod 755 "/usr/local/bin/$(basename "$f")"
+		done
+		registro "Wine $WINE_VERSIONE per Intel/AMD installato (con Box64)"
+	else
+		rm -rf /opt/wine-x86_64
+		registro "Wine per ARM non scaricato: i programmi Windows non saranno disponibili"
+	fi
 fi
 
 # ── Firewall: Condivisione Vicina ammessa nelle reti di casa/lavoro e nell'hotspot ──

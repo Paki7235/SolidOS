@@ -63,11 +63,14 @@ def analizza(percorso: str) -> dict:
         info["isolamento"] = T("Resta un singolo file nella cartella Applicazioni: per rimuoverlo basta cancellarlo.")
     elif tipo in ("flatpak", "flatpakref"):
         info["isolamento"] = T("Gira in una sandbox con accesso limitato ai tuoi file.")
-    elif tipo in ("exe", "msi") and _processore_arm():
+    elif tipo in ("exe", "msi") and _processore_arm() and not esiste("wine"):
         info["supportato"] = False
-        info["descrizione"] = T("Questo computer ha un processore ARM (come i Mac con processore Apple e le loro "
-                                "macchine virtuali): i programmi per Windows sono fatti per processori Intel o AMD e "
-                                "qui non possono funzionare. Cerca la stessa app nello Store: spesso c'è la versione per Linux.")
+        info["descrizione"] = T("Questo computer ha un processore ARM e il supporto per i programmi Windows non è "
+                                "installato. Cerca la stessa app nello Store: spesso c'è la versione per Linux.")
+    elif tipo in ("exe", "msi") and _processore_arm():
+        info["isolamento"] = T("Programma Windows: gira con Wine in un ambiente separato. Questo computer ha un "
+                               "processore ARM, quindi Box64 traduce il programma (fatto per Intel/AMD): funziona "
+                               "più lento e non tutti i programmi partono.")
     elif tipo in ("exe", "msi"):
         info["isolamento"] = T("Programma Windows: gira con Wine in un ambiente separato. Non tutti i programmi funzionano.")
     elif tipo == "mac":
@@ -183,9 +186,9 @@ def nome_prefisso(percorso: str) -> str:
 
 
 def _wine(percorso, avanzamento):
-    if _processore_arm():
-        return {"ok": False, "messaggio": T("I programmi per Windows non funzionano sui computer con processore ARM: "
-                                            "cerca la stessa app nello Store.")}
+    if not esiste("wine") and _processore_arm():
+        return {"ok": False, "messaggio": T("Su questo computer (processore ARM) il supporto per i programmi Windows "
+                                            "non è installato: cerca la stessa app nello Store.")}
     if not esiste("wine"):
         return {"ok": False, "messaggio": T("Per i programmi Windows serve Wine: installalo dallo Store o con «sudo apt install wine».")}
     prefisso = PREFISSI_WINE / nome_prefisso(percorso)
