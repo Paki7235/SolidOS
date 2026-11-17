@@ -144,3 +144,41 @@ def trova_per_nome(nome: str) -> dict | None:
     risultati = cerca(nome)
     esatti = [r for r in risultati if r["nome"].lower() == nome.lower()]
     return (esatti or risultati or [None])[0]
+
+
+def apri(ident: str, origine: str = "flatpak") -> dict:
+    """Apre un'app installata (pulsante «Apri», come nell'App Store)."""
+    from ..sistema import avvia
+
+    if origine == "flatpak" and re.fullmatch(r"[A-Za-z0-9._-]+", ident or ""):
+        avvia(["flatpak", "run", ident])
+        return {"ok": True, "messaggio": ""}
+    if origine == "appimage" and Path(ident).is_file():
+        avvia([ident])
+        return {"ok": True, "messaggio": ""}
+    if origine == "apt":
+        avvia(["gtk-launch", ident])
+        return {"ok": True, "messaggio": ""}
+    return {"ok": False, "messaggio": T("Non so come aprire questa app")}
+
+
+def aggiornamenti_disponibili() -> list[dict]:
+    """App installate con una versione nuova pronta (pagina «Aggiornamenti»)."""
+    if not esiste("flatpak"):
+        return []
+    risultato = []
+    for riga in uscita(["flatpak", "remote-ls", "--user", "--updates", "--app",
+                        "--columns=application,name,version"], timeout=120).splitlines():
+        p = riga.split("\t")
+        if p and "." in p[0]:
+            risultato.append({"id": p[0], "nome": p[1] if len(p) > 1 else p[0], "versione": p[2] if len(p) > 2 else "",
+                              "origine": "flatpak", "installata": True, "descrizione": T("Aggiornamento disponibile")})
+    return risultato
+
+
+def aggiorna_app(ident: str) -> dict:
+    if not re.fullmatch(r"[A-Za-z0-9._-]+", ident or ""):
+        return {"ok": False, "messaggio": T("App non valida")}
+    r = esegui(["flatpak", "update", "--user", "-y", "--noninteractive", ident], timeout=3600)
+    return {"ok": r.returncode == 0, "messaggio": T("Aggiornata") if r.returncode == 0 else spiega_errore(r.stderr or "")}
+

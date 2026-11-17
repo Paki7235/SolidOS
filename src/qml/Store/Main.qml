@@ -1,3 +1,8 @@
+// SolidOS App: lo store di sistema, completo come un App Store.
+// Barra laterale (ricerca, Scopri, categorie, Installate, Aggiornamenti), vetrina con un'app
+// in evidenza e le collezioni di Flathub, e una pagina per ogni app con foto dello schermo,
+// descrizione, dimensioni e il pulsante «Ottieni» o «Apri». Compaiono solo le app che
+// esistono per il processore di questo computer.
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -6,23 +11,56 @@ import SolidUI
 Finestra {
     id: finestra
     title: Tema.nomeSistema + " App"
-    width: 1000
-    height: 680
-    property var vetrina: ponte.chiama0("vetrina")
+    width: 1120
+    height: 760
+
+    // ── Stato ──────────────────────────────────────────────────────────────
+    property string pagina: "scopri"          // scopri | categoria | cerca | installate | aggiornamenti | app
+    property string paginaPrima: "scopri"     // dove tornare dalla pagina di un'app
+    property string categoriaScelta: ""
+    property string nomeCategoria: ""
+    property var popolari: []
+    property var tendenza: []
+    property var nuove: []
+    property var elencoCategoria: []
     property var risultati: []
     property var installate: []
-    property int scheda: 0
+    property var aggiornamenti: []
+    property var categorie: []
+    property var idInstallate: ({})           // id → true, per «Ottieni» / «Apri»
+    property var scheda: null                 // dettagli dell'app aperta
     property string occupata: ""
-    property bool cercando: false
-    property bool preparando: true        // all'apertura scarica il catalogo di Flathub
+    property int caricamenti: 0
+    readonly property bool caricando: caricamenti > 0
 
-    function cerca(t) { if (t.length < 2) { risultati = []; return } cercando = true; ponte.avvia("cerca", [t], "cerca") }
-    function aggiornaInstallate() { ponte.avvia("installate", [], "installate") }
-    function installa(app) { occupata = app.id; ponte.avvia("installa", [app.id, app.origine], "installa") }
-    function rimuovi(app) { occupata = app.id; ponte.avvia("rimuovi", [app.id, app.origine, app.sistema === true], "rimuovi") }
+    function chiedi(metodo, argomenti, ident) { caricamenti++; ponte.avvia(metodo, argomenti, ident) }
+    function aggiornaInstallate() {
+        ponte.avvia("installateId", [], "idInstallate")
+        ponte.avvia("installate", [], "installate")
+        ponte.avvia("aggiornamenti", [], "aggiornamenti")
+    }
+    function vai(p) { pagina = p; vista.contentY = 0 }
+    function apriApp(app) {
+        if (pagina !== "app") paginaPrima = pagina
+        scheda = { id: app.id, nome: app.nome, descrizioneBreve: app.descrizione || "", icona: app.icona || "", origine: app.origine || "flatpak", caricata: false }
+        vai("app")
+        if ((app.origine || "flatpak") === "flatpak") chiedi("dettagli", [app.id], "dettagli")
+    }
+    function installata(id) { return finestra.idInstallate[id] === true }
+    function installa(app) { occupata = app.id; ponte.avvia("installa", [app.id, app.origine || "flatpak"], "installa") }
+    function rimuovi(app) { occupata = app.id; ponte.avvia("rimuovi", [app.id, app.origine || "flatpak", app.sistema === true], "rimuovi") }
+    function apri(app) { ponte.avvia("apri", [app.id, app.origine || "flatpak"], "apri") }
+    function cerca(t) {
+        if (t.trim().length < 2) { if (pagina === "cerca") vai("scopri"); return }
+        vai("cerca"); risultati = []; chiedi("cercaCatalogo", [t], "cerca")
+    }
 
     Component.onCompleted: {
+        categorie = ponte.chiama0("categorie")
         ponte.avvia("prepara", [], "prepara")
+        chiedi("collezione", ["popular"], "popular")
+        chiedi("collezione", ["trending"], "trending")
+        chiedi("collezione", ["recently-updated"], "recently-updated")
         aggiornaInstallate()
         var iniziale = ponte.chiama0("ricercaIniziale")
         if (iniziale) { ricerca.text = iniziale; cerca(iniziale) }
@@ -30,106 +68,373 @@ Finestra {
     Connections {
         target: ponte
         function onCompletato(id, r) {
-            if (id === "vetrina") finestra.vetrina = r
-            else if (id === "prepara") {
-                finestra.preparando = false
-                // Solo le app che esistono per questo computer (su ARM alcune non ci sono)
-                if (r.ok) ponte.avvia("vetrinaDisponibile", [], "vetrina")
-                if (!r.ok) finestra.avviso(r.messaggio)
-                else if (ricerca.text.length >= 2) finestra.cerca(ricerca.text)
-            }
-            else if (id === "cerca") { finestra.risultati = r; finestra.cercando = false }
+            var risposte = ["popular", "trending", "recently-updated", "categoria", "cerca", "dettagli"]
+            if (risposte.indexOf(id) >= 0) finestra.caricamenti = Math.max(0, finestra.caricamenti - 1)
+            if (id === "popular") finestra.popolari = r
+            else if (id === "trending") finestra.tendenza = r
+            else if (id === "recently-updated") finestra.nuove = r
+            else if (id === "categoria") finestra.elencoCategoria = r
+            else if (id === "cerca") finestra.risultati = r
             else if (id === "installate") finestra.installate = r
-            else if (id === "installa" || id === "rimuovi" || id === "aggiorna") {
+            else if (id === "aggiornamenti") finestra.aggiornamenti = r
+            else if (id === "idInstallate") {
+                var m = {}
+                for (var i = 0; i < r.length; i++) m[r[i]] = true
+                finestra.idInstallate = m
+            }
+            else if (id === "dettagli") {
+                if (r.ok && finestra.scheda && r.id === finestra.scheda.id) finestra.scheda = Object.assign({ caricata: true }, r)
+                else if (!r.ok) finestra.avviso(r.messaggio)
+            }
+            else if (id === "prepara") { if (!r.ok) finestra.avviso(r.messaggio) }
+            else if (id === "apri") { if (!r.ok) finestra.avviso(r.messaggio) }
+            else if (id === "installa" || id === "rimuovi" || id === "aggiorna" || id === "aggiornaApp") {
                 finestra.occupata = ""
-                ponte.avvia("vetrinaDisponibile", [], "vetrina")
                 finestra.avviso(r.ok ? (r.messaggio || I18n.t("Fatto")) : (r.messaggio || I18n.t("Operazione non riuscita")))
                 finestra.aggiornaInstallate()
-                if (ricerca.text) finestra.cerca(ricerca.text)
             }
         }
     }
 
-    ColumnLayout {
+    // ── Componenti ─────────────────────────────────────────────────────────
+    // Icona di un'app: dal catalogo (indirizzo web) oppure dal tema di sistema
+    component IconaApp: Item {
+        property var app: ({})
+        property int lato: 56
+        width: lato; height: lato
+        Image {
+            id: daRete
+            anchors.fill: parent
+            visible: status === Image.Ready
+            source: (parent.app.icona || "").indexOf("http") === 0 ? parent.app.icona : ""
+            sourceSize.width: parent.lato * 2; sourceSize.height: parent.lato * 2
+            fillMode: Image.PreserveAspectFit; asynchronous: true; smooth: true
+        }
+        Icona { anchors.fill: parent; visible: daRete.status !== Image.Ready; nome: (parent.app.icona || "").indexOf("http") === 0 ? parent.app.id : (parent.app.icona || parent.app.id || "application-x-executable"); lato: parent.lato }
+    }
+    // Pulsante piccolo «Ottieni» / «Apri» / «Attendi…»
+    component PulsanteApp: Rectangle {
+        property var app: ({})
+        readonly property bool presente: finestra.installata(app.id) || app.installata === true
+        readonly property bool inCorso: finestra.occupata === app.id
+        width: Math.max(76, etichetta.implicitWidth + 28); height: 30; radius: 15
+        color: presente ? (Tema.chiaro ? "#E9EDF1" : "#2A3243") : Tema.accento
+        opacity: finestra.occupata !== "" && !inCorso ? 0.5 : 1
+        Text {
+            id: etichetta
+            anchors.centerIn: parent
+            text: parent.inCorso ? I18n.t("Attendi…") : (parent.presente ? I18n.t("Apri") : I18n.t("Ottieni"))
+            color: parent.presente ? Tema.accento : "#FFFFFF"
+            font.family: Tema.font; font.pixelSize: 13; font.weight: Font.Bold
+        }
+        MouseArea {
+            anchors.fill: parent; cursorShape: Qt.PointingHandCursor
+            enabled: finestra.occupata === ""
+            onClicked: parent.presente ? finestra.apri(parent.app) : finestra.installa(parent.app)
+        }
+    }
+    // Scheda di un'app nelle griglie
+    component SchedaApp: Rectangle {
+        id: sa
+        property var app: ({})
+        width: 300; height: 96; radius: 14
+        color: zona.containsMouse ? (Tema.chiaro ? "#F1F4F8" : "#232A3A") : (Tema.chiaro ? "#FFFFFF" : "#1A2030")
+        border.color: Tema.chiaro ? "#E2E8F0" : "#262F42"
+        MouseArea { id: zona; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: finestra.apriApp(sa.app) }
+        RowLayout {
+            anchors.fill: parent; anchors.margins: 14
+            spacing: 12
+            IconaApp { app: sa.app; lato: 60 }
+            ColumnLayout {
+                Layout.fillWidth: true; spacing: 2
+                Text { Layout.fillWidth: true; text: sa.app.nome || ""; elide: Text.ElideRight; color: Tema.testo; font.family: Tema.font; font.pixelSize: 14; font.weight: Font.DemiBold }
+                Text { Layout.fillWidth: true; text: sa.app.descrizione || ""; elide: Text.ElideRight; maximumLineCount: 2; wrapMode: Text.Wrap; color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 12 }
+            }
+            PulsanteApp { app: sa.app; Layout.alignment: Qt.AlignVCenter }
+        }
+    }
+    // Sezione con titolo e griglia di app
+    component Sezione: ColumnLayout {
+        id: sezione
+        property string titolo: ""
+        property var elenco: []
+        property int quante: 9
+        Layout.fillWidth: true
+        spacing: 12
+        visible: elenco.length > 0
+        Text { text: sezione.titolo; color: Tema.testo; font.family: Tema.font; font.pixelSize: 20; font.weight: Font.Bold }
+        Flow {
+            Layout.fillWidth: true
+            spacing: 12
+            // tante colonne quante ne entrano (schede di almeno 290 px), tutte della stessa larghezza
+            readonly property int colonne: Math.max(1, Math.floor((width + 12) / 302))
+            Repeater { model: sezione.elenco.slice(0, sezione.quante); SchedaApp { required property var modelData; app: modelData; width: Math.floor((parent.width - (parent.colonne - 1) * 12) / parent.colonne) } }
+        }
+    }
+
+    RowLayout {
         anchors.fill: parent
         spacing: 0
+
+        // ── Barra laterale ─────────────────────────────────────────────────
         Rectangle {
-            Layout.fillWidth: true
-            implicitHeight: 72
-            color: Tema.superficie
-            RowLayout {
-                anchors.fill: parent
-                anchors.margins: 16
-                spacing: 12
-                TabBar {
-                    id: schede
-                    onCurrentIndexChanged: finestra.scheda = currentIndex
-                    background: Item {}
-                    TabButton { text: I18n.t("Scopri"); width: implicitWidth + 20 }
-                    TabButton { text: I18n.t("Installate"); width: implicitWidth + 20 }
-                }
+            Layout.preferredWidth: 236
+            Layout.fillHeight: true
+            color: Tema.chiaro ? "#F1F4F8" : "#141A27"
+            ColumnLayout {
+                anchors.fill: parent; anchors.margins: 14
+                spacing: 4
                 CampoRicerca {
                     id: ricerca
                     Layout.fillWidth: true
-                    placeholderText: I18n.t("Cerca app, giochi, strumenti…")
-                    onAccepted: { schede.currentIndex = 0; finestra.cerca(text) }
+                    placeholderText: I18n.t("Cerca app e giochi")
+                    onAccepted: finestra.cerca(text)
+                    onTextChanged: ritardoRicerca.restart()
                 }
-                Pulsante { text: I18n.t("Aggiorna tutto"); icona: "system-software-update"; onClicked: { finestra.occupata = "*"; ponte.avvia("aggiorna", [], "aggiorna") } }
-            }
-        }
-        BarraProgresso { Layout.fillWidth: true; indeterminate: true; visible: finestra.preparando || finestra.cercando || finestra.occupata !== "" }
-        Testo {
-            visible: finestra.preparando || finestra.occupata !== ""
-            Layout.fillWidth: true; Layout.leftMargin: 16; Layout.topMargin: 6
-            secondario: true
-            text: finestra.occupata !== "" ? I18n.t("Download e installazione in corso: può volerci qualche minuto…")
-                                           : I18n.t("Preparo il catalogo delle app (la prima volta può volerci un minuto)…")
-        }
-        GridView {
-            id: griglia
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            Layout.margins: 16
-            clip: true
-            cellWidth: Math.max(300, width / Math.floor(width / 300))
-            cellHeight: 130
-            model: finestra.scheda === 1 ? finestra.installate : (ricerca.text.length >= 2 ? finestra.risultati : finestra.vetrina)
-            delegate: Item {
-                width: griglia.cellWidth
-                height: griglia.cellHeight
-                Scheda {
-                    anchors.fill: parent
-                    anchors.margins: 6
-                    ColumnLayout {
-                        anchors.fill: parent
-                        spacing: 4
-                        RowLayout {
-                            Icona { nome: modelData.icona || modelData.id; lato: 36 }
-                            ColumnLayout {
-                                Layout.fillWidth: true
-                                spacing: 0
-                                Testo { text: modelData.nome; font.weight: Font.DemiBold; Layout.fillWidth: true; elide: Text.ElideRight; wrapMode: Text.NoWrap }
-                                Testo { text: modelData.origine === "flatpak" ? "Flathub" : (modelData.origine === "apt" ? "Debian" : "AppImage"); secondario: true; font.pointSize: Tema.fontDimensione - 2 }
-                            }
-                            Pulsante {
-                                Layout.alignment: Qt.AlignVCenter
-                                enabled: finestra.occupata === ""
-                                principale: !modelData.installata && finestra.scheda === 0
-                                pericoloso: finestra.scheda === 1
-                                text: finestra.occupata === modelData.id ? I18n.t("Attendi…") : (finestra.scheda === 1 ? I18n.t("Rimuovi") : (modelData.installata ? I18n.t("Installata") : I18n.t("Installa")))
-                                onClicked: finestra.scheda === 1 ? finestra.rimuovi(modelData) : (!modelData.installata && finestra.installa(modelData))
-                            }
+                Timer { id: ritardoRicerca; interval: 450; onTriggered: finestra.cerca(ricerca.text) }
+                Item { Layout.preferredHeight: 8 }
+                VoceElenco { Layout.fillWidth: true; icona: "starred-symbolic"; titolo: I18n.t("Scopri"); selezionata: finestra.pagina === "scopri"; onClicked: { ricerca.text = ""; finestra.vai("scopri") } }
+                Text { Layout.topMargin: 12; Layout.leftMargin: 8; text: I18n.t("Categorie"); color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 11; font.weight: Font.DemiBold }
+                Repeater {
+                    model: finestra.categorie
+                    VoceElenco {
+                        required property var modelData
+                        Layout.fillWidth: true; icona: modelData.icona; titolo: modelData.nome
+                        selezionata: finestra.pagina === "categoria" && finestra.categoriaScelta === modelData.id
+                        onClicked: {
+                            finestra.categoriaScelta = modelData.id; finestra.nomeCategoria = modelData.nome
+                            finestra.elencoCategoria = []; finestra.vai("categoria")
+                            finestra.chiedi("categoria", [modelData.id], "categoria")
                         }
-                        Testo { text: modelData.descrizione || ""; secondario: true; maximumLineCount: 2; elide: Text.ElideRight; Layout.fillWidth: true }
                     }
                 }
+                Item { Layout.fillHeight: true }
+                VoceElenco { Layout.fillWidth: true; icona: "emblem-ok-symbolic"; titolo: I18n.t("Installate"); sottotitolo: finestra.installate.length + " " + I18n.t("app"); selezionata: finestra.pagina === "installate"; onClicked: finestra.vai("installate") }
+                VoceElenco {
+                    Layout.fillWidth: true; icona: "software-update-available-symbolic"; titolo: I18n.t("Aggiornamenti")
+                    sottotitolo: finestra.aggiornamenti.length ? finestra.aggiornamenti.length + " " + I18n.t("disponibili") : I18n.t("Tutto aggiornato")
+                    selezionata: finestra.pagina === "aggiornamenti"; onClicked: finestra.vai("aggiornamenti")
+                }
             }
-            Testo {
-                anchors.centerIn: parent
-                visible: griglia.count === 0 && !finestra.cercando
-                secondario: true
-                text: finestra.scheda === 1 ? I18n.t("Nessuna app installata dallo store")
-                      : (finestra.preparando ? I18n.t("Catalogo in preparazione…") : I18n.t("Nessun risultato: prova con un'altra parola"))
+        }
+
+        // ── Contenuto ──────────────────────────────────────────────────────
+        Rectangle {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            color: Tema.chiaro ? "#F8FAFC" : "#0F1422"
+            BarraProgresso { anchors.top: parent.top; width: parent.width; indeterminate: true; visible: finestra.caricando || finestra.occupata !== ""; z: 5 }
+
+            Flickable {
+                id: vista
+                anchors.fill: parent
+                contentHeight: colonna.implicitHeight + 64
+                clip: true
+                ScrollBar.vertical: ScrollBar {}
+                ColumnLayout {
+                    id: colonna
+                    x: 32; y: 28
+                    width: vista.width - 64
+                    spacing: 28
+
+                    // ══ Scopri ══════════════════════════════════════════════
+                    // App in evidenza: la più scaricata del mese
+                    Rectangle {
+                        id: evidenza
+                        visible: finestra.pagina === "scopri" && finestra.popolari.length > 0
+                        Layout.fillWidth: true; Layout.preferredHeight: 200
+                        radius: 22
+                        gradient: Gradient {
+                            orientation: Gradient.Horizontal
+                            GradientStop { position: 0; color: Tema.accento }
+                            GradientStop { position: 1; color: Qt.darker(Tema.accento, 1.8) }
+                        }
+                        readonly property var app: finestra.popolari.length ? finestra.popolari[0] : ({})
+                        MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: finestra.apriApp(evidenza.app) }
+                        RowLayout {
+                            anchors.fill: parent; anchors.margins: 32
+                            spacing: 26
+                            Rectangle {
+                                Layout.preferredWidth: 120; Layout.preferredHeight: 120; radius: 28; color: "#26FFFFFF"
+                                IconaApp { anchors.centerIn: parent; app: evidenza.app; lato: 96 }
+                            }
+                            ColumnLayout {
+                                Layout.fillWidth: true; spacing: 6
+                                Text { text: I18n.t("IN EVIDENZA"); color: "#CCFFFFFF"; font.family: Tema.font; font.pixelSize: 12; font.weight: Font.Bold; font.letterSpacing: 1.2 }
+                                Text { Layout.fillWidth: true; text: evidenza.app.nome || ""; elide: Text.ElideRight; color: "#FFFFFF"; font.family: Tema.font; font.pixelSize: 30; font.weight: Font.Bold }
+                                Text { Layout.fillWidth: true; text: evidenza.app.descrizione || ""; elide: Text.ElideRight; color: "#E6FFFFFF"; font.family: Tema.font; font.pixelSize: 15 }
+                                Item { Layout.preferredHeight: 6 }
+                                PulsanteApp { app: evidenza.app }
+                            }
+                        }
+                    }
+                    Sezione { visible: finestra.pagina === "scopri" && elenco.length > 0; titolo: I18n.t("Le più popolari"); elenco: finestra.popolari.slice(1) }
+                    Sezione { visible: finestra.pagina === "scopri" && elenco.length > 0; titolo: I18n.t("Di tendenza"); elenco: finestra.tendenza }
+                    Sezione { visible: finestra.pagina === "scopri" && elenco.length > 0; titolo: I18n.t("Nuove e aggiornate"); elenco: finestra.nuove }
+                    Text {
+                        visible: finestra.pagina === "scopri" && !finestra.caricando && finestra.popolari.length === 0
+                        Layout.fillWidth: true; wrapMode: Text.Wrap
+                        text: I18n.t("Non riesco a leggere il catalogo delle app: controlla la connessione a Internet e riapri lo store.")
+                        color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 14
+                    }
+
+                    // ══ Categoria e ricerca ═════════════════════════════════
+                    Sezione {
+                        visible: finestra.pagina === "categoria"
+                        titolo: finestra.nomeCategoria; elenco: finestra.elencoCategoria; quante: 60
+                    }
+                    Sezione {
+                        visible: finestra.pagina === "cerca"
+                        titolo: I18n.t("Risultati per") + " «" + ricerca.text + "»"; elenco: finestra.risultati; quante: 60
+                    }
+                    Text {
+                        visible: (finestra.pagina === "cerca" && finestra.risultati.length === 0 || finestra.pagina === "categoria" && finestra.elencoCategoria.length === 0) && !finestra.caricando
+                        text: finestra.pagina === "cerca" ? I18n.t("Nessuna app trovata: prova con un'altra parola") : I18n.t("Nessuna app in questa categoria per questo computer")
+                        color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 14
+                    }
+
+                    // ══ Installate e aggiornamenti ══════════════════════════
+                    ColumnLayout {
+                        visible: finestra.pagina === "installate" || finestra.pagina === "aggiornamenti"
+                        Layout.fillWidth: true; spacing: 10
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Text { Layout.fillWidth: true; text: finestra.pagina === "installate" ? I18n.t("Installate") : I18n.t("Aggiornamenti"); color: Tema.testo; font.family: Tema.font; font.pixelSize: 26; font.weight: Font.Bold }
+                            Pulsante {
+                                visible: finestra.pagina === "aggiornamenti" && finestra.aggiornamenti.length > 0
+                                principale: true; text: I18n.t("Aggiorna tutto"); icona: "system-software-update"
+                                enabled: finestra.occupata === ""
+                                onClicked: { finestra.occupata = "*"; ponte.avvia("aggiorna", [], "aggiorna") }
+                            }
+                        }
+                        Text {
+                            visible: (finestra.pagina === "installate" ? finestra.installate : finestra.aggiornamenti).length === 0
+                            text: finestra.pagina === "installate" ? I18n.t("Nessuna app installata dallo store") : I18n.t("Tutte le app sono aggiornate")
+                            color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 14
+                        }
+                        Repeater {
+                            model: finestra.pagina === "installate" ? finestra.installate : (finestra.pagina === "aggiornamenti" ? finestra.aggiornamenti : [])
+                            Rectangle {
+                                id: riga
+                                required property var modelData
+                                Layout.fillWidth: true; Layout.preferredHeight: 72; radius: 14
+                                color: Tema.chiaro ? "#FFFFFF" : "#1A2030"; border.color: Tema.chiaro ? "#E2E8F0" : "#262F42"
+                                RowLayout {
+                                    anchors.fill: parent; anchors.margins: 14; spacing: 14
+                                    Icona { nome: riga.modelData.id; lato: 44 }
+                                    ColumnLayout {
+                                        Layout.fillWidth: true; spacing: 2
+                                        Text { Layout.fillWidth: true; elide: Text.ElideRight; text: riga.modelData.nome; color: Tema.testo; font.family: Tema.font; font.pixelSize: 14; font.weight: Font.DemiBold }
+                                        Text { Layout.fillWidth: true; elide: Text.ElideRight; text: (riga.modelData.versione ? I18n.t("Versione") + " " + riga.modelData.versione + " · " : "") + (riga.modelData.descrizione || ""); color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 12 }
+                                    }
+                                    Pulsante { text: I18n.t("Apri"); visible: finestra.pagina === "installate"; enabled: finestra.occupata === ""; onClicked: finestra.apri(riga.modelData) }
+                                    Pulsante { text: I18n.t("Aggiorna"); principale: true; visible: finestra.pagina === "aggiornamenti"; enabled: finestra.occupata === ""; onClicked: { finestra.occupata = riga.modelData.id; ponte.avvia("aggiornaApp", [riga.modelData.id], "aggiornaApp") } }
+                                    Pulsante { text: I18n.t("Rimuovi"); pericoloso: true; visible: finestra.pagina === "installate"; enabled: finestra.occupata === ""; onClicked: finestra.rimuovi(riga.modelData) }
+                                }
+                            }
+                        }
+                    }
+
+                    // ══ Pagina di un'app ════════════════════════════════════
+                    ColumnLayout {
+                        id: paginaApp
+                        visible: finestra.pagina === "app" && finestra.scheda !== null
+                        Layout.fillWidth: true; spacing: 22
+                        readonly property var s: finestra.scheda || ({})
+                        Text {
+                            text: "‹ " + I18n.t("Indietro"); color: Tema.accento; font.family: Tema.font; font.pixelSize: 14
+                            MouseArea { anchors.fill: parent; anchors.margins: -8; cursorShape: Qt.PointingHandCursor; onClicked: finestra.vai(finestra.paginaPrima) }
+                        }
+                        // Intestazione: icona, nome, sviluppatore, pulsanti
+                        RowLayout {
+                            Layout.fillWidth: true; spacing: 22
+                            IconaApp { app: paginaApp.s; lato: 120 }
+                            ColumnLayout {
+                                Layout.fillWidth: true; spacing: 4
+                                Text { Layout.fillWidth: true; wrapMode: Text.Wrap; text: paginaApp.s.nome || ""; color: Tema.testo; font.family: Tema.font; font.pixelSize: 30; font.weight: Font.Bold }
+                                Text { Layout.fillWidth: true; wrapMode: Text.Wrap; text: paginaApp.s.descrizioneBreve || ""; color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 15 }
+                                Text { visible: text !== ""; text: paginaApp.s.sviluppatore || ""; color: Tema.accento; font.family: Tema.font; font.pixelSize: 13; font.weight: Font.Medium }
+                                Item { Layout.preferredHeight: 6 }
+                                RowLayout {
+                                    spacing: 10
+                                    PulsanteApp { app: paginaApp.s; visible: paginaApp.s.disponibile !== false }
+                                    Pulsante {
+                                        visible: finestra.installata(paginaApp.s.id || "")
+                                        text: I18n.t("Rimuovi"); pericoloso: true; enabled: finestra.occupata === ""
+                                        onClicked: finestra.rimuovi(paginaApp.s)
+                                    }
+                                    Text { visible: paginaApp.s.disponibile === false; text: I18n.t("Non disponibile per questo computer"); color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 13 }
+                                }
+                            }
+                        }
+                        // Informazioni in breve
+                        Rectangle {
+                            visible: paginaApp.s.caricata === true
+                            Layout.fillWidth: true; Layout.preferredHeight: 74; radius: 14
+                            color: Tema.chiaro ? "#FFFFFF" : "#1A2030"; border.color: Tema.chiaro ? "#E2E8F0" : "#262F42"
+                            RowLayout {
+                                anchors.fill: parent; anchors.margins: 6; spacing: 0
+                                Repeater {
+                                    model: [
+                                        { t: I18n.t("Versione"), v: paginaApp.s.versione || "—" },
+                                        { t: I18n.t("Download"), v: paginaApp.s.scarica || "—" },
+                                        { t: I18n.t("Spazio"), v: paginaApp.s.occupa || "—" },
+                                        { t: I18n.t("Licenza"), v: paginaApp.s.libera ? I18n.t("Libera") : I18n.t("Proprietaria") },
+                                        { t: I18n.t("Aggiornata"), v: paginaApp.s.data || "—" }
+                                    ]
+                                    ColumnLayout {
+                                        required property var modelData
+                                        Layout.fillWidth: true; spacing: 2
+                                        Text { Layout.alignment: Qt.AlignHCenter; text: parent.modelData.t.toUpperCase(); color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 10; font.weight: Font.Bold; font.letterSpacing: 0.8 }
+                                        Text { Layout.alignment: Qt.AlignHCenter; text: parent.modelData.v; color: Tema.testo; font.family: Tema.font; font.pixelSize: 15; font.weight: Font.DemiBold }
+                                    }
+                                }
+                            }
+                        }
+                        // Foto dello schermo
+                        ListView {
+                            visible: (paginaApp.s.foto || []).length > 0
+                            Layout.fillWidth: true; Layout.preferredHeight: 340
+                            orientation: ListView.Horizontal
+                            spacing: 14; clip: true
+                            model: paginaApp.s.foto || []
+                            ScrollBar.horizontal: ScrollBar {}
+                            delegate: Rectangle {
+                                required property var modelData
+                                height: 324; width: Math.max(200, foto.status === Image.Ready ? foto.implicitWidth * height / Math.max(1, foto.implicitHeight) : 560)
+                                radius: 14; clip: true
+                                color: Tema.chiaro ? "#E9EDF1" : "#1A2030"
+                                Image {
+                                    id: foto
+                                    anchors.fill: parent
+                                    source: parent.modelData.url
+                                    fillMode: Image.PreserveAspectFit; asynchronous: true; smooth: true
+                                    sourceSize.height: 648
+                                }
+                                Text { anchors.centerIn: parent; visible: foto.status !== Image.Ready; text: I18n.t("Caricamento…"); color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 13 }
+                            }
+                        }
+                        // Descrizione e novità
+                        Text {
+                            visible: text !== ""
+                            Layout.fillWidth: true; wrapMode: Text.Wrap; textFormat: Text.RichText
+                            text: paginaApp.s.descrizione || ""
+                            color: Tema.testo; font.family: Tema.font; font.pixelSize: 14; lineHeight: 1.3
+                        }
+                        ColumnLayout {
+                            visible: (paginaApp.s.novita || "") !== ""
+                            Layout.fillWidth: true; spacing: 8
+                            Text { text: I18n.t("Novità") + (paginaApp.s.versione ? " · " + I18n.t("versione") + " " + paginaApp.s.versione : ""); color: Tema.testo; font.family: Tema.font; font.pixelSize: 18; font.weight: Font.Bold }
+                            Text { Layout.fillWidth: true; wrapMode: Text.Wrap; textFormat: Text.RichText; text: paginaApp.s.novita || ""; color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 13; lineHeight: 1.3 }
+                        }
+                        Text {
+                            visible: (paginaApp.s.sito || "") !== ""
+                            text: I18n.t("Sito dello sviluppatore") + " ›"
+                            color: Tema.accento; font.family: Tema.font; font.pixelSize: 14
+                            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: Qt.openUrlExternally(paginaApp.s.sito) }
+                        }
+                    }
+                }
             }
         }
     }

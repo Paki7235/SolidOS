@@ -6,7 +6,9 @@ import sys
 
 from ..ponte import Backend, crea_ponte
 from ..qmlapp import esegui_app
-from . import aggiornamenti_flatpak, cerca, installa, installate, rimuovi, vetrina, vetrina_disponibile
+from . import (aggiorna_app, aggiornamenti_disponibili, aggiornamenti_flatpak, apri, cerca, installa, installate,
+               installate_id, rimuovi, vetrina, vetrina_disponibile)
+from . import catalogo
 
 
 class BackendStore(Backend):
@@ -18,6 +20,40 @@ class BackendStore(Backend):
 
     def vetrina(self):
         return vetrina()
+
+    # ── Catalogo di Flathub (come l'App Store) ───────────────────────────
+    def collezione(self, nome):
+        return catalogo.collezione(nome)
+
+    def categorie(self):
+        return catalogo.categorie()
+
+    def categoria(self, nome):
+        return catalogo.categoria(nome)
+
+    def cercaCatalogo(self, testo):
+        """Prima il catalogo online (solo app per questo processore), poi i pacchetti Debian."""
+        risultati = catalogo.cerca(testo)
+        visti = {r["id"] for r in risultati}
+        for r in cerca(testo):
+            if r["id"] not in visti and (r["origine"] == "apt" or not risultati):
+                risultati.append(r)
+        return risultati
+
+    def dettagli(self, ident):
+        return catalogo.dettagli(ident)
+
+    def installateId(self):
+        return installate_id()
+
+    def apri(self, ident, origine="flatpak"):
+        return apri(ident, origine)
+
+    def aggiornamenti(self):
+        return aggiornamenti_disponibili()
+
+    def aggiornaApp(self, ident):
+        return aggiorna_app(ident)
 
     def vetrinaDisponibile(self):
         return vetrina_disponibile()
