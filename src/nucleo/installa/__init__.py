@@ -30,6 +30,12 @@ APPS = Path.home() / ".local/share/applications"
 FLATHUB = "https://dl.flathub.org/repo/flathub.flatpakrepo"
 
 
+def _processore_arm() -> bool:
+    import platform
+
+    return platform.machine().lower() in ("aarch64", "arm64", "armv7l", "armv8l")
+
+
 def analizza(percorso: str) -> dict:
     """Informazioni da mostrare prima dell'installazione."""
     percorso = percorso.removeprefix("file://")
@@ -57,6 +63,11 @@ def analizza(percorso: str) -> dict:
         info["isolamento"] = T("Resta un singolo file nella cartella Applicazioni: per rimuoverlo basta cancellarlo.")
     elif tipo in ("flatpak", "flatpakref"):
         info["isolamento"] = T("Gira in una sandbox con accesso limitato ai tuoi file.")
+    elif tipo in ("exe", "msi") and _processore_arm():
+        info["supportato"] = False
+        info["descrizione"] = T("Questo computer ha un processore ARM (come i Mac con processore Apple e le loro "
+                                "macchine virtuali): i programmi per Windows sono fatti per processori Intel o AMD e "
+                                "qui non possono funzionare. Cerca la stessa app nello Store: spesso c'è la versione per Linux.")
     elif tipo in ("exe", "msi"):
         info["isolamento"] = T("Programma Windows: gira con Wine in un ambiente separato. Non tutti i programmi funzionano.")
     elif tipo == "mac":
@@ -162,8 +173,11 @@ def nome_prefisso(percorso: str) -> str:
 
 
 def _wine(percorso, avanzamento):
+    if _processore_arm():
+        return {"ok": False, "messaggio": T("I programmi per Windows non funzionano sui computer con processore ARM: "
+                                            "cerca la stessa app nello Store.")}
     if not esiste("wine"):
-        return {"ok": False, "messaggio": T("Wine non è installato")}
+        return {"ok": False, "messaggio": T("Per i programmi Windows serve Wine: installalo dallo Store o con «sudo apt install wine».")}
     prefisso = PREFISSI_WINE / nome_prefisso(percorso)
     prefisso.mkdir(parents=True, exist_ok=True)
     env = dict(os.environ, WINEPREFIX=str(prefisso), WINEDEBUG="-all", WINEDLLOVERRIDES="winemenubuilder.exe=e")
