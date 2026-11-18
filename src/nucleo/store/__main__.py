@@ -43,6 +43,45 @@ class BackendStore(Backend):
     def dettagli(self, ident):
         return catalogo.dettagli(ident)
 
+    # ── Raccolte e recensioni ────────────────────────────────────────────
+    def raccolte(self):
+        return catalogo.raccolte()
+
+    def raccolteDi(self, ident):
+        return catalogo.raccolte_di(ident)
+
+    def piuAmate(self):
+        """Le app con il voto più alto dalle recensioni di chi usa SolidOS."""
+        from .. import recensioni
+
+        voti = recensioni.piu_amate()
+        app = catalogo._molte([v["app"] for v in voti])
+        per_id = {v["app"]: v for v in voti}
+        for a in app:
+            a["media"], a["totale"] = per_id[a["id"]]["media"], per_id[a["id"]]["totale"]
+        return app
+
+    def recensioni(self, ident):
+        from .. import recensioni
+
+        return {"riepilogo": recensioni.riepilogo(ident), "elenco": recensioni.elenco(ident),
+                "account": recensioni.collegato()}
+
+    def scriviRecensione(self, ident, voto, titolo, testo):
+        from .. import recensioni
+
+        return recensioni.scrivi(ident, voto, titolo, testo)
+
+    def cancellaRecensione(self, ident):
+        from .. import recensioni
+
+        return recensioni.cancella(ident)
+
+    def recensioneUtile(self, recensione):
+        from .. import recensioni
+
+        return recensioni.utile(recensione)
+
     def installateId(self):
         return installate_id()
 

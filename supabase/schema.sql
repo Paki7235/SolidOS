@@ -101,3 +101,78 @@ language sql security definer set search_path = public as $$
   delete from public.comandi where creato < now() - interval '30 days' and proprietario = auth.uid();
 $$;
 grant execute on function public.pulisci_comandi() to authenticated;
+
+-- ══ Recensioni delle app dello Store (SolidOS App sul PC e Store sul telefono) ═══════════
+-- Le leggono tutti (anche senza accesso); le scrive solo chi ha un Solid ID, UNA per app,
+-- e ognuno può modificare o togliere solo la propria. Il nome mostrato lo mette il database
+-- dal profilo (nessuno può firmarsi con il nome di un altro).
+create table if not exists public.recensioni (
+  id uuid primary key default gen_random_uuid(),
+  app text not null check (app ~ '^[A-Za-z0-9._-]{3,200}$'),
+  autore uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  nome text not null default '',
+  voto smallint not null check (voto between 1 and 5),
+  titolo text not null default '' check (char_length(titolo) <= 80),
+  testo text not null default '' check (char_length(testo) <= 2000),
+  creata timestamptz not null default now(),
+  modificata timestamptz not null default now(),
+  unique (app, autore)
+);
+create index if not exists recensioni_app on public.recensioni (app, modificata desc);
+
+-- «Utile»: un voto per persona per recensione
+create table if not exists public.recensioni_utili (
+  recensione uuid not null references public.recensioni (id) on delete cascade,
+  persona uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  primary key (recensione, persona)
+);
+
+create or replace function public.recensione_firmata() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  new.autore := auth.uid();
+  new.nome := coalesce(nullif((select nome from public.profili where id = auth.uid()), ''), 'Utente SolidOS');
+  new.modificata := now();
+  return new;
+end $$;
+drop trigger if exists recensione_firmata on public.recensioni;
+create trigger recensione_firmata before insert or update on public.recensioni
+  for each row execute function public.recensione_firmata();
+
+alter table public.recensioni enable row level security;
+alter table public.recensioni_utili enable row level security;
+
+drop policy if exists "recensioni leggibili" on public.recensioni;
+create policy "recensioni leggibili" on public.recensioni for select to anon, authenticated using (true);
+drop policy if exists "recensione propria" on public.recensioni;
+create policy "recensione propria" on public.recensioni for insert to authenticated with check (autore = auth.uid());
+drop policy if exists "recensione propria modifica" on public.recensioni;
+create policy "recensione propria modifica" on public.recensioni for update to authenticated
+  using (autore = auth.uid()) with check (autore = auth.uid());
+drop policy if exists "recensione propria cancella" on public.recensioni;
+create policy "recensione propria cancella" on public.recensioni for delete to authenticated using (autore = auth.uid());
+
+drop policy if exists "utili leggibili" on public.recensioni_utili;
+create policy "utili leggibili" on public.recensioni_utili for select to anon, authenticated using (true);
+drop policy if exists "utile proprio" on public.recensioni_utili;
+create policy "utile proprio" on public.recensioni_utili for insert to authenticated with check (persona = auth.uid());
+drop policy if exists "utile proprio cancella" on public.recensioni_utili;
+create policy "utile proprio cancella" on public.recensioni_utili for delete to authenticated using (persona = auth.uid());
+
+grant select on public.recensioni, public.recensioni_utili to anon, authenticated;
+grant insert, update, delete on public.recensioni to authenticated;
+grant insert, delete on public.recensioni_utili to authenticated;
+
+-- Voto medio e distribuzione per app; elenco con il numero di «Utile»
+create or replace view public.voti_app with (security_invoker = true) as
+  select app, count(*)::int as totale, round(avg(voto)::numeric, 1)::float as media,
+         count(*) filter (where voto = 5)::int as v5, count(*) filter (where voto = 4)::int as v4,
+         count(*) filter (where voto = 3)::int as v3, count(*) filter (where voto = 2)::int as v2,
+         count(*) filter (where voto = 1)::int as v1
+  from public.recensioni group by app;
+create or replace view public.recensioni_complete with (security_invoker = true) as
+  select r.id, r.app, r.nome, r.voto, r.titolo, r.testo, r.modificata,
+         (select count(*) from public.recensioni_utili u where u.recensione = r.id)::int as utili,
+         (r.autore = auth.uid()) as mia
+  from public.recensioni r;
+grant select on public.voti_app, public.recensioni_complete to anon, authenticated;

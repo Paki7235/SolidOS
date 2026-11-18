@@ -1,8 +1,9 @@
 // SolidOS App: lo store di sistema, completo come un App Store.
-// Barra laterale (ricerca, Scopri, categorie, Installate, Aggiornamenti), vetrina con un'app
-// in evidenza e le collezioni di Flathub, e una pagina per ogni app con foto dello schermo,
-// descrizione, dimensioni e il pulsante «Ottieni» o «Apri». Compaiono solo le app che
-// esistono per il processore di questo computer.
+// Barra laterale (ricerca, Scopri, Raccolte, categorie, Installate, Aggiornamenti), vetrina con
+// un'app in evidenza, le raccolte scelte da SolidOS, le più amate e le collezioni di Flathub, e
+// una pagina per ogni app con foto dello schermo, descrizione, dimensioni, raccolte e le
+// recensioni di chi usa SolidOS (scritte con il Solid ID). Compaiono solo le app che esistono
+// per il processore di questo computer.
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -15,7 +16,12 @@ Finestra {
     height: 760
 
     // ── Stato ──────────────────────────────────────────────────────────────
-    property string pagina: "scopri"          // scopri | categoria | cerca | installate | aggiornamenti | app
+    property string pagina: "scopri"          // scopri | raccolte | raccolta | categoria | cerca | installate | aggiornamenti | app
+    property var raccolte: []
+    property var raccolta: null               // raccolta aperta
+    property var piuAmate: []
+    property var recensioni: ({ riepilogo: { media: 0, totale: 0, distribuzione: [0, 0, 0, 0, 0] }, elenco: [], account: { collegato: false } })
+    property var raccolteApp: []              // raccolte che contengono l'app aperta
     property string paginaPrima: "scopri"     // dove tornare dalla pagina di un'app
     property string categoriaScelta: ""
     property string nomeCategoria: ""
@@ -45,7 +51,11 @@ Finestra {
         scheda = { id: app.id, nome: app.nome, descrizioneBreve: app.descrizione || "", icona: app.icona || "", origine: app.origine || "flatpak", caricata: false }
         vai("app")
         if ((app.origine || "flatpak") === "flatpak") chiedi("dettagli", [app.id], "dettagli")
+        recensioni = { riepilogo: { media: 0, totale: 0, distribuzione: [0, 0, 0, 0, 0] }, elenco: [], account: recensioni.account }
+        raccolteApp = ponte.chiama("raccolteDi", [app.id])
+        ponte.avvia("recensioni", [app.id], "recensioni")
     }
+    function apriRaccolta(r) { if (pagina !== "app") paginaPrima = pagina; raccolta = r; vai("raccolta") }
     function installata(id) { return finestra.idInstallate[id] === true }
     function installa(app) { occupata = app.id; ponte.avvia("installa", [app.id, app.origine || "flatpak"], "installa") }
     function rimuovi(app) { occupata = app.id; ponte.avvia("rimuovi", [app.id, app.origine || "flatpak", app.sistema === true], "rimuovi") }
@@ -61,6 +71,8 @@ Finestra {
         chiedi("collezione", ["popular"], "popular")
         chiedi("collezione", ["trending"], "trending")
         chiedi("collezione", ["recently-updated"], "recently-updated")
+        ponte.avvia("raccolte", [], "raccolte")
+        ponte.avvia("piuAmate", [], "piuAmate")
         aggiornaInstallate()
         var iniziale = ponte.chiama0("ricercaIniziale")
         if (iniziale) { ricerca.text = iniziale; cerca(iniziale) }
@@ -76,6 +88,13 @@ Finestra {
             else if (id === "categoria") finestra.elencoCategoria = r
             else if (id === "cerca") finestra.risultati = r
             else if (id === "installate") finestra.installate = r
+            else if (id === "raccolte") finestra.raccolte = r
+            else if (id === "piuAmate") finestra.piuAmate = r
+            else if (id === "recensioni") finestra.recensioni = r
+            else if (id === "scriviRecensione" || id === "cancellaRecensione" || id === "utile") {
+                finestra.avviso(r.messaggio)
+                if (r.ok) { scrittura.close(); if (finestra.scheda) ponte.avvia("recensioni", [finestra.scheda.id], "recensioni"); ponte.avvia("piuAmate", [], "piuAmate") }
+            }
             else if (id === "aggiornamenti") finestra.aggiornamenti = r
             else if (id === "idInstallate") {
                 var m = {}
@@ -149,8 +168,56 @@ Finestra {
                 Layout.fillWidth: true; spacing: 2
                 Text { Layout.fillWidth: true; text: sa.app.nome || ""; elide: Text.ElideRight; color: Tema.testo; font.family: Tema.font; font.pixelSize: 14; font.weight: Font.DemiBold }
                 Text { Layout.fillWidth: true; text: sa.app.descrizione || ""; elide: Text.ElideRight; maximumLineCount: 2; wrapMode: Text.Wrap; color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 12 }
+                Row {
+                    visible: (sa.app.totale || 0) > 0; spacing: 5
+                    Stelle { voto: sa.app.media || 0; lato: 11; anchors.verticalCenter: parent.verticalCenter }
+                    Text { text: String(sa.app.media || 0).replace(".", ",") + " (" + (sa.app.totale || 0) + ")"; color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 11; font.weight: Font.DemiBold }
+                }
             }
             PulsanteApp { app: sa.app; Layout.alignment: Qt.AlignVCenter }
+        }
+    }
+    // Cinque stelle (voto da 0 a 5)
+    component Stelle: Row {
+        property real voto: 0
+        property int lato: 12
+        spacing: 1
+        Repeater {
+            model: 5
+            Text {
+                required property int index
+                text: "★"; font.pixelSize: parent.lato
+                color: index < Math.round(parent.voto) ? "#F5A524" : (Tema.chiaro ? "#D4D4D8" : "#4A4B52")
+            }
+        }
+    }
+    // Copertina di una raccolta: sfumatura con le icone delle prime app sovrapposte
+    component Copertina: Rectangle {
+        id: cop
+        property var r: ({})
+        radius: 16; clip: true
+        color: Tema.chiaro ? "#FFFFFF" : "#26272D"
+        border.color: zonaCop.containsMouse ? Tema.accento : "transparent"
+        MouseArea { id: zonaCop; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: finestra.apriRaccolta(cop.r) }
+        Rectangle {
+            id: fascia
+            width: parent.width; height: 104; radius: 16
+            gradient: Gradient {
+                orientation: Gradient.Horizontal
+                GradientStop { position: 0; color: (cop.r.colori || ["#4C7DFF"])[0] }
+                GradientStop { position: 1; color: (cop.r.colori || ["#4C7DFF", "#8B5CF6"])[1] }
+            }
+            Row {
+                anchors.centerIn: parent
+                spacing: -12
+                Repeater { model: (cop.r.app || []).slice(0, 4); IconaApp { required property var modelData; app: modelData; lato: 52 } }
+            }
+        }
+        Column {
+            x: 14; anchors.top: fascia.bottom; anchors.topMargin: 10
+            width: parent.width - 28; spacing: 2
+            Text { width: parent.width; elide: Text.ElideRight; text: cop.r.nome || ""; color: Tema.testo; font.family: Tema.font; font.pixelSize: 15; font.weight: Font.Bold }
+            Text { width: parent.width; elide: Text.ElideRight; text: cop.r.sotto || ""; color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 12 }
         }
     }
     // Sezione con titolo e griglia di app
@@ -194,6 +261,7 @@ Finestra {
                 Timer { id: ritardoRicerca; interval: 450; onTriggered: finestra.cerca(ricerca.text) }
                 Item { Layout.preferredHeight: 8 }
                 VoceElenco { Layout.fillWidth: true; icona: "starred-symbolic"; titolo: I18n.t("Scopri"); selezionata: finestra.pagina === "scopri"; onClicked: { ricerca.text = ""; finestra.vai("scopri") } }
+                VoceElenco { Layout.fillWidth: true; icona: "view-app-grid-symbolic"; titolo: I18n.t("Raccolte"); selezionata: finestra.pagina === "raccolte" || finestra.pagina === "raccolta"; onClicked: { ricerca.text = ""; finestra.vai("raccolte") } }
                 Text { Layout.topMargin: 12; Layout.leftMargin: 8; text: I18n.t("Categorie"); color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 11; font.weight: Font.DemiBold }
                 Repeater {
                     model: finestra.categorie
@@ -268,6 +336,35 @@ Finestra {
                             }
                         }
                     }
+                    // Raccolte (le prime 4) e «Vedi tutte»
+                    ColumnLayout {
+                        visible: (finestra.pagina === "scopri" || finestra.pagina === "raccolte") && finestra.raccolte.length > 0
+                        Layout.fillWidth: true; spacing: 12
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Text { Layout.fillWidth: true; text: I18n.t("Raccolte"); color: Tema.testo; font.family: Tema.font; font.pixelSize: finestra.pagina === "raccolte" ? 26 : 20; font.weight: Font.Bold }
+                            Text {
+                                visible: finestra.pagina === "scopri"
+                                text: I18n.t("Vedi tutte") + " ›"; color: Tema.accento; font.family: Tema.font; font.pixelSize: 13; font.weight: Font.DemiBold
+                                MouseArea { anchors.fill: parent; anchors.margins: -6; cursorShape: Qt.PointingHandCursor; onClicked: finestra.vai("raccolte") }
+                            }
+                        }
+                        Text { visible: finestra.pagina === "raccolte"; text: I18n.t("Gruppi di app scelti da SolidOS per fare una cosa sola, bene."); color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 14 }
+                        Grid {
+                            id: grigliaRaccolte
+                            Layout.fillWidth: true
+                            columns: Math.max(2, Math.floor((width + 16) / 236)); spacing: 16
+                            Repeater {
+                                model: finestra.pagina === "raccolte" ? finestra.raccolte : finestra.raccolte.slice(0, grigliaRaccolte.columns)
+                                Copertina {
+                                    required property var modelData
+                                    r: modelData
+                                    width: Math.floor((grigliaRaccolte.width - (grigliaRaccolte.columns - 1) * 16) / grigliaRaccolte.columns); height: 168
+                                }
+                            }
+                        }
+                    }
+                    Sezione { visible: finestra.pagina === "scopri" && elenco.length > 0; titolo: I18n.t("Le più amate su SolidOS"); elenco: finestra.piuAmate }
                     Sezione { visible: finestra.pagina === "scopri" && elenco.length > 0; titolo: I18n.t("Le più popolari"); elenco: finestra.popolari.slice(1) }
                     Sezione { visible: finestra.pagina === "scopri" && elenco.length > 0; titolo: I18n.t("Di tendenza"); elenco: finestra.tendenza }
                     Sezione { visible: finestra.pagina === "scopri" && elenco.length > 0; titolo: I18n.t("Nuove e aggiornate"); elenco: finestra.nuove }
@@ -276,6 +373,33 @@ Finestra {
                         Layout.fillWidth: true; wrapMode: Text.Wrap
                         text: I18n.t("Non riesco a leggere il catalogo delle app: controlla la connessione a Internet e riapri lo store.")
                         color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 14
+                    }
+
+                    // ══ Una raccolta ═══════════════════════════════════════
+                    Rectangle {
+                        id: testaRaccolta
+                        visible: finestra.pagina === "raccolta" && finestra.raccolta !== null
+                        Layout.fillWidth: true; Layout.preferredHeight: 190; radius: 22
+                        readonly property var r: finestra.raccolta || ({})
+                        gradient: Gradient {
+                            orientation: Gradient.Horizontal
+                            GradientStop { position: 0; color: (testaRaccolta.r.colori || ["#4C7DFF"])[0] }
+                            GradientStop { position: 1; color: (testaRaccolta.r.colori || ["#4C7DFF", "#8B5CF6"])[1] }
+                        }
+                        Text {
+                            x: 24; y: 18; text: "‹ " + I18n.t("Indietro"); color: "#E6FFFFFF"; font.family: Tema.font; font.pixelSize: 14
+                            MouseArea { anchors.fill: parent; anchors.margins: -8; cursorShape: Qt.PointingHandCursor; onClicked: finestra.vai(finestra.paginaPrima === "raccolta" ? "raccolte" : finestra.paginaPrima) }
+                        }
+                        Column {
+                            x: 28; anchors.bottom: parent.bottom; anchors.bottomMargin: 24; spacing: 6
+                            Row { spacing: -12; Repeater { model: (parent.parent.parent.r.app || []).slice(0, 5); IconaApp { required property var modelData; app: modelData; lato: 48 } } }
+                            Text { text: parent.parent.r.nome || ""; color: "#FFFFFF"; font.family: Tema.font; font.pixelSize: 30; font.weight: Font.Bold }
+                            Text { text: (parent.parent.r.sotto || "") + " · " + I18n.t("scelte da") + " " + Tema.nomeSistema; color: "#E6FFFFFF"; font.family: Tema.font; font.pixelSize: 14 }
+                        }
+                    }
+                    Sezione {
+                        visible: finestra.pagina === "raccolta" && finestra.raccolta !== null
+                        titolo: I18n.t("Le app"); elenco: finestra.raccolta ? finestra.raccolta.app : []; quante: 30
                     }
 
                     // ══ Categoria e ricerca ═════════════════════════════════
@@ -427,6 +551,105 @@ Finestra {
                             Text { text: I18n.t("Novità") + (paginaApp.s.versione ? " · " + I18n.t("versione") + " " + paginaApp.s.versione : ""); color: Tema.testo; font.family: Tema.font; font.pixelSize: 18; font.weight: Font.Bold }
                             Text { Layout.fillWidth: true; wrapMode: Text.Wrap; textFormat: Text.RichText; text: paginaApp.s.novita || ""; color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 13; lineHeight: 1.3 }
                         }
+                        // Nelle raccolte
+                        ColumnLayout {
+                            visible: finestra.raccolteApp.length > 0
+                            Layout.fillWidth: true; spacing: 10
+                            Text { text: I18n.t("Nelle raccolte"); color: Tema.testo; font.family: Tema.font; font.pixelSize: 18; font.weight: Font.Bold }
+                            Flow {
+                                Layout.fillWidth: true; spacing: 10
+                                Repeater {
+                                    model: finestra.raccolteApp
+                                    Rectangle {
+                                        id: chipRaccolta
+                                        required property var modelData
+                                        height: 46; width: nomeR.implicitWidth + 64; radius: 12
+                                        color: Tema.chiaro ? "#FFFFFF" : "#26272D"
+                                        Rectangle {
+                                            x: 7; anchors.verticalCenter: parent.verticalCenter; width: 32; height: 32; radius: 9
+                                            gradient: Gradient { GradientStop { position: 0; color: chipRaccolta.modelData.colori[0] } GradientStop { position: 1; color: chipRaccolta.modelData.colori[1] } }
+                                        }
+                                        Text { id: nomeR; x: 50; anchors.verticalCenter: parent.verticalCenter; text: parent.modelData.nome; color: Tema.testo; font.family: Tema.font; font.pixelSize: 13; font.weight: Font.DemiBold }
+                                        MouseArea {
+                                            anchors.fill: parent; cursorShape: Qt.PointingHandCursor
+                                            onClicked: { var id = parent.modelData.id; var t = finestra.raccolte.filter(function (x) { return x.id === id }); if (t.length) finestra.apriRaccolta(t[0]) }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        // Recensioni di chi usa SolidOS
+                        ColumnLayout {
+                            visible: paginaApp.s.origine !== "apt"
+                            Layout.fillWidth: true; spacing: 12
+                            readonly property var rr: finestra.recensioni.riepilogo || ({ media: 0, totale: 0, distribuzione: [0, 0, 0, 0, 0] })
+                            RowLayout {
+                                Layout.fillWidth: true
+                                Text { Layout.fillWidth: true; text: I18n.t("Recensioni"); color: Tema.testo; font.family: Tema.font; font.pixelSize: 18; font.weight: Font.Bold }
+                                Pulsante {
+                                    text: (finestra.recensioni.elenco || []).some(function (x) { return x.mia }) ? I18n.t("Modifica la tua") : I18n.t("Scrivi una recensione")
+                                    icona: "document-edit-symbolic"
+                                    onClicked: scrittura.apri()
+                                }
+                            }
+                            RowLayout {
+                                visible: parent.rr.totale > 0
+                                Layout.fillWidth: true; spacing: 22
+                                ColumnLayout {
+                                    spacing: 0
+                                    Text { Layout.alignment: Qt.AlignHCenter; text: String(parent.parent.parent.rr.media).replace(".", ","); color: Tema.testo; font.family: Tema.font; font.pixelSize: 46; font.weight: Font.Bold }
+                                    Text { Layout.alignment: Qt.AlignHCenter; text: I18n.t("su 5"); color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 12 }
+                                }
+                                ColumnLayout {
+                                    Layout.preferredWidth: 280; spacing: 4
+                                    Repeater {
+                                        model: 5
+                                        RowLayout {
+                                            required property int index
+                                            spacing: 8
+                                            Text { text: 5 - parent.index; color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 11; font.weight: Font.DemiBold }
+                                            Rectangle {
+                                                Layout.fillWidth: true; height: 6; radius: 3; color: Tema.chiaro ? "#E9E9EE" : "#2F3037"
+                                                readonly property var rr: finestra.recensioni.riepilogo
+                                                Rectangle { height: parent.height; radius: 3; color: Tema.testoSecondario
+                                                            width: parent.width * (parent.rr.totale ? parent.rr.distribuzione[parent.parent.index] / parent.rr.totale : 0) }
+                                            }
+                                        }
+                                    }
+                                }
+                                Text { Layout.fillWidth: true; text: parent.parent.rr.totale + " " + (parent.parent.rr.totale === 1 ? I18n.t("voto") : I18n.t("voti")); color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 12 }
+                            }
+                            Text {
+                                visible: parent.rr.totale === 0
+                                text: I18n.t("Nessuna recensione ancora: scrivi la prima.")
+                                color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 14
+                            }
+                            Repeater {
+                                model: finestra.recensioni.elenco || []
+                                Rectangle {
+                                    id: rec
+                                    required property var modelData
+                                    Layout.fillWidth: true; Layout.preferredHeight: colRec.implicitHeight + 24; radius: 14
+                                    color: Tema.chiaro ? "#FFFFFF" : "#26272D"
+                                    ColumnLayout {
+                                        id: colRec
+                                        x: 16; y: 12; width: parent.width - 32; spacing: 4
+                                        RowLayout {
+                                            Layout.fillWidth: true; spacing: 8
+                                            Stelle { voto: rec.modelData.voto; lato: 12 }
+                                            Text { Layout.fillWidth: true; elide: Text.ElideRight; text: (rec.modelData.titolo ? rec.modelData.titolo + " · " : "") + rec.modelData.nome + (rec.modelData.mia ? " (" + I18n.t("tu") + ")" : ""); color: Tema.testo; font.family: Tema.font; font.pixelSize: 13; font.weight: Font.DemiBold }
+                                            Text { text: rec.modelData.quando || ""; color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 12 }
+                                        }
+                                        Text { Layout.fillWidth: true; visible: text !== ""; wrapMode: Text.Wrap; text: rec.modelData.testo || ""; color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 13; lineHeight: 1.25 }
+                                        Text {
+                                            visible: !rec.modelData.mia
+                                            text: I18n.t("Utile") + (rec.modelData.utili ? " (" + rec.modelData.utili + ")" : ""); color: Tema.accento; font.family: Tema.font; font.pixelSize: 12; font.weight: Font.DemiBold
+                                            MouseArea { anchors.fill: parent; anchors.margins: -6; cursorShape: Qt.PointingHandCursor; onClicked: ponte.avvia("recensioneUtile", [rec.modelData.id], "utile") }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                         Text {
                             visible: (paginaApp.s.sito || "") !== ""
                             text: I18n.t("Sito dello sviluppatore") + " ›"
@@ -434,6 +657,71 @@ Finestra {
                             MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: Qt.openUrlExternally(paginaApp.s.sito) }
                         }
                     }
+                }
+            }
+        }
+    }
+
+    // ── Scrivi una recensione ──────────────────────────────────────────────
+    Popup {
+        id: scrittura
+        property int voto: 0
+        function apri() {
+            var mia = (finestra.recensioni.elenco || []).filter(function (x) { return x.mia })
+            voto = mia.length ? mia[0].voto : 0
+            titoloRec.text = mia.length ? mia[0].titolo : ""
+            testoRec.text = mia.length ? mia[0].testo : ""
+            open()
+        }
+        anchors.centerIn: parent
+        width: 480; modal: true; padding: 24
+        background: Rectangle { radius: 18; color: Tema.chiaro ? "#FFFFFF" : "#26272D"; border.color: Tema.chiaro ? "#E5E5EA" : "#3A3B42" }
+        contentItem: ColumnLayout {
+            spacing: 14
+            Text { text: I18n.t("Scrivi una recensione"); color: Tema.testo; font.family: Tema.font; font.pixelSize: 20; font.weight: Font.Bold }
+            Text {
+                visible: !finestra.recensioni.account || !finestra.recensioni.account.collegato
+                Layout.fillWidth: true; wrapMode: Text.Wrap
+                text: I18n.t("Per scrivere una recensione accedi al Solid ID da Impostazioni › Account.")
+                color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 13
+            }
+            RowLayout {
+                spacing: 8
+                Repeater {
+                    model: 5
+                    Text {
+                        required property int index
+                        text: "★"; font.pixelSize: 36
+                        color: index < scrittura.voto ? "#F5A524" : (Tema.chiaro ? "#D4D4D8" : "#4A4B52")
+                        MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: scrittura.voto = parent.index + 1 }
+                    }
+                }
+                Text { text: scrittura.voto ? ["", I18n.t("Pessima"), I18n.t("Così così"), I18n.t("Buona"), I18n.t("Molto buona"), I18n.t("Ottima")][scrittura.voto] : I18n.t("Tocca le stelle"); color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 13 }
+            }
+            CampoTesto { id: titoloRec; Layout.fillWidth: true; placeholderText: I18n.t("Titolo (facoltativo)"); maximumLength: 80 }
+            ScrollView {
+                Layout.fillWidth: true; Layout.preferredHeight: 130
+                TextArea {
+                    id: testoRec
+                    wrapMode: TextArea.Wrap
+                    placeholderText: I18n.t("Cosa ti piace, cosa no, a cosa ti serve…")
+                    color: Tema.testo; font.family: Tema.font; font.pixelSize: 14
+                    background: Rectangle { radius: 10; color: Tema.chiaro ? "#F2F2F7" : "#2F3037" }
+                }
+            }
+            RowLayout {
+                Layout.fillWidth: true; spacing: 10
+                Pulsante {
+                    visible: (finestra.recensioni.elenco || []).some(function (x) { return x.mia })
+                    text: I18n.t("Togli la mia"); pericoloso: true
+                    onClicked: ponte.avvia("cancellaRecensione", [finestra.scheda.id], "cancellaRecensione")
+                }
+                Item { Layout.fillWidth: true }
+                Pulsante { text: I18n.t("Annulla"); onClicked: scrittura.close() }
+                Pulsante {
+                    principale: true; text: I18n.t("Pubblica")
+                    enabled: scrittura.voto > 0 && finestra.recensioni.account && finestra.recensioni.account.collegato
+                    onClicked: ponte.avvia("scriviRecensione", [finestra.scheda.id, scrittura.voto, titoloRec.text, testoRec.text], "scriviRecensione")
                 }
             }
         }

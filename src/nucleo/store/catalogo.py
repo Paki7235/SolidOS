@@ -190,3 +190,93 @@ def dettagli(ident: str) -> dict:
         "disponibile": not archi or ARCH in archi, "origine": "flatpak",
         "categorie": [html.unescape(c) for c in (a.get("categories") or [])][:4],
     }
+
+
+# ── Raccolte scelte da SolidOS (da sfogliare, come le liste dell'App Store) ────
+# id Flathub; quelle che non esistono per questo processore si saltano da sole
+RACCOLTE = [
+    {"id": "studio", "nome": T("Per lo studio"), "sotto": T("Appunti, flashcard, bibliografia e matematica"),
+     "colori": ["#4C7DFF", "#8B5CF6"],
+     "app": ["com.github.xournalpp.xournalpp", "net.ankiweb.Anki", "org.zotero.Zotero", "org.libreoffice.LibreOffice",
+             "com.logseq.Logseq", "org.geogebra.GeoGebra"]},
+    {"id": "ufficio", "nome": T("Ufficio completo"), "sotto": T("Documenti, fogli di calcolo, posta e PDF"),
+     "colori": ["#14B8A6", "#2F5FD0"],
+     "app": ["org.libreoffice.LibreOffice", "org.mozilla.Thunderbird", "org.onlyoffice.desktopeditors",
+             "com.github.jeromerobert.pdfarranger", "org.gnome.Calendar", "org.kde.okular"]},
+    {"id": "grafica", "nome": T("Foto e grafica"), "sotto": T("Ritocca, disegna, impagina, modella in 3D"),
+     "colori": ["#F59E0B", "#E5484D"],
+     "app": ["org.gimp.GIMP", "org.inkscape.Inkscape", "org.kde.krita", "org.blender.Blender",
+             "org.darktable.Darktable", "com.github.PintaProject.Pinta"]},
+    {"id": "video", "nome": T("Video e musica"), "sotto": T("Montaggio, registrazione e ascolto"),
+     "colori": ["#EC4899", "#8B5CF6"],
+     "app": ["org.kde.kdenlive", "com.obsproject.Studio", "org.audacityteam.Audacity", "org.videolan.VLC",
+             "org.shotcut.Shotcut", "fr.handbrake.ghb"]},
+    {"id": "giochi", "nome": T("Giochi gratis"), "sotto": T("Da soli o con gli amici"),
+     "colori": ["#30A46C", "#0EA5E9"],
+     "app": ["net.supertuxkart.SuperTuxKart", "org.luanti.luanti", "com.play0ad.zeroad", "com.github.Anuken.Mindustry",
+             "com.valvesoftware.Steam", "org.libretro.RetroArch"]},
+    {"id": "comunicare", "nome": T("Parlare con tutti"), "sotto": T("Messaggi, chiamate e videochiamate"),
+     "colori": ["#0EA5E9", "#4C7DFF"],
+     "app": ["org.telegram.desktop", "org.signal.Signal", "im.riot.Riot", "com.discordapp.Discord", "us.zoom.Zoom",
+             "org.mozilla.firefox"]},
+]
+
+
+def app_breve(ident: str) -> dict | None:
+    """Nome, descrizione breve e icona di un'app (dalla sua scheda, in cache)."""
+    if not re.fullmatch(r"[A-Za-z0-9._-]+", ident or ""):
+        return None
+    a = _richiesta(f"/appstream/{ident}")
+    if not a:
+        return None
+    s = _richiesta(f"/summary/{ident}") or {}
+    archi = s.get("arches") or []
+    if archi and ARCH not in archi:
+        return None
+    return {"id": ident, "nome": a.get("name") or ident, "descrizione": a.get("summary") or "",
+            "icona": a.get("icon") or "", "sviluppatore": a.get("developer_name") or "", "origine": "flatpak"}
+
+
+def _molte(idents: list[str]) -> list[dict]:
+    from concurrent.futures import ThreadPoolExecutor
+
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        return [a for a in pool.map(app_breve, idents) if a]
+
+
+# Sul telefono: app che funzionano bene su uno schermo piccolo
+RACCOLTE_TELEFONO = [
+    {"id": "giorni", "nome": T("Per tutti i giorni"), "sotto": T("Meteo, promemoria, orologi e mappe"),
+     "colori": ["#4C7DFF", "#8B5CF6"],
+     "app": ["org.gnome.Weather", "io.github.alainm23.planify", "org.gnome.clocks", "org.gnome.Maps", "org.gnome.Calendar"]},
+    {"id": "social", "nome": T("Messaggi e social"), "sotto": T("Chat, gruppi e Mastodon"),
+     "colori": ["#0EA5E9", "#4C7DFF"],
+     "app": ["org.telegram.desktop", "org.gnome.Fractal", "dev.geopjr.Tuba", "de.schmidhuberj.Flare"]},
+    {"id": "ascolto", "nome": T("Musica e podcast"), "sotto": T("Ascolta, scopri, riconosci un brano"),
+     "colori": ["#EC4899", "#8B5CF6"],
+     "app": ["io.bassi.Amberol", "org.gnome.Podcasts", "org.kde.kasts", "org.gnome.Shortwave", "io.github.seadve.Mousai"]},
+    {"id": "giochi", "nome": T("Giochi da tasca"), "sotto": T("Partite veloci, anche senza rete"),
+     "colori": ["#30A46C", "#0EA5E9"],
+     "app": ["org.gnome.Chess", "org.gnome.Mines", "org.gnome.Sudoku", "org.gnome.TwentyFortyEight", "org.gnome.Quadrapassel"]},
+    {"id": "strumenti", "nome": T("Strumenti utili"), "sotto": T("Codici di accesso, QR e file tra dispositivi"),
+     "colori": ["#F59E0B", "#E5484D"],
+     "app": ["com.belmoussaoui.Authenticator", "com.belmoussaoui.Decoder", "app.drey.Warp", "org.gnome.Solanum"]},
+]
+
+
+def raccolte(definizioni: list[dict] | None = None) -> list[dict]:
+    """Le raccolte con le loro app (quelle che esistono per questo processore)."""
+    definizioni = definizioni or RACCOLTE
+    tutte = _molte(sorted({i for r in definizioni for i in r["app"]}))
+    per_id = {a["id"]: a for a in tutte}
+    risultato = []
+    for r in definizioni:
+        app = [per_id[i] for i in r["app"] if i in per_id]
+        if app:
+            risultato.append({"id": r["id"], "nome": r["nome"], "sotto": r["sotto"], "colori": r["colori"], "app": app})
+    return risultato
+
+
+def raccolte_di(ident: str, definizioni: list[dict] | None = None) -> list[dict]:
+    """In quali raccolte si trova un'app (per la sua scheda)."""
+    return [{"id": r["id"], "nome": r["nome"], "colori": r["colori"]} for r in (definizioni or RACCOLTE) if ident in r["app"]]
