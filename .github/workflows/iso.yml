@@ -65,7 +65,9 @@ jobs:
           fetch-depth: 1
 
       - name: Numero di versione (per gli aggiornamenti dal PC)
-        run: printf '%s\n' "${{ github.run_number }}" > src/dati/versione
+        run: |
+          printf '%s\n' "${{ github.run_number }}" > src/dati/versione
+          git log -1 --format=%s > src/dati/novita
 
       - name: Controlli statici
         if: matrix.arch == 'amd64'
@@ -120,6 +122,7 @@ jobs:
       - name: Crea il pacchetto
         run: |
           printf '%s\n' "${{ github.run_number }}" > src/dati/versione
+          git log -1 --format=%s > src/dati/novita
           ./scripts/genera-branding.sh build/albero --senza-immagini
           N=${{ github.run_number }}
           FILE=solidos-aggiornamento-$N.tar.xz

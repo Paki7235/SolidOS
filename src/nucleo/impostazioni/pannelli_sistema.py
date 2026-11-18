@@ -214,6 +214,11 @@ class PannelloAggiornamenti(Pannello):
             voci_solidos.append(azione("solidos", T("Nuova versione: build {n}", n=so["disponibile"]),
                                        T("Installa"), so["novita"] or T("Shell, app e impostazioni aggiornate."),
                                        ))
+        if so["installata"] and aggiornamento.novita_installata():
+            voci_solidos.append(info("novita", T("Novità di questa versione"), "",
+                                     aggiornamento.novita_installata()))
+        if so["nuova"]:
+            pass   # c'è già la voce «Nuova versione» con il pulsante Installa
         elif so["disponibile"] is not None:
             voci_solidos.append(info("solidos-ok", T("Nuove versioni"), T("Hai l'ultima versione")))
         else:
@@ -388,6 +393,12 @@ class PannelloDataOra(Pannello):
         return None
 
 
+def _build() -> int:
+    from ..aggiornamento import versione_installata
+
+    return versione_installata()
+
+
 class PannelloInformazioni(Pannello):
     id = "informazioni"
     titolo = T("Informazioni sul sistema")
@@ -404,7 +415,8 @@ class PannelloInformazioni(Pannello):
                                         for f in ("sys_vendor", "product_name")]))
         debian = Path("/etc/debian_version").read_text().strip() if Path("/etc/debian_version").exists() else ""
         return [
-            info("sistema", T("Sistema"), f'{branding.nome()} {branding.get("OS_VERSION")}'),
+            info("sistema", T("Sistema"), f'{branding.nome()} {branding.get("OS_VERSION")}'
+                 + (f' (build {_build()})' if _build() else "")),
             info("base", T("Basato su"), f"Debian {debian}"),
             campo("hostname", T("Nome del computer"), platform.node()),
             info("modello", T("Modello"), modello or "—"),

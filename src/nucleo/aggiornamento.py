@@ -29,6 +29,14 @@ def versione_installata() -> int:
         return 0
 
 
+def novita_installata() -> str:
+    """Cosa è cambiato nella versione installata (scritto dalla build)."""
+    try:
+        return (FILE_VERSIONE.parent / "novita").read_text(encoding="utf-8").strip()[:600]
+    except OSError:
+        return ""
+
+
 def scheda_remota(timeout: float = 20) -> dict | None:
     """La scheda dell'ultima versione pubblicata, o None senza rete/indirizzo."""
     base = url_base()

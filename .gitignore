@@ -14,3 +14,4 @@ __pycache__/
 
 # Numero della build (scritto dalla build stessa)
 /src/dati/versione
+/src/dati/novita
