@@ -46,6 +46,10 @@ case "$SOLIDOS" in
 	"SolidOS aggiornato"*)
 		ESITO="$ESITO · $SOLIDOS"
 		notifica_utenti "Nuova versione di SolidOS installata" "Esci e rientra (o riavvia) per usarla." ;;
+	*"firma"*)
+		# Un aggiornamento con la firma sbagliata non si installa mai: si avvisa chi usa il PC
+		ESITO="$ESITO · $SOLIDOS"
+		notifica_utenti "Aggiornamento di SolidOS rifiutato" "Non era firmato da SolidOS: il computer resta com'è." ;;
 esac
 command -v flatpak >/dev/null && flatpak update --system -y --noninteractive >/dev/null 2>&1 || true
 

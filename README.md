@@ -134,3 +134,6 @@ funzionano se la rete della VM è in modalità **Scheda con bridge**.
 ## Licenza
 
 Codice: GPL-3.0-or-later ([LICENSE](LICENSE)). Grafica originale: CC BY-SA 4.0.
+
+SolidOS è software libero e gratuito: nessun costo, nessuna pubblicità, nessun dato venduto.
+Gli aggiornamenti si installano da soli solo se firmati dal progetto: vedi [SECURITY.md](SECURITY.md).

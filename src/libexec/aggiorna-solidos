@@ -1,7 +1,8 @@
 #!/usr/bin/python3
 """Installa l'ultima versione di SolidOS pubblicata (eseguito come root).
 
-1. legge la scheda versione.json della build più recente;
+1. legge la scheda versione.json della build più recente e ne verifica la FIRMA (chiave di
+   SolidOS): una scheda non firmata o modificata non si usa;
 2. se è più nuova di quella installata: scarica il pacchetto e ne verifica la somma SHA-256;
 3. crea un punto di ripristino (se c'è la Linea del Tempo);
 4. copia i file nuovi sopra quelli vecchi (solo dentro le cartelle di SolidOS: niente
@@ -64,7 +65,7 @@ def main():
     forza = "--forza" in sys.argv[1:]
     scheda = aggiornamento.scheda_remota(timeout=30)
     if scheda is None:
-        esito("Impossibile contattare il server degli aggiornamenti di SolidOS", 2)
+        esito(f"Nessun aggiornamento installato: {aggiornamento.ultimo_errore or 'server non raggiungibile'}", 2)
     nuova, installata = int(scheda["versione"]), aggiornamento.versione_installata()
     if nuova <= installata and not forza:
         esito(f"SolidOS è già aggiornato (versione {installata})")

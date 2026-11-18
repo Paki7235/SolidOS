@@ -14,6 +14,8 @@ console-setup
 keyboard-configuration
 tzdata
 ca-certificates
+# verifica la firma degli aggiornamenti di SolidOS
+openssl
 dbus-user-session
 polkitd
 ?pkexec

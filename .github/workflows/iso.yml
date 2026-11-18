@@ -136,6 +136,16 @@ jobs:
                      "commit": "${{ github.sha }}"}, open("versione.json", "w"), ensure_ascii=False)
           PY
           cat versione.json; ls -la "$FILE"
+      - name: Firma la scheda (chiave segreta di SolidOS)
+        env:
+          FIRMA: ${{ secrets.FIRMA_AGGIORNAMENTI }}
+        run: |
+          # Senza la chiave non si pubblica niente: i PC accettano solo schede firmate
+          [ -n "$FIRMA" ] || { echo "Manca il segreto FIRMA_AGGIORNAMENTI"; exit 1; }
+          umask 077; printf '%s\n' "$FIRMA" > "$RUNNER_TEMP/chiave.pem"
+          openssl pkeyutl -sign -inkey "$RUNNER_TEMP/chiave.pem" -rawin -in versione.json -out versione.json.firma
+          rm -f "$RUNNER_TEMP/chiave.pem"
+          openssl pkeyutl -verify -pubin -inkey src/dati/chiave-aggiornamenti.pem -rawin -in versione.json -sigfile versione.json.firma
       - name: Pubblica (Release «aggiornamento», sempre la stessa)
         env:
           GH_TOKEN: ${{ github.token }}
@@ -145,7 +155,7 @@ jobs:
             gh release create aggiornamento --repo "$R" --latest=false --title "Aggiornamenti di SolidOS" \
               --notes "Pacchetto con l'ultima versione di SolidOS, usato da Impostazioni › Aggiornamenti sui PC già installati."
           gh release upload aggiornamento --repo "$R" --clobber solidos-aggiornamento-*.tar.xz
-          gh release upload aggiornamento --repo "$R" --clobber versione.json
+          gh release upload aggiornamento --repo "$R" --clobber versione.json versione.json.firma
           # restano solo l'ultimo pacchetto e la sua scheda
           gh release view aggiornamento --repo "$R" --json assets -q '.assets[].name' \
             | grep '^solidos-aggiornamento-' | grep -vx "solidos-aggiornamento-${{ github.run_number }}.tar.xz" \
