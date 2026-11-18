@@ -1,0 +1,3 @@
+# Sfondo di ogni utente visto dalla schermata di accesso (la cartella personale non è leggibile
+# da lì): la scrivania ne lascia qui una copia. 1777 come /tmp: ognuno scrive solo il suo.
+d /var/lib/@OS_ID@-sfondi 1777 root root -

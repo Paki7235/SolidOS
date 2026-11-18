@@ -67,6 +67,11 @@ class BackendGreeter(Backend):
                                   "password": not (SENZA_PASSWORD / u.pw_name).exists()})
         return risultato
 
+    def sfondo(self, utente: str) -> str:
+        from ..sistema import sfondo_pubblico
+
+        return "file://" + sfondo_pubblico(str(utente))
+
     def ultimoUtente(self) -> str:
         try:
             return ULTIMO_UTENTE.read_text().strip()

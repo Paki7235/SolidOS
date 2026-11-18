@@ -177,7 +177,14 @@ Item {
                         anchors.leftMargin: 14
                         anchors.rightMargin: 14
                         spacing: 10
-                        Icona { nome: modelData.icona || ""; lato: 22; visible: !!modelData.icona }
+                        // Utenti: la foto del profilo (o le iniziali) in un cerchio; altrimenti l'icona
+                        FotoAccount {
+                            visible: modelData.iniziali !== undefined
+                            lato: visible ? 36 : 0
+                            Layout.preferredWidth: lato; Layout.preferredHeight: lato
+                            account: ({ foto: modelData.foto || "", iniziali: modelData.iniziali || "" })
+                        }
+                        Icona { nome: modelData.icona || ""; lato: 22; visible: !!modelData.icona && modelData.iniziali === undefined }
                         ColumnLayout {
                             Layout.fillWidth: true
                             spacing: 1

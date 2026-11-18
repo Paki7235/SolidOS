@@ -117,9 +117,11 @@ class BackendShell(Backend):
 
     # ── Scrivania e sfondo ──────────────────────────────────────────────────
     def sfondo(self) -> str:
-        from ..sistema import sfondo_attuale
+        from ..sistema import pubblica_sfondo, sfondo_attuale
 
-        return "file://" + sfondo_attuale()
+        percorso = sfondo_attuale()
+        pubblica_sfondo(percorso)   # anche la schermata di accesso mostrerà questo
+        return "file://" + percorso
 
     def mostraStart(self) -> None:
         self.emetti("mostra", "start")

@@ -218,10 +218,13 @@ def cmd_utente_password(nome_utente: str):
     codice = esegui(["chpasswd"], input=f"{nome_utente}:{password}\n", text=True)
     if codice == 0:
         (SENZA_PASSWORD / nome_utente).unlink(missing_ok=True)
+        esegui(["gpasswd", "-d", nome_utente, GRUPPO_SENZA_PASSWORD], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     sys.exit(codice)
 
 
 SENZA_PASSWORD = Path("/var/lib/nucleo/senza-password")
+# Chi è in questo gruppo non riceve richieste di password (regola polkit 50-senza-password)
+GRUPPO_SENZA_PASSWORD = "senzapassword"
 
 
 def _solo_proprio_o_amministratore(nome_utente: str):
@@ -258,6 +261,8 @@ def cmd_utente_senza_password(nome_utente: str):
         esegui(["chage", "-d", "-1", nome_utente])   # niente «password scaduta» da cambiare
         SENZA_PASSWORD.mkdir(parents=True, exist_ok=True)
         (SENZA_PASSWORD / nome_utente).touch()
+        esegui(["groupadd", "-f", "-r", GRUPPO_SENZA_PASSWORD])
+        esegui(["usermod", "-aG", GRUPPO_SENZA_PASSWORD, nome_utente])
     sys.exit(codice)
 
 

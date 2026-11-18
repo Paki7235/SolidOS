@@ -47,6 +47,17 @@ def ammesso(nome: str) -> bool:
     return nome.startswith(CONSENTITI) and not nome.startswith(ESCLUSI)
 
 
+def _senza_password():
+    """Account senza password (creati prima di questa versione): nel gruppo che evita le
+    richieste di password vuote (regola polkit 50-senza-password)."""
+    cartella = Path("/var/lib/nucleo/senza-password")
+    if not cartella.is_dir():
+        return
+    subprocess.run(["groupadd", "-f", "-r", "senzapassword"], check=False, capture_output=True)
+    for voce in cartella.iterdir():
+        subprocess.run(["usermod", "-aG", "senzapassword", voce.name], check=False, capture_output=True)
+
+
 def main():
     if os.geteuid() != 0:
         esito("serve l'amministratore", 1)
@@ -88,6 +99,8 @@ def main():
     aggiornamento.FILE_VERSIONE.write_text(f"{nuova}\n")
     # Servizi o regole cambiati: si ricaricano (le app e la shell si aggiornano al prossimo accesso)
     subprocess.run(["systemctl", "daemon-reload"], check=False)
+    subprocess.run(["systemd-tmpfiles", "--create"], check=False, capture_output=True)
+    _senza_password()
     subprocess.run(["glib-compile-schemas", "/usr/share/glib-2.0/schemas"], check=False, capture_output=True)
     subprocess.run(["update-desktop-database", "-q", "/usr/share/applications"], check=False, capture_output=True)
     esito(f"SolidOS aggiornato alla versione {nuova}")

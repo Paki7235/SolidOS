@@ -42,8 +42,10 @@ Window {
 
     Image {
         anchors.fill: parent
-        source: "file:///usr/share/" + Tema.idSistema + "/sfondo-predefinito.png"
+        // Lo sfondo della persona scelta (lo stesso della sua scrivania), non uno fisso
+        source: finestra.utente ? greeter.chiama("sfondo", [finestra.utente]) : ""
         fillMode: Image.PreserveAspectCrop
+        asynchronous: false
     }
     // Leggera ombra in alto e in basso per leggere bene ora e nome su ogni sfondo
     Rectangle {

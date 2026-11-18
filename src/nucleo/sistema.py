@@ -223,6 +223,78 @@ def sfondo_attuale() -> str:
     return percorso
 
 
+def cartella_sfondi_pubblici() -> Path:
+    from . import branding
+
+    return Path(f"/var/lib/{branding.id_os()}-sfondi")
+
+
+def pubblica_sfondo(percorso: str) -> None:
+    """Lascia lo sfondo dove lo vede la schermata di accesso (così all'accensione si vede
+    subito il proprio, senza passare da quello predefinito). Gli sfondi del sistema si
+    indicano col percorso; le immagini personali si copiano (ridotte, se enormi)."""
+    import pwd
+    import shutil
+
+    cartella = cartella_sfondi_pubblici()
+    if not cartella.is_dir() or not os.access(cartella, os.W_OK):
+        return
+    utente = pwd.getpwuid(os.getuid()).pw_name
+    voce, immagine = cartella / f"{utente}.percorso", cartella / f"{utente}.immagine"
+    try:
+        if percorso.startswith("/usr/share/"):
+            if not voce.exists() or voce.read_text() != percorso:
+                temporaneo = cartella / f".{utente}.percorso"
+                temporaneo.write_text(percorso)
+                temporaneo.chmod(0o644)
+                temporaneo.replace(voce)
+            immagine.unlink(missing_ok=True)
+            return
+        sorgente = Path(percorso)
+        if immagine.exists() and immagine.stat().st_mtime >= sorgente.stat().st_mtime \
+                and voce.exists() and voce.read_text() == percorso:
+            return
+        temporaneo = cartella / f".{utente}.immagine"
+        if sorgente.stat().st_size > 12 * 1024 * 1024:
+            from PyQt6.QtCore import Qt
+            from PyQt6.QtGui import QImage
+
+            img = QImage(percorso)
+            if img.isNull():
+                return
+            img.scaled(2560, 1600, Qt.AspectRatioMode.KeepAspectRatioByExpanding,
+                       Qt.TransformationMode.SmoothTransformation).save(str(temporaneo), "JPG", 90)
+        else:
+            shutil.copyfile(percorso, temporaneo)
+        temporaneo.chmod(0o644)
+        temporaneo.replace(immagine)
+        # il percorso d'origine serve solo a capire se è cambiato (la schermata usa la copia)
+        voce_tmp = cartella / f".{utente}.percorso"
+        voce_tmp.write_text(percorso)
+        voce_tmp.chmod(0o644)
+        voce_tmp.replace(voce)
+    except OSError:
+        pass
+
+
+def sfondo_pubblico(utente: str) -> str:
+    """Per la schermata di accesso: lo sfondo dell'utente, o quello iniziale."""
+    from . import branding
+
+    cartella = cartella_sfondi_pubblici()
+    immagine, voce = cartella / f"{utente}.immagine", cartella / f"{utente}.percorso"
+    try:
+        if immagine.is_file():
+            return str(immagine)
+        if voce.is_file():
+            p = voce.read_text().strip()
+            if p.startswith("/usr/share/") and Path(p).is_file():
+                return p
+    except OSError:
+        pass
+    return SFONDO_INIZIALE.format(id=branding.id_os())
+
+
 def imposta_sfondo(percorso: str) -> None:
     """Salva lo sfondo e lo applica subito: lo disegna la scrivania della shell."""
     from . import branding

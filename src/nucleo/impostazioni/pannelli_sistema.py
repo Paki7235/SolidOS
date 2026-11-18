@@ -44,7 +44,16 @@ class PannelloUtenti(Pannello):
                 if u.pw_name != io:
                     azioni.append({"id": "elimina", "testo": T("Elimina"), "pericolosa": True})
                 faccia = Path(u.pw_dir) / ".face"
-                utenti.append({"id": u.pw_name, "titolo": (u.pw_gecos.split(",")[0] or u.pw_name) + (f" ({T('tu')})" if u.pw_name == io else ""),
+                nome_u = (u.pw_gecos.split(",")[0] or u.pw_name).strip()
+                parole = nome_u.split() or ["?"]
+                foto_u = ""
+                try:
+                    if u.pw_name == io and faccia.is_file():
+                        foto_u = f"file://{faccia}?m={faccia.stat().st_mtime_ns}"   # nuovo indirizzo a ogni foto
+                except OSError:
+                    pass
+                utenti.append({"foto": foto_u, "iniziali": (parole[0][0] + (parole[-1][0] if len(parole) > 1 else "")).upper(),
+                               "id": u.pw_name, "titolo": (u.pw_gecos.split(",")[0] or u.pw_name) + (f" ({T('tu')})" if u.pw_name == io else ""),
                                "sottotitolo": T("Amministratore") if u.pw_name in amministratori else T("Utente standard"),
                                "icona": str(faccia) if u.pw_name == io and faccia.is_file() else "user-identity",
                                "attivo": u.pw_name == io, "azioni": azioni})

@@ -22,6 +22,7 @@ passwd -d "$UTENTE" >/dev/null
 chage -d -1 "$UTENTE" 2>/dev/null || true
 mkdir -p /var/lib/nucleo/senza-password
 touch "/var/lib/nucleo/senza-password/$UTENTE"
+groupadd -f -r senzapassword && usermod -aG senzapassword "$UTENTE"
 
 # Nome del computer
 echo "@OS_ID@-pc" >/etc/hostname
