@@ -31,5 +31,7 @@ xdg-user-dirs-update >/dev/null 2>&1
 /usr/libexec/@OS_ID@/avvisi-avvio >/dev/null 2>&1 &
 @OS_ID@-spazi ripristina >/dev/null 2>&1 &
 /usr/libexec/nucleo/primo-accesso >/dev/null 2>&1 &
+# Foto di questo computer condivise con i telefoni (Foto › Account collegati), se accesa
+grep -q '"attiva": true' "${XDG_CONFIG_HOME:-$HOME/.config}/@OS_ID@/foto-server.json" 2>/dev/null && @OS_ID@-foto --condividi >/dev/null 2>&1 &
 # Avviso «Aggiornamento disponibile» (con il pulsante Aggiorna) quando esce una nuova versione
 @OS_ID@-aggiornamento-software --avvisa >/dev/null 2>&1 &
