@@ -36,6 +36,9 @@ Finestra {
     property var idInstallate: ({})           // id → true, per «Ottieni» / «Apri»
     property var scheda: null                 // dettagli dell'app aperta
     property string occupata: ""
+    property var avanzamento: ({})            // id → percentuale dello scaricamento
+    property var account: ({ collegato: false, elenco: [], automatiche: true })   // «Le mie app» del Solid ID
+    readonly property var altrove: account.elenco.filter(function (x) { return !x.installata && !finestra.installata(x.app) })
     property int caricamenti: 0
     readonly property bool caricando: caricamenti > 0
 
@@ -57,7 +60,11 @@ Finestra {
     }
     function apriRaccolta(r) { if (pagina !== "app") paginaPrima = pagina; raccolta = r; vai("raccolta") }
     function installata(id) { return finestra.idInstallate[id] === true }
-    function installa(app) { occupata = app.id; ponte.avvia("installa", [app.id, app.origine || "flatpak"], "installa") }
+    function installa(app) {
+        occupata = app.id
+        var v = Object.assign({}, avanzamento); v[app.id] = 0; avanzamento = v
+        ponte.avvia("installa", [app.id, app.origine || "flatpak", app.nome || "", app.icona || ""], "installa")
+    }
     function rimuovi(app) { occupata = app.id; ponte.avvia("rimuovi", [app.id, app.origine || "flatpak", app.sistema === true], "rimuovi") }
     function apri(app) { ponte.avvia("apri", [app.id, app.origine || "flatpak"], "apri") }
     function cerca(t) {
@@ -74,11 +81,17 @@ Finestra {
         ponte.avvia("raccolte", [], "raccolte")
         ponte.avvia("piuAmate", [], "piuAmate")
         aggiornaInstallate()
+        ponte.avvia("mieApp", [], "mieApp")
+        ponte.avvia("scaricaMie", [], "scaricaMie")   // le app prese sul telefono arrivano da sole
         var iniziale = ponte.chiama0("ricercaIniziale")
         if (iniziale) { ricerca.text = iniziale; cerca(iniziale) }
     }
     Connections {
         target: ponte
+        function onEvento(nome, d) {
+            if (nome === "avanzamento") { var v = Object.assign({}, finestra.avanzamento); v[d.id] = d.percento; finestra.avanzamento = v }
+            else if (nome === "scaricata") { finestra.avviso(d.nome + ": " + I18n.t("scaricata dalle tue app")); finestra.aggiornaInstallate() }
+        }
         function onCompletato(id, r) {
             var risposte = ["popular", "trending", "recently-updated", "categoria", "cerca", "dettagli"]
             if (risposte.indexOf(id) >= 0) finestra.caricamenti = Math.max(0, finestra.caricamenti - 1)
@@ -90,6 +103,8 @@ Finestra {
             else if (id === "installate") finestra.installate = r
             else if (id === "raccolte") finestra.raccolte = r
             else if (id === "piuAmate") finestra.piuAmate = r
+            else if (id === "mieApp") finestra.account = r
+            else if (id === "scaricaMie") { if (r.scaricate) ponte.avvia("mieApp", [], "mieApp") }
             else if (id === "recensioni") finestra.recensioni = r
             else if (id === "scriviRecensione" || id === "cancellaRecensione" || id === "utile") {
                 finestra.avviso(r.messaggio)
@@ -109,6 +124,8 @@ Finestra {
             else if (id === "apri") { if (!r.ok) finestra.avviso(r.messaggio) }
             else if (id === "installa" || id === "rimuovi" || id === "aggiorna" || id === "aggiornaApp") {
                 finestra.occupata = ""
+                finestra.avanzamento = ({})
+                ponte.avvia("mieApp", [], "mieApp")
                 finestra.avviso(r.ok ? (r.messaggio || I18n.t("Fatto")) : (r.messaggio || I18n.t("Operazione non riuscita")))
                 finestra.aggiornaInstallate()
             }
@@ -136,14 +153,25 @@ Finestra {
         property var app: ({})
         readonly property bool presente: finestra.installata(app.id) || app.installata === true
         readonly property bool inCorso: finestra.occupata === app.id
-        width: Math.max(76, etichetta.implicitWidth + 28); height: 30; radius: 15
-        color: presente ? (Tema.chiaro ? "#E9EDF1" : "#2A3243") : Tema.accento
+        // Durante lo scaricamento il pulsante diventa una barra che si riempie
+        readonly property int percento: finestra.avanzamento[app.id] !== undefined ? finestra.avanzamento[app.id] : -1
+        id: pa
+        width: Math.max(percento >= 0 ? 110 : 76, etichetta.implicitWidth + 28); height: 30; radius: 15
+        color: percento >= 0 || presente ? (Tema.chiaro ? "#E9EDF1" : "#2A3243") : Tema.accento
         opacity: finestra.occupata !== "" && !inCorso ? 0.5 : 1
+        clip: true
+        Rectangle {
+            visible: pa.percento >= 0
+            width: Math.max(pa.height, pa.width * pa.percento / 100); height: pa.height; radius: pa.radius
+            color: Tema.accento
+            Behavior on width { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
+        }
         Text {
             id: etichetta
             anchors.centerIn: parent
-            text: parent.inCorso ? I18n.t("Attendi…") : (parent.presente ? I18n.t("Apri") : I18n.t("Ottieni"))
-            color: parent.presente ? Tema.accento : "#FFFFFF"
+            text: pa.percento >= 0 ? (pa.percento >= 100 ? I18n.t("Installo…") : pa.percento + "%")
+                  : parent.inCorso ? I18n.t("Attendi…") : (parent.presente ? I18n.t("Apri") : I18n.t("Ottieni"))
+            color: pa.percento >= 0 ? (pa.percento > 45 ? "#FFFFFF" : Tema.testo) : (parent.presente ? Tema.accento : "#FFFFFF")
             font.family: Tema.font; font.pixelSize: 13; font.weight: Font.Bold
         }
         MouseArea {
@@ -277,6 +305,11 @@ Finestra {
                     }
                 }
                 Item { Layout.fillHeight: true }
+                VoceElenco {
+                    Layout.fillWidth: true; icona: "avatar-default-symbolic"; titolo: I18n.t("Le mie app")
+                    sottotitolo: finestra.account.collegato ? (finestra.altrove.length ? finestra.altrove.length + " " + I18n.t("dagli altri dispositivi") : I18n.t("Legate al Solid ID")) : I18n.t("Accedi al Solid ID")
+                    selezionata: finestra.pagina === "mie"; onClicked: { finestra.vai("mie"); ponte.avvia("mieApp", [], "mieApp") }
+                }
                 VoceElenco { Layout.fillWidth: true; icona: "emblem-ok-symbolic"; titolo: I18n.t("Installate"); sottotitolo: finestra.installate.length + " " + I18n.t("app"); selezionata: finestra.pagina === "installate"; onClicked: finestra.vai("installate") }
                 VoceElenco {
                     Layout.fillWidth: true; icona: "software-update-available-symbolic"; titolo: I18n.t("Aggiornamenti")
@@ -455,6 +488,58 @@ Finestra {
                                     Pulsante { text: I18n.t("Aggiorna"); principale: true; visible: finestra.pagina === "aggiornamenti"; enabled: finestra.occupata === ""; onClicked: { finestra.occupata = riga.modelData.id; ponte.avvia("aggiornaApp", [riga.modelData.id], "aggiornaApp") } }
                                     Pulsante { text: I18n.t("Rimuovi"); pericoloso: true; visible: finestra.pagina === "installate"; enabled: finestra.occupata === ""; onClicked: finestra.rimuovi(riga.modelData) }
                                 }
+                            }
+                        }
+                    }
+
+                    // ══ Le mie app (Solid ID) ═══════════════════════════════
+                    ColumnLayout {
+                        visible: finestra.pagina === "mie"
+                        Layout.fillWidth: true; spacing: 12
+                        Text { text: I18n.t("Le mie app"); color: Tema.testo; font.family: Tema.font; font.pixelSize: 26; font.weight: Font.Bold }
+                        Text {
+                            Layout.fillWidth: true; wrapMode: Text.Wrap
+                            text: finestra.account.collegato
+                                  ? I18n.t("Ogni app che prendi dallo Store, qui o sul telefono, resta nel tuo Solid ID: la ritrovi su tutti i tuoi dispositivi, come con l'ID Apple.")
+                                  : I18n.t("Accedi al Solid ID (Impostazioni › Solid ID): le app che prendi sul telefono compariranno anche qui, e al contrario.")
+                            color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 14
+                        }
+                        RowLayout {
+                            visible: finestra.account.collegato
+                            Layout.fillWidth: true; spacing: 12
+                            Text { Layout.fillWidth: true; text: I18n.t("Scarica da sole le app prese sul telefono"); color: Tema.testo; font.family: Tema.font; font.pixelSize: 14 }
+                            Interruttore {
+                                checked: finestra.account.automatiche
+                                onToggled: {
+                                    ponte.chiama("impostaAutomatiche", [checked])
+                                    finestra.account = Object.assign({}, finestra.account, { automatiche: checked })
+                                    if (checked) ponte.avvia("scaricaMie", [], "scaricaMie")
+                                }
+                            }
+                        }
+                        Text {
+                            visible: finestra.altrove.length > 0
+                            text: I18n.t("Dagli altri dispositivi"); color: Tema.testo; font.family: Tema.font; font.pixelSize: 18; font.weight: Font.Bold
+                        }
+                        Repeater {
+                            model: finestra.pagina === "mie" ? finestra.account.elenco : []
+                            Rectangle {
+                                id: rigaMia
+                                required property var modelData
+                                readonly property var a: ({ id: modelData.app, nome: modelData.nome, icona: modelData.icona || "", origine: "flatpak" })
+                                Layout.fillWidth: true; Layout.preferredHeight: 72; radius: 14
+                                color: Tema.chiaro ? "#FFFFFF" : "#1A2030"; border.color: Tema.chiaro ? "#E2E8F0" : "#262F42"
+                                RowLayout {
+                                    anchors.fill: parent; anchors.margins: 14; spacing: 14
+                                    IconaApp { app: rigaMia.a; lato: 44 }
+                                    ColumnLayout {
+                                        Layout.fillWidth: true; spacing: 2
+                                        Text { Layout.fillWidth: true; elide: Text.ElideRight; text: rigaMia.modelData.nome || rigaMia.modelData.app; color: Tema.testo; font.family: Tema.font; font.pixelSize: 14; font.weight: Font.DemiBold }
+                                        Text { Layout.fillWidth: true; elide: Text.ElideRight; text: rigaMia.modelData.dispositivo === "telefono" ? I18n.t("Presa sul telefono") : I18n.t("Presa su un PC"); color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 12 }
+                                    }
+                                    PulsanteApp { app: rigaMia.a }
+                                }
+                                MouseArea { anchors.fill: parent; anchors.rightMargin: 140; cursorShape: Qt.PointingHandCursor; onClicked: finestra.apriApp(rigaMia.a) }
                             }
                         }
                     }

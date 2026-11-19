@@ -8,7 +8,14 @@ from ..ponte import Backend, crea_ponte
 from ..qmlapp import esegui_app
 from . import (aggiorna_app, aggiornamenti_disponibili, aggiornamenti_flatpak, apri, cerca, installa, installate,
                installate_id, rimuovi, vetrina, vetrina_disponibile)
-from . import catalogo
+from . import catalogo, spiega_errore
+from ..i18n import T
+
+
+def _automatiche() -> bool:
+    from ..sistema import config_utente, leggi_json
+
+    return bool(leggi_json(config_utente("store.json"), {}).get("app_automatiche", True))
 
 
 class BackendStore(Backend):
@@ -113,8 +120,57 @@ class BackendStore(Backend):
     def installate(self):
         return installate()
 
-    def installa(self, ident, origine):
-        return installa(ident, origine)
+    def installa(self, ident, origine, nome="", icona=""):
+        from .. import appmie
+
+        if origine == "flatpak":
+            # Con la percentuale per la barra di avanzamento
+            from ..installa import prepara_flathub
+
+            prepara_flathub()
+            codice, uscita = appmie.flatpak_installa(
+                ident, lambda p, fase: self.emetti("avanzamento", {"id": ident, "percento": p, "fase": fase}))
+            r = ({"ok": True, "messaggio": T("Installata: la trovi nel menu delle app")} if codice == 0
+                 else {"ok": False, "messaggio": spiega_errore(uscita)})
+        else:
+            r = installa(ident, origine)
+        if r.get("ok"):
+            appmie.aggiungi(ident, nome, icona)   # entra in «Le mie app» del Solid ID
+        return r
+
+    # ── Le mie app: quelle prese con lo stesso Solid ID (anche sul telefono) ──
+    def mieApp(self):
+        from .. import appmie
+
+        presenti = set(installate_id())
+        elenco = appmie.elenco()
+        for a in elenco:
+            a["installata"] = a.get("app") in presenti
+        return {"collegato": appmie.collegato(), "elenco": elenco, "automatiche": _automatiche()}
+
+    def impostaAutomatiche(self, si):
+        from ..sistema import config_utente, scrivi_json
+
+        scrivi_json(config_utente("store.json"), {"app_automatiche": bool(si)})
+        return {"ok": True}
+
+    def scaricaMie(self):
+        """Scarica da sole le app prese sugli altri dispositivi (se l'impostazione è accesa)."""
+        from .. import appmie
+
+        if not _automatiche() or not appmie.collegato():
+            return {"ok": True, "scaricate": 0}
+        n = 0
+        for a in appmie.da_scaricare(set(installate_id())):
+            if self.installa(a["app"], "flatpak", a.get("nome", ""), a.get("icona", "")).get("ok"):
+                n += 1
+                self.emetti("scaricata", {"id": a["app"], "nome": a.get("nome", "")})
+        return {"ok": True, "scaricate": n}
+
+    def togliMia(self, ident):
+        from .. import appmie
+
+        return appmie.togli(ident)
 
     def rimuovi(self, ident, origine, sistema=False):
         return rimuovi(ident, origine, bool(sistema))

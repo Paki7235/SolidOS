@@ -176,3 +176,22 @@ create or replace view public.recensioni_complete with (security_invoker = true)
          (r.autore = auth.uid()) as mia
   from public.recensioni r;
 grant select on public.voti_app, public.recensioni_complete to anon, authenticated;
+
+-- ══ Le mie app (come «Acquistati» sull'App Store) ══════════════════════════════════════
+-- Ogni app presa dallo Store (sul PC o sul telefono) entra nell'elenco del proprio Solid ID:
+-- gli altri dispositivi la mostrano in «Le mie app» e, se si vuole, la scaricano da soli.
+-- Ognuno vede e cambia solo il proprio elenco.
+create table if not exists public.app_mie (
+  utente uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  app text not null check (app ~ '^[A-Za-z0-9._-]{3,200}$'),
+  nome text not null default '' check (char_length(nome) <= 120),
+  icona text not null default '' check (char_length(icona) <= 400),
+  dispositivo text not null default '' check (char_length(dispositivo) <= 60),
+  aggiunta timestamptz not null default now(),
+  primary key (utente, app)
+);
+alter table public.app_mie enable row level security;
+drop policy if exists "app mie proprie" on public.app_mie;
+create policy "app mie proprie" on public.app_mie for all to authenticated
+  using (utente = auth.uid()) with check (utente = auth.uid());
+grant select, insert, update, delete on public.app_mie to authenticated;
