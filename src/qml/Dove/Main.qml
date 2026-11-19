@@ -75,7 +75,7 @@ Finestra {
                 else if (r === "eseguito") {
                     seguiComando.stop()
                     finestra.statoComando = ({ suona: I18n.t("Sta suonando 🔊"), ferma: I18n.t("Suono fermato"),
-                                               blocca: I18n.t("Bloccato 🔒"), posizione: I18n.t("Posizione aggiornata") })[finestra.comandoTipo] || I18n.t("Fatto")
+                                               blocca: I18n.t("Bloccato 🔒"), perso: I18n.t("Modalità smarrito attiva 🔒"), cancella: I18n.t("Il telefono si sta cancellando"), posizione: I18n.t("Posizione aggiornata") })[finestra.comandoTipo] || I18n.t("Fatto")
                     finestra.aggiorna()
                 } else if (r === "errore") { seguiComando.stop(); finestra.statoComando = I18n.t("Il dispositivo non è riuscito a eseguirlo") }
             } else if (id === "accesso") {
@@ -253,10 +253,11 @@ Finestra {
                             text: finestra.comandoTipo === "suona" && finestra.statoComando.indexOf("🔊") >= 0 ? I18n.t("Ferma il suono") : I18n.t("Fai suonare")
                             onClicked: finestra.invia(text === I18n.t("Ferma il suono") ? "ferma" : "suona")
                         }
-                        Pulsante { Layout.fillWidth: true; icona: "system-lock-screen"; text: I18n.t("Blocca…"); onClicked: dialogoBlocco.open() }
+                        Pulsante { Layout.fillWidth: true; icona: "system-lock-screen"; text: scheda.d.tipo === "telefono" ? I18n.t("Modalità smarrito…") : I18n.t("Blocca…"); onClicked: dialogoBlocco.open() }
                         Pulsante { Layout.fillWidth: true; icona: "find-location"; text: I18n.t("Aggiorna posizione"); onClicked: finestra.invia("posizione") }
                         Pulsante { Layout.fillWidth: true; icona: "mark-location"; text: I18n.t("Indicazioni"); enabled: !!scheda.d.posizione; onClicked: ponte.chiama("indicazioni", [scheda.d.lat, scheda.d.lon]) }
                     }
+                    Pulsante { Layout.fillWidth: true; visible: scheda.d.tipo === "telefono"; pericoloso: true; icona: "edit-delete"; text: I18n.t("Inizializza a distanza…"); onClicked: dialogoCancella.open() }
                     Testo { Layout.fillWidth: true; visible: finestra.statoComando !== ""; text: finestra.statoComando; font.weight: Font.DemiBold }
                 }
             }
@@ -267,14 +268,30 @@ Finestra {
         id: dialogoBlocco
         anchors.centerIn: parent
         modal: true
-        title: I18n.t("Blocca") + " " + (finestra.dispositivoScelto ? finestra.dispositivoScelto.nome : "")
+        readonly property bool telefono: !!finestra.dispositivoScelto && finestra.dispositivoScelto.tipo === "telefono"
+        title: (telefono ? I18n.t("Modalità smarrito:") : I18n.t("Blocca")) + " " + (finestra.dispositivoScelto ? finestra.dispositivoScelto.nome : "")
         standardButtons: Dialog.Cancel | Dialog.Ok
         ColumnLayout {
             spacing: 10
             width: 380
-            Testo { Layout.fillWidth: true; text: I18n.t("Lo schermo si blocca subito e mostra questo messaggio a chi lo trova.") }
+            Testo { Layout.fillWidth: true; wrapMode: Text.Wrap
+                    text: dialogoBlocco.telefono ? I18n.t("Il telefono si blocca subito e per sbloccarlo serve la password del tuo Solid ID, non basta il codice. Il messaggio compare sullo schermo per chi lo trova.")
+                                                 : I18n.t("Lo schermo si blocca subito e mostra questo messaggio a chi lo trova.") }
             CampoTesto { id: messaggioBlocco; Layout.fillWidth: true; placeholderText: I18n.t("Es. Se lo trovi chiama il 333 1234567"); maximumLength: 200 }
         }
-        onAccepted: { finestra.invia("blocca", messaggioBlocco.text); messaggioBlocco.text = "" }
+        onAccepted: { finestra.invia(dialogoBlocco.telefono ? "perso" : "blocca", messaggioBlocco.text); messaggioBlocco.text = "" }
+    }
+
+    Dialog {
+        id: dialogoCancella
+        anchors.centerIn: parent
+        modal: true
+        title: I18n.t("Cancellare") + " " + (finestra.dispositivoScelto ? finestra.dispositivoScelto.nome : "") + "?"
+        standardButtons: Dialog.Cancel | Dialog.Ok
+        Testo {
+            width: 380; wrapMode: Text.Wrap
+            text: I18n.t("Appena è collegato a Internet, il telefono cancella tutti i dati e riparte come nuovo. Non si può tornare indietro. Il blocco di attivazione resta: per usarlo servirà il tuo Solid ID.")
+        }
+        onAccepted: finestra.invia("cancella")
     }
 }

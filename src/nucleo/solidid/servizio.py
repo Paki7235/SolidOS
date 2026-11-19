@@ -106,8 +106,12 @@ class Servizio:
                 await self.suona()
             elif tipo == "ferma":
                 self.suona_fino = 0
-            elif tipo == "blocca":
+            elif tipo in ("blocca", "perso"):
                 await self.blocca(c.get("messaggio") or "")
+            elif tipo == "cancella":
+                # Sul PC non si cancella a distanza (i dati sono anche di altri utenti del computer)
+                await self.esegui(self._segna, ident, "errore")
+                return
             elif tipo == "posizione":
                 await self.aggiorna()
             await self.esegui(self._segna, ident, "eseguito")

@@ -195,3 +195,31 @@ drop policy if exists "app mie proprie" on public.app_mie;
 create policy "app mie proprie" on public.app_mie for all to authenticated
   using (utente = auth.uid()) with check (utente = auth.uid());
 grant select, insert, update, delete on public.app_mie to authenticated;
+
+-- ══ Sicurezza di «Dov'è» come su iPhone ═══════════════════════════════════════════════
+-- 1) Comandi in più: «cancella» (inizializza a distanza) e «perso» (modalità smarrito).
+alter table public.comandi drop constraint if exists comandi_tipo_check;
+alter table public.comandi add constraint comandi_tipo_check
+  check (tipo in ('suona', 'ferma', 'blocca', 'perso', 'cancella', 'posizione'));
+alter table public.dispositivi add column if not exists perso boolean not null default false;
+
+-- 2) Blocco di attivazione: l'impronta dell'hardware (non cambia con un reset o una nuova
+-- installazione). Un telefono collegato a un Solid ID, anche se cancellato, chiede la password
+-- di quell'account prima di poter essere usato.
+alter table public.dispositivi add column if not exists hardware text
+  check (hardware is null or char_length(hardware) between 16 and 128);
+create index if not exists dispositivi_hardware on public.dispositivi (hardware);
+
+-- Risponde solo «è bloccato da p•••@gmail.com» (email nascosta), senza mostrare altro.
+-- Chi ha già fatto l'accesso con l'account proprietario vede «non bloccato».
+create or replace function public.blocco_attivazione(h text) returns text
+language sql stable security definer set search_path = public as $$
+  select regexp_replace(u.email, '^(.).*(@.*)$', '\1•••\2')
+  from public.dispositivi d join auth.users u on u.id = d.proprietario
+  where h is not null and char_length(h) between 16 and 128
+    and d.hardware = h and d.trova_attivo
+    and (auth.uid() is null or d.proprietario <> auth.uid())
+  order by d.ultimo_visto desc limit 1
+$$;
+revoke all on function public.blocco_attivazione(text) from public;
+grant execute on function public.blocco_attivazione(text) to anon, authenticated;
