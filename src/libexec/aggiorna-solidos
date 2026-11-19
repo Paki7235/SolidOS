@@ -37,8 +37,26 @@ ESCLUSI = ("etc/greetd/", "etc/calamares/", "etc/live/", "usr/lib/live/", "etc/s
 
 
 def esito(messaggio: str, codice: int = 0):
+    if codice:
+        avanzamento("errore", 0, messaggio)
     print(messaggio)
     sys.exit(codice)
+
+
+# Avanzamento per «Aggiornamento software» (leggibile da tutti, come su Mac e iPhone)
+AVANZAMENTO = Path("/run/nucleo-aggiornamento.json")
+
+
+def avanzamento(fase: str, percento: float = 0, testo: str = "") -> None:
+    """fase: controllo | scarica | verifica | ripristino | installa | fatto | errore"""
+    try:
+        tmp = AVANZAMENTO.with_suffix(".tmp")
+        tmp.write_text(json.dumps({"fase": fase, "percento": round(max(0, min(100, percento)), 1),
+                                   "testo": testo}, ensure_ascii=False))
+        tmp.chmod(0o644)
+        tmp.replace(AVANZAMENTO)
+    except OSError:
+        pass
 
 
 def ammesso(nome: str) -> bool:
@@ -63,11 +81,13 @@ def main():
     if os.geteuid() != 0:
         esito("serve l'amministratore", 1)
     forza = "--forza" in sys.argv[1:]
+    avanzamento("controllo", 0)
     scheda = aggiornamento.scheda_remota(timeout=30)
     if scheda is None:
         esito(f"Nessun aggiornamento installato: {aggiornamento.ultimo_errore or 'server non raggiungibile'}", 2)
     nuova, installata = int(scheda["versione"]), aggiornamento.versione_installata()
     if nuova <= installata and not forza:
+        AVANZAMENTO.unlink(missing_ok=True)
         esito(f"SolidOS è già aggiornato (versione {installata})")
     file_nome = str(scheda.get("file", ""))
     atteso = str(scheda.get("sha256", "")).lower()
@@ -81,21 +101,41 @@ def main():
         h = hashlib.sha256()
         try:
             with urllib.request.urlopen(richiesta, timeout=120) as r, open(pacchetto, "wb") as f:
-                while blocco := r.read(1 << 20):
+                totale = int(r.headers.get("Content-Length") or scheda.get("dimensione") or 0)
+                fatti = 0
+                avanzamento("scarica", 0)
+                while blocco := r.read(1 << 18):
                     h.update(blocco)
                     f.write(blocco)
+                    fatti += len(blocco)
+                    if totale:
+                        avanzamento("scarica", fatti * 100 / totale,
+                                    f"{fatti / 1048576:.1f} MB di {totale / 1048576:.1f} MB".replace(".", ","))
         except OSError as e:
             esito(f"Download non riuscito: {e}", 4)
+        avanzamento("verifica", 100)
         if h.hexdigest() != atteso:
             esito("Il file scaricato è danneggiato (somma di controllo diversa): riprova più tardi", 5)
 
+        avanzamento("ripristino", 0)
         if Path("/etc/snapper/configs/root").is_file():
             subprocess.run(["snapper", "-c", "root", "create", "-c", "number",
                             "-d", f"Prima di SolidOS versione {nuova}"], check=False)
 
+        valido = lambda m: (m.isfile() or m.isdir() or m.issym()) and ammesso(m.name)  # noqa: E731
         with tarfile.open(pacchetto) as t:
-            membri = [m for m in t.getmembers() if (m.isfile() or m.isdir() or m.issym()) and ammesso(m.name)]
-            t.extractall("/", members=membri, filter="tar")
+            totale = sum(1 for m in t.getmembers() if valido(m))
+        # seconda lettura in sequenza (un archivio compresso non si legge bene saltando avanti e indietro)
+        avanzamento("installa", 0)
+        with tarfile.open(pacchetto, "r|xz") as t:
+            fatti = 0
+            for m in t:
+                if not valido(m):
+                    continue
+                t.extract(m, "/", filter="tar")
+                fatti += 1
+                if fatti % 40 == 0:
+                    avanzamento("installa", fatti * 100 / max(1, totale))
 
     aggiornamento.FILE_VERSIONE.write_text(f"{nuova}\n")
     # Servizi o regole cambiati: si ricaricano (le app e la shell si aggiornano al prossimo accesso)
@@ -104,6 +144,7 @@ def main():
     _senza_password()
     subprocess.run(["glib-compile-schemas", "/usr/share/glib-2.0/schemas"], check=False, capture_output=True)
     subprocess.run(["update-desktop-database", "-q", "/usr/share/applications"], check=False, capture_output=True)
+    avanzamento("fatto", 100, str(nuova))
     esito(f"SolidOS aggiornato alla versione {nuova}")
 
 

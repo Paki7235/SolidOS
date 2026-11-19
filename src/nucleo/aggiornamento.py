@@ -105,7 +105,12 @@ def controlla() -> dict:
     installata = versione_installata()
     scheda = scheda_remota()
     if scheda is None:
-        return {"installata": installata, "disponibile": None, "nuova": False, "novita": ""}
+        return {"installata": installata, "disponibile": None, "nuova": False, "novita": "",
+                "dimensione": 0, "errore": ultimo_errore}
     disponibile = int(scheda["versione"])
+    try:
+        dimensione = int(scheda.get("dimensione") or 0)
+    except (TypeError, ValueError):
+        dimensione = 0
     return {"installata": installata, "disponibile": disponibile, "nuova": disponibile > installata,
-            "novita": str(scheda.get("novita", ""))[:600]}
+            "novita": str(scheda.get("novita", ""))[:600], "dimensione": dimensione, "errore": ""}

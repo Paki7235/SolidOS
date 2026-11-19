@@ -208,7 +208,9 @@ class PannelloAggiornamenti(Pannello):
         stato = leggi_json(Path("/var/lib/nucleo/aggiornamenti.json"), {})
         disponibili = uscita(["apt-get", "-s", "-o", "Debug::NoLocking=1", "upgrade"], timeout=60).count("\nInst ")
         so = aggiornamento.controlla()
-        voci_solidos = [info("versione", T("Versione di {s}", s=branding.nome()),
+        voci_solidos = [azione("software", T("Aggiornamento software"), T("Apri"),
+                               T("Come su Mac e iPhone: cosa c'è di nuovo, quanto pesa, barra di avanzamento e riavvio")),
+                        info("versione", T("Versione di {s}", s=branding.nome()),
                              T("build {n}", n=so["installata"]) if so["installata"] else T("non indicata"))]
         if so["nuova"]:
             voci_solidos.append(azione("solidos", T("Nuova versione: build {n}", n=so["disponibile"]),
@@ -237,9 +239,10 @@ class PannelloAggiornamenti(Pannello):
     def azione(self, voce, elemento, az, dati):
         if voce == "ora":
             return _esito_helper(helper("aggiorna-ora"), T("Aggiornamento avviato in background: riceverai una notifica"))
-        if voce == "solidos":
-            return _esito_helper(helper("aggiorna-solidos", timeout=1800),
-                                 T("Nuova versione installata: esci e rientra (o riavvia) per usarla"))
+        if voce in ("solidos", "software"):
+            # l'installazione si segue nella finestra «Aggiornamento software» (barra e riavvio)
+            avvia([branding.comando("aggiornamento-software")])
+            return esito(ricarica=False)
         return None
 
 

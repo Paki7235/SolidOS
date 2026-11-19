@@ -36,3 +36,4 @@ dove	nucleo.apps.dove	Dov'è	org.gnome.Maps	Utility;Network;	Trova i tuoi dispos
 solidid	nucleo.solidid
 mobile	nucleo.mobile	@OS_NAME@ Mobile	@OS_ID@-logo	Utility;	Anteprima dell'interfaccia per telefoni: blocco, Home, Libreria app, Centro di controllo e Personalizza	no	
 web	nucleo.apps.web	Vela	epiphany	Network;WebBrowser;	Naviga in internet: schede, preferiti, download e finestra privata	no	text/html;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;
+aggiornamento-software	nucleo.apps.aggiornamento_software	Aggiornamento software	system-software-update	Settings;System;	Nuove versioni di @OS_NAME@: cosa cambia, aggiorna e riavvia	no	
