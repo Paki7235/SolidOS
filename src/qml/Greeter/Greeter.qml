@@ -217,7 +217,22 @@ Window {
                     anchors.horizontalCenter: parent.horizontalCenter
                     width: 40; height: 40; radius: 20
                     color: areaPotenza.containsMouse ? "#59FFFFFF" : "#33FFFFFF"
-                    Icona { anchors.centerIn: parent; nome: parent.parent.modelData.icona; lato: 22 }
+                    // simboli disegnati: la schermata di accesso non sempre trova il tema delle icone
+                    Canvas {
+                        anchors.centerIn: parent; width: 22; height: 22
+                        readonly property bool spegni: parent.parent.modelData.azione === "spegni"
+                        onPaint: {
+                            var g = getContext("2d"); g.reset()
+                            g.strokeStyle = "white"; g.fillStyle = "white"; g.lineWidth = 2.2; g.lineCap = "round"
+                            if (spegni) {
+                                g.beginPath(); g.arc(11, 12, 7.5, Math.PI * 1.68, Math.PI * 1.32 + Math.PI * 2, false); g.stroke()
+                                g.beginPath(); g.moveTo(11, 2.5); g.lineTo(11, 10); g.stroke()
+                            } else {
+                                g.beginPath(); g.arc(11, 11, 7.5, Math.PI * 0.1, Math.PI * 1.65); g.stroke()
+                                g.beginPath(); g.moveTo(19.5, 2.5); g.lineTo(19, 9); g.lineTo(12.5, 7.5); g.closePath(); g.fill()
+                            }
+                        }
+                    }
                     MouseArea { id: areaPotenza; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: greeter.chiama0(parent.parent.modelData.azione) }
                 }
                 Text { anchors.horizontalCenter: parent.horizontalCenter; text: parent.modelData.testo; color: "#E6FFFFFF"; font.family: Tema.font; font.pixelSize: 12 }
