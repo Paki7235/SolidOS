@@ -9,3 +9,5 @@ speech-dispatcher
 pipewire-bin
 alsa-utils
 espeak-ng
+python3-cryptography
+python3-qrcode

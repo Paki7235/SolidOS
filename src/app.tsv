@@ -46,3 +46,4 @@ avvisi	nucleo.avvisi
 calendario	nucleo.apps.calendario	Calendario	org.gnome.Calendar	Office;Calendar;	Appuntamenti con avvisi, calendari colorati, file .ics	no	text/calendar;
 promemoria	nucleo.apps.promemoria	Promemoria	org.gnome.Todo	Office;ProjectManagement;	Liste di cose da fare con scadenze, avvisi e bandiere	no	
 registratore	nucleo.apps.registratore	Registratore	org.gnome.SoundRecorder	AudioVideo;Audio;Recorder;	Registrazioni vocali con pausa, riascolto e forma d'onda	no	
+password	nucleo.apps.password	Password	dialog-password	Utility;Security;	Password dei siti, codici di verifica e Wi-Fi in una cassaforte cifrata	no	
