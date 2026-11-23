@@ -32,6 +32,25 @@ else
 	set menu_color_highlight=black/light-gray
 fi
 
+# Se su questo computer @OS_NAME@ è già installato, si avvia quello (come quando un disco
+# di installazione resta inserito): l'installazione resta scegliendola dal menu.
+set installato=""
+if [ "$grub_platform" = "efi" ]; then
+	for efi in /EFI/@OS_ID@/shimx64.efi /EFI/@OS_ID@/grubx64.efi /EFI/@OS_ID@/shimaa64.efi /EFI/@OS_ID@/grubaa64.efi; do
+		if search --no-floppy --file --set=disco_installato "$efi"; then
+			set installato="$efi"
+			break
+		fi
+	done
+fi
+if [ -n "$installato" ]; then
+	set default=installato
+	set timeout=4
+	menuentry "@T_AVVIO_INSTALLATO@" --id installato {
+		chainloader ($disco_installato)$installato
+	}
+fi
+
 menuentry "@T_AVVIO_INSTALLA@" --id installa {
 	linux /live/%KERNEL% @KERNEL_PARAMETRI_LIVE@ @OS_ID@.installa=1
 	initrd /live/%INITRD%
