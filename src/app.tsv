@@ -43,3 +43,6 @@ mappe	nucleo.apps.mappe	Mappe	org.gnome.Maps	Utility;Maps;	Mappe di @OS_NAME@, r
 meteo	nucleo.apps.meteo	Meteo	org.gnome.Weather	Utility;	Il tempo di adesso, delle prossime ore e dei prossimi giorni	no	
 orologio	nucleo.apps.orologio	Orologio	org.gnome.clocks	Utility;Clock;	Sveglie, timer, cronometro e ora nel mondo	no	
 avvisi	nucleo.avvisi
+calendario	nucleo.apps.calendario	Calendario	org.gnome.Calendar	Office;Calendar;	Appuntamenti con avvisi, calendari colorati, file .ics	no	text/calendar;
+promemoria	nucleo.apps.promemoria	Promemoria	org.gnome.Todo	Office;ProjectManagement;	Liste di cose da fare con scadenze, avvisi e bandiere	no	
+registratore	nucleo.apps.registratore	Registratore	org.gnome.SoundRecorder	AudioVideo;Audio;Recorder;	Registrazioni vocali con pausa, riascolto e forma d'onda	no	
