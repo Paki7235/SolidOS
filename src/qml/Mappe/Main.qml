@@ -104,21 +104,22 @@ Finestra {
             ponte.chiama("parla", [g.metriAllaManovra < 60 ? g.manovra.testo : I18n.t("Tra") + " " + g.allaManovra + ", " + g.manovra.annuncio])
         }
     }
+    // disegno della manovra (tipi di Valhalla)
     function freccia(tipo) {
-        if ([4, 5, 6].indexOf(tipo) >= 0) return "⚑"
-        if ([9, 18, 20, 23].indexOf(tipo) >= 0) return "↗"
-        if (tipo === 10) return "→"
-        if (tipo === 11) return "↘"
-        if ([12, 13].indexOf(tipo) >= 0) return "↶"
-        if (tipo === 14) return "↙"
-        if (tipo === 15) return "←"
-        if ([16, 19, 21, 24].indexOf(tipo) >= 0) return "↖"
-        if ([26, 27].indexOf(tipo) >= 0) return "⟳"
-        return "↑"
+        if ([4, 5, 6].indexOf(tipo) >= 0) return "arrivo"
+        if ([9, 18, 20, 23].indexOf(tipo) >= 0) return "leggera-destra"
+        if (tipo === 10) return "svolta-destra"
+        if (tipo === 11) return "brusca-destra"
+        if ([12, 13].indexOf(tipo) >= 0) return "inversione"
+        if (tipo === 14) return "brusca-sinistra"
+        if (tipo === 15) return "svolta-sinistra"
+        if ([16, 19, 21, 24].indexOf(tipo) >= 0) return "leggera-sinistra"
+        if ([26, 27].indexOf(tipo) >= 0) return "rotonda"
+        return "dritto"
     }
     function simboloMezzo(m) {
-        return ({ WALK: "🚶", BUS: "🚌", TRAM: "🚋", SUBWAY: "🚇", METRO: "🚇", RAIL: "🚆", REGIONAL_RAIL: "🚆", HIGHSPEED_RAIL: "🚄",
-                  LONG_DISTANCE: "🚆", SUBURBAN: "🚆", FERRY: "⛴", COACH: "🚌", FUNICULAR: "🚞", CABLE_CAR: "🚡", AERIAL_LIFT: "🚡" })[m] || "🚏"
+        return ({ WALK: "pedone", BUS: "autobus", COACH: "autobus", TRAM: "tram", SUBWAY: "metro", METRO: "metro", FERRY: "nave",
+                  FUNICULAR: "funivia", CABLE_CAR: "funivia", AERIAL_LIFT: "funivia" })[m] || "treno"
     }
     function zonaVisibile() {
         return [carta.latDa(carta.cy + carta.height / 2), carta.lonDa(carta.cx - carta.width / 2),
@@ -269,7 +270,7 @@ Finestra {
                 }
                 Pulsante {
                     visible: finestra.modoCerca === "partenza"
-                    text: "➤ " + I18n.t("La mia posizione")
+                    text: I18n.t("Parti dalla mia posizione")
                     onClicked: { finestra.partenza = null; finestra.modoCerca = "luogo"; finestra.indicazioni() }
                 }
 
@@ -281,9 +282,13 @@ Finestra {
                     Repeater {
                         model: finestra.categorie
                         Rectangle {
-                            width: testoCat.implicitWidth + 22; height: 30; radius: 15
+                            width: rigaCat.implicitWidth + 22; height: 30; radius: 15
                             color: finestra.categoria === modelData.id ? Tema.accento : Tema.superficieAlta
-                            Text { id: testoCat; anchors.centerIn: parent; text: modelData.simbolo + "  " + modelData.nome; color: finestra.categoria === modelData.id ? "white" : Tema.testo; font.family: Tema.font; font.pixelSize: 12 }
+                            Row {
+                                id: rigaCat; anchors.centerIn: parent; spacing: 6
+                                Simbolo { anchors.verticalCenter: parent.verticalCenter; nome: modelData.simbolo; lato: 15; colore: finestra.categoria === modelData.id ? "#FFFFFF" : Tema.accento }
+                                Text { anchors.verticalCenter: parent.verticalCenter; text: modelData.nome; color: finestra.categoria === modelData.id ? "white" : Tema.testo; font.family: Tema.font; font.pixelSize: 12 }
+                            }
                             MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: finestra.cercaCategoria(modelData) }
                         }
                     }
@@ -332,19 +337,27 @@ Finestra {
                     Text { visible: finestra.salvati.preferiti.length > 0; Layout.topMargin: 4; text: I18n.t("Preferiti"); color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 12; font.weight: Font.DemiBold }
                     Repeater {
                         model: finestra.salvati.preferiti
-                        Text {
-                            text: (modelData.etichetta === I18n.t("Casa") ? "🏠  " : (modelData.etichetta === I18n.t("Lavoro") ? "💼  " : "★  ")) + (modelData.etichetta ? modelData.etichetta + " · " : "") + modelData.nome
-                            color: Tema.testo; font.family: Tema.font; font.pixelSize: 13; elide: Text.ElideRight; Layout.fillWidth: true
-                            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: finestra.scegli(modelData) }
+                        RowLayout {
+                            Layout.fillWidth: true; spacing: 8
+                            Simbolo { nome: modelData.etichetta === I18n.t("Casa") ? "casa" : (modelData.etichetta === I18n.t("Lavoro") ? "valigetta" : "stella"); lato: 15; colore: Tema.accento }
+                            Text {
+                                text: (modelData.etichetta ? modelData.etichetta + " · " : "") + modelData.nome
+                                color: Tema.testo; font.family: Tema.font; font.pixelSize: 13; elide: Text.ElideRight; Layout.fillWidth: true
+                                MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: finestra.scegli(modelData) }
+                            }
                         }
                     }
                     Text { visible: finestra.salvati.recenti.length > 0; Layout.topMargin: 6; text: I18n.t("Recenti"); color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 12; font.weight: Font.DemiBold }
                     Repeater {
                         model: finestra.salvati.recenti.slice(0, 6)
-                        Text {
-                            text: "🕘  " + modelData.nome
-                            color: Tema.testo; font.family: Tema.font; font.pixelSize: 13; elide: Text.ElideRight; Layout.fillWidth: true
-                            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: finestra.scegli(modelData) }
+                        RowLayout {
+                            Layout.fillWidth: true; spacing: 8
+                            Simbolo { nome: "cronologia"; lato: 15; colore: Tema.testoSecondario }
+                            Text {
+                                text: modelData.nome
+                                color: Tema.testo; font.family: Tema.font; font.pixelSize: 13; elide: Text.ElideRight; Layout.fillWidth: true
+                                MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: finestra.scegli(modelData) }
+                            }
                         }
                     }
                     Rectangle { Layout.fillWidth: true; Layout.topMargin: 8; height: 1; color: Tema.bordo }
@@ -383,8 +396,8 @@ Finestra {
                     RowLayout {
                         Layout.fillWidth: true
                         Text { text: finestra.luogo ? finestra.luogo.nome : ""; color: Tema.testo; font.family: Tema.font; font.pixelSize: 21; font.weight: Font.Bold; wrapMode: Text.WordWrap; Layout.fillWidth: true }
-                        Text {
-                            text: "✕"; color: Tema.testoSecondario; font.pixelSize: 16
+                        Simbolo {
+                            nome: "chiudi"; lato: 18; colore: Tema.testoSecondario
                             MouseArea { anchors.fill: parent; anchors.margins: -8; cursorShape: Qt.PointingHandCursor; onClicked: { finestra.luogo = null; finestra.percorsi = []; finestra.tappe = []; finestra.partenza = null } }
                         }
                     }
@@ -404,7 +417,7 @@ Finestra {
                         spacing: 6
                         Pulsante { text: I18n.t("Indicazioni"); principale: true; onClicked: finestra.indicazioni() }
                         Pulsante {
-                            text: finestra.salvati.preferiti.some(function (p) { return finestra.luogo && p.lat === finestra.luogo.lat && p.lon === finestra.luogo.lon }) ? "★ " + I18n.t("Salvato") : "☆ " + I18n.t("Salva")
+                            text: finestra.salvati.preferiti.some(function (p) { return finestra.luogo && p.lat === finestra.luogo.lat && p.lon === finestra.luogo.lon }) ? I18n.t("Salvato") : I18n.t("Salva")
                             onClicked: finestra.salvati = ponte.chiama("preferito", [finestra.luogo, ""])
                         }
                         Pulsante {
@@ -454,12 +467,12 @@ Finestra {
                         Layout.fillWidth: true
                         spacing: 6
                         Text {
-                            text: "🏠 " + I18n.t("Imposta come Casa"); color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 12
+                            text: I18n.t("Imposta come Casa"); color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 12
                             MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: { finestra.salvati = ponte.chiama("preferito", [finestra.luogo, I18n.t("Casa")]); avviso.mostra(I18n.t("Salvato come Casa")) } }
                         }
                         Text { text: "·"; color: Tema.testoSecondario }
                         Text {
-                            text: "💼 " + I18n.t("come Lavoro"); color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 12
+                            text: I18n.t("come Lavoro"); color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 12
                             MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: { finestra.salvati = ponte.chiama("preferito", [finestra.luogo, I18n.t("Lavoro")]); avviso.mostra(I18n.t("Salvato come Lavoro")) } }
                         }
                         Text { text: "·"; color: Tema.testoSecondario }
@@ -479,7 +492,7 @@ Finestra {
                     // da / tappe / a
                     RowLayout {
                         Layout.fillWidth: true
-                        Text { text: "●"; color: "#22C55E"; font.pixelSize: 12 }
+                        Rectangle { width: 10; height: 10; radius: 5; color: "#22C55E" }
                         Text { text: I18n.t("Da") + ": " + (finestra.partenza ? finestra.partenza.nome : I18n.t("La mia posizione")); color: Tema.testo; font.family: Tema.font; font.pixelSize: 13; elide: Text.ElideRight; Layout.fillWidth: true }
                         Text {
                             text: I18n.t("Cambia"); color: Tema.accento; font.family: Tema.font; font.pixelSize: 12
@@ -490,17 +503,17 @@ Finestra {
                         model: finestra.mezzo === "mezzi" ? [] : finestra.tappe
                         RowLayout {
                             Layout.fillWidth: true
-                            Text { text: "●"; color: "#A855F7"; font.pixelSize: 12 }
+                            Rectangle { width: 10; height: 10; radius: 5; color: "#A855F7" }
                             Text { text: I18n.t("Tappa") + ": " + modelData.nome; color: Tema.testo; font.family: Tema.font; font.pixelSize: 13; elide: Text.ElideRight; Layout.fillWidth: true }
-                            Text {
-                                text: "✕"; color: Tema.testoSecondario; font.pixelSize: 12
+                            Simbolo {
+                                nome: "chiudi"; lato: 14; colore: Tema.testoSecondario
                                 MouseArea { anchors.fill: parent; anchors.margins: -6; cursorShape: Qt.PointingHandCursor; onClicked: { var t = finestra.tappe.slice(); t.splice(index, 1); finestra.tappe = t; finestra.indicazioni() } }
                             }
                         }
                     }
                     RowLayout {
                         Layout.fillWidth: true
-                        Text { text: "●"; color: "#EF4444"; font.pixelSize: 12 }
+                        Rectangle { width: 10; height: 10; radius: 5; color: "#EF4444" }
                         Text { text: I18n.t("A") + ": " + (finestra.luogo ? finestra.luogo.nome : ""); color: Tema.testo; font.family: Tema.font; font.pixelSize: 13; elide: Text.ElideRight; Layout.fillWidth: true }
                         Text {
                             visible: finestra.mezzo !== "mezzi"
@@ -512,11 +525,15 @@ Finestra {
                     RowLayout {
                         spacing: 6
                         Repeater {
-                            model: [{ id: "auto", t: "🚗 " + I18n.t("Auto") }, { id: "mezzi", t: "🚆 " + I18n.t("Mezzi") }, { id: "bici", t: "🚲 " + I18n.t("Bici") }, { id: "piedi", t: "🚶 " + I18n.t("A piedi") }]
+                            model: [{ id: "auto", s: "auto", t: I18n.t("Auto") }, { id: "mezzi", s: "treno", t: I18n.t("Mezzi") }, { id: "bici", s: "bici", t: I18n.t("Bici") }, { id: "piedi", s: "pedone", t: I18n.t("A piedi") }]
                             Rectangle {
-                                width: testoMezzo.implicitWidth + 18; height: 30; radius: 15
+                                width: rigaMezzo.implicitWidth + 20; height: 30; radius: 15
                                 color: finestra.mezzo === modelData.id ? Tema.accento : Tema.superficieAlta
-                                Text { id: testoMezzo; anchors.centerIn: parent; text: modelData.t; color: finestra.mezzo === modelData.id ? "white" : Tema.testo; font.family: Tema.font; font.pixelSize: 12 }
+                                Row {
+                                    id: rigaMezzo; anchors.centerIn: parent; spacing: 6
+                                    Simbolo { anchors.verticalCenter: parent.verticalCenter; nome: modelData.s; lato: 15; colore: finestra.mezzo === modelData.id ? "#FFFFFF" : Tema.testo }
+                                    Text { anchors.verticalCenter: parent.verticalCenter; text: modelData.t; color: finestra.mezzo === modelData.id ? "white" : Tema.testo; font.family: Tema.font; font.pixelSize: 12 }
+                                }
                                 MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: { finestra.mezzo = modelData.id; finestra.indicazioni() } }
                             }
                         }
@@ -584,10 +601,14 @@ Finestra {
                                             visible: modelData.mezzo !== "WALK" || modelData.minuti > 0
                                             height: 22; radius: 6; width: tTratto.implicitWidth + 12
                                             color: modelData.mezzo === "WALK" ? "transparent" : modelData.colore
-                                            Text {
-                                                id: tTratto; anchors.centerIn: parent
-                                                text: finestra.simboloMezzo(modelData.mezzo) + (modelData.linea ? " " + modelData.linea : "") + (modelData.mezzo === "WALK" ? " " + modelData.minuti + "′" : "")
-                                                color: modelData.mezzo === "WALK" ? Tema.testoSecondario : "white"; font.family: Tema.font; font.pixelSize: 12; font.weight: Font.DemiBold
+                                            Row {
+                                                id: tTratto; anchors.centerIn: parent; spacing: 4
+                                                Simbolo { anchors.verticalCenter: parent.verticalCenter; nome: finestra.simboloMezzo(modelData.mezzo); lato: 14; colore: modelData.mezzo === "WALK" ? Tema.testoSecondario : "#FFFFFF" }
+                                                Text {
+                                                    anchors.verticalCenter: parent.verticalCenter
+                                                    text: modelData.mezzo === "WALK" ? modelData.minuti + "′" : modelData.linea
+                                                    color: modelData.mezzo === "WALK" ? Tema.testoSecondario : "white"; font.family: Tema.font; font.pixelSize: 12; font.weight: Font.DemiBold
+                                                }
                                             }
                                         }
                                     }
@@ -602,9 +623,14 @@ Finestra {
                                         ColumnLayout {
                                             Layout.fillWidth: true
                                             spacing: 0
-                                            Text {
-                                                text: modelData.parte + "  " + finestra.simboloMezzo(modelData.mezzo) + "  " + (modelData.mezzo === "WALK" ? I18n.t("A piedi") + " " + modelData.minuti + " min" : modelData.nome + " " + modelData.linea + (modelData.direzione ? " → " + modelData.direzione : ""))
-                                                color: Tema.testo; font.family: Tema.font; font.pixelSize: 13; font.weight: modelData.mezzo === "WALK" ? Font.Normal : Font.DemiBold; wrapMode: Text.WordWrap; Layout.fillWidth: true
+                                            RowLayout {
+                                                Layout.fillWidth: true; spacing: 6
+                                                Text { text: modelData.parte; color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 13 }
+                                                Simbolo { nome: finestra.simboloMezzo(modelData.mezzo); lato: 15; colore: modelData.mezzo === "WALK" ? Tema.testoSecondario : modelData.colore }
+                                                Text {
+                                                    text: modelData.mezzo === "WALK" ? I18n.t("A piedi") + " " + modelData.minuti + " min" : modelData.nome + " " + modelData.linea + (modelData.direzione ? " → " + modelData.direzione : "")
+                                                    color: Tema.testo; font.family: Tema.font; font.pixelSize: 13; font.weight: modelData.mezzo === "WALK" ? Font.Normal : Font.DemiBold; wrapMode: Text.WordWrap; Layout.fillWidth: true
+                                                }
                                             }
                                             Text {
                                                 visible: modelData.mezzo !== "WALK"
@@ -634,7 +660,7 @@ Finestra {
                         RowLayout {
                             Layout.fillWidth: true
                             spacing: 10
-                            Text { text: finestra.freccia(modelData.tipo); color: Tema.accento; font.pixelSize: 18; Layout.preferredWidth: 22; horizontalAlignment: Text.AlignHCenter }
+                            Simbolo { nome: finestra.freccia(modelData.tipo); lato: 20; colore: Tema.accento; Layout.alignment: Qt.AlignTop }
                             ColumnLayout {
                                 Layout.fillWidth: true; spacing: 0
                                 Text { text: modelData.testo; color: Tema.testo; font.family: Tema.font; font.pixelSize: 13; wrapMode: Text.WordWrap; Layout.fillWidth: true }
@@ -660,7 +686,7 @@ Finestra {
             RowLayout {
                 anchors.fill: parent; anchors.margins: 16
                 spacing: 18
-                Text { text: finestra.stato ? finestra.freccia(finestra.stato.manovra.tipo) : ""; color: "white"; font.pixelSize: 46; font.weight: Font.Bold }
+                Simbolo { nome: finestra.stato ? finestra.freccia(finestra.stato.manovra.tipo) : ""; lato: 52; colore: "#FFFFFF" }
                 ColumnLayout {
                     Layout.fillWidth: true; spacing: 2
                     Text { text: finestra.stato ? finestra.stato.allaManovra : ""; color: "white"; font.family: Tema.font; font.pixelSize: 26; font.weight: Font.Bold }
@@ -674,11 +700,12 @@ Finestra {
             width: testoDopo.implicitWidth + 28; height: 34
             radius: 10
             color: "#172E6E"
-            Text {
+            Row {
                 id: testoDopo
-                anchors.centerIn: parent
-                text: finestra.stato && finestra.stato.dopo ? I18n.t("Poi") + "  " + finestra.freccia(finestra.stato.dopo.tipo) + "  " + (finestra.stato.dopo.via || finestra.stato.dopo.testo) : ""
-                color: "#E0E7FF"; font.family: Tema.font; font.pixelSize: 13
+                anchors.centerIn: parent; spacing: 8
+                Text { anchors.verticalCenter: parent.verticalCenter; text: I18n.t("Poi"); color: "#E0E7FF"; font.family: Tema.font; font.pixelSize: 13 }
+                Simbolo { anchors.verticalCenter: parent.verticalCenter; nome: finestra.stato && finestra.stato.dopo ? finestra.freccia(finestra.stato.dopo.tipo) : ""; lato: 16; colore: "#E0E7FF" }
+                Text { anchors.verticalCenter: parent.verticalCenter; text: finestra.stato && finestra.stato.dopo ? (finestra.stato.dopo.via || finestra.stato.dopo.testo) : ""; color: "#E0E7FF"; font.family: Tema.font; font.pixelSize: 13 }
             }
         }
     }
@@ -720,8 +747,19 @@ Finestra {
                 color: Tema.testo; font.family: Tema.font; font.pixelSize: 14; font.weight: Font.Medium
                 elide: Text.ElideRight; horizontalAlignment: Text.AlignHCenter
             }
-            Pulsante { text: finestra.voce ? "🔊" : "🔇"; onClicked: finestra.voce = !finestra.voce }
-            Pulsante { text: finestra.ruota ? "🧭" : "⬆"; onClicked: finestra.ruota = !finestra.ruota }
+            Repeater {
+                model: [{ s: finestra.voce ? "volume" : "silenzioso", f: function () { finestra.voce = !finestra.voce }, t: finestra.voce ? I18n.t("Voce accesa") : I18n.t("Voce spenta") },
+                        { s: finestra.ruota ? "bussola" : "nord", f: function () { finestra.ruota = !finestra.ruota }, t: finestra.ruota ? I18n.t("La mappa gira con te") : I18n.t("Nord in alto") }]
+                Rectangle {
+                    width: 40; height: 40; radius: 20
+                    color: sopraG.hovered ? Tema.superficieAlta : Tema.superficie
+                    border.color: Tema.bordo
+                    Simbolo { anchors.centerIn: parent; nome: modelData.s; lato: 20; colore: Tema.testo }
+                    HoverHandler { id: sopraG }
+                    MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: modelData.f() }
+                    ToolTip.visible: sopraG.hovered; ToolTip.text: modelData.t
+                }
+            }
             Pulsante { visible: !finestra.seguendo; text: I18n.t("Ricentra"); onClicked: { finestra.seguendo = true; if (finestra.qui) carta.centra(finestra.qui.lat, finestra.qui.lon, 16) } }
             Pulsante { text: I18n.t("Termina"); pericoloso: true; onClicked: finestra.termina() }
         }
@@ -736,7 +774,7 @@ Finestra {
         color: sopraQui.hovered ? Tema.superficieAlta : Tema.superficie
         border.color: Tema.bordo
         HoverHandler { id: sopraQui }
-        Text { anchors.centerIn: parent; text: "➤"; rotation: -45; color: Tema.accento; font.pixelSize: 16 }
+        Simbolo { anchors.centerIn: parent; nome: "mirino"; lato: 20; colore: Tema.accento }
         MouseArea {
             anchors.fill: parent
             onClicked: {

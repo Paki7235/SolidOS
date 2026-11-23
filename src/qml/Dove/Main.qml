@@ -74,8 +74,8 @@ Finestra {
                 if (r === "ricevuto") finestra.statoComando = I18n.t("Ricevuto dal dispositivo")
                 else if (r === "eseguito") {
                     seguiComando.stop()
-                    finestra.statoComando = ({ suona: I18n.t("Sta suonando 🔊"), ferma: I18n.t("Suono fermato"),
-                                               blocca: I18n.t("Bloccato 🔒"), perso: I18n.t("Modalità smarrito attiva 🔒"), cancella: I18n.t("Il telefono si sta cancellando"), posizione: I18n.t("Posizione aggiornata") })[finestra.comandoTipo] || I18n.t("Fatto")
+                    finestra.statoComando = ({ suona: I18n.t("Sta suonando"), ferma: I18n.t("Suono fermato"),
+                                               blocca: I18n.t("Bloccato"), perso: I18n.t("Modalità smarrito attiva"), cancella: I18n.t("Il telefono si sta cancellando"), posizione: I18n.t("Posizione aggiornata") })[finestra.comandoTipo] || I18n.t("Fatto")
                     finestra.aggiorna()
                 } else if (r === "errore") { seguiComando.stop(); finestra.statoComando = I18n.t("Il dispositivo non è riuscito a eseguirlo") }
             } else if (id === "accesso") {
@@ -192,7 +192,7 @@ Finestra {
                             ColumnLayout {
                                 Layout.fillWidth: true; spacing: 1
                                 Testo { Layout.fillWidth: true; text: modelData.nome; font.weight: Font.DemiBold; elide: Text.ElideRight; wrapMode: Text.NoWrap }
-                                Testo { Layout.fillWidth: true; text: modelData.stato + (modelData.bloccato ? " · 🔒" : ""); secondario: true; font.pointSize: Tema.fontDimensione - 1; elide: Text.ElideRight; wrapMode: Text.NoWrap }
+                                Testo { Layout.fillWidth: true; text: modelData.stato + (modelData.bloccato ? " · " + I18n.t("bloccato") : ""); secondario: true; font.pointSize: Tema.fontDimensione - 1; elide: Text.ElideRight; wrapMode: Text.NoWrap }
                             }
                         }
                         MouseArea { id: area; anchors.fill: parent; hoverEnabled: true; onClicked: finestra.scegli(modelData.id, true) }
@@ -250,7 +250,7 @@ Finestra {
                         columns: 2; columnSpacing: 8; rowSpacing: 8
                         Pulsante {
                             Layout.fillWidth: true; principale: true; icona: "audio-volume-high"
-                            text: finestra.comandoTipo === "suona" && finestra.statoComando.indexOf("🔊") >= 0 ? I18n.t("Ferma il suono") : I18n.t("Fai suonare")
+                            text: finestra.comandoTipo === "suona" && finestra.statoComando === I18n.t("Sta suonando") ? I18n.t("Ferma il suono") : I18n.t("Fai suonare")
                             onClicked: finestra.invia(text === I18n.t("Ferma il suono") ? "ferma" : "suona")
                         }
                         Pulsante { Layout.fillWidth: true; icona: "system-lock-screen"; text: scheda.d.tipo === "telefono" ? I18n.t("Modalità smarrito…") : I18n.t("Blocca…"); onClicked: dialogoBlocco.open() }

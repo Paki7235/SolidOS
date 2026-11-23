@@ -156,7 +156,7 @@ Finestra {
                                 color: parent.parent.attivo ? "white" : Tema.testo
                                 font.family: Tema.font; font.pixelSize: 14
                             }
-                            Text { visible: modelData.preferito === true; text: "★"; color: parent.parent.attivo ? "white" : "#F5B301"; font.pixelSize: 13 }
+                            Simbolo { visible: modelData.preferito === true; nome: "stella-piena"; lato: 14; colore: parent.parent.attivo ? "#FFFFFF" : "#F5B301" }
                         }
                         MouseArea { anchors.fill: parent; onClicked: { finestra.modifica = false; finestra.scelto = modelData.id } }
                     }
@@ -239,10 +239,10 @@ Finestra {
                         spacing: 14
                         Repeater {
                             model: [
-                                { t: I18n.t("email"), s: "✉", tipo: "email" },
-                                { t: I18n.t("chiama"), s: "☎", tipo: "numero" },
-                                { t: I18n.t("sito"), s: "🌐", tipo: "sito" },
-                                { t: I18n.t("mappa"), s: "⌖", tipo: "indirizzo" }
+                                { t: I18n.t("email"), s: "busta", tipo: "email" },
+                                { t: I18n.t("chiama"), s: "telefono", tipo: "numero" },
+                                { t: I18n.t("sito"), s: "globo", tipo: "sito" },
+                                { t: I18n.t("mappa"), s: "dove", tipo: "indirizzo" }
                             ]
                             Column {
                                 spacing: 4
@@ -252,7 +252,7 @@ Finestra {
                                     anchors.horizontalCenter: parent.horizontalCenter
                                     width: 44; height: 44; radius: 22
                                     color: Tema.superficieAlta
-                                    Text { anchors.centerIn: parent; text: modelData.s; color: Tema.accento; font.pixelSize: 18 }
+                                    Simbolo { anchors.centerIn: parent; nome: modelData.s; lato: 20; colore: Tema.accento }
                                     MouseArea { anchors.fill: parent; enabled: !!parent.parent.valore; onClicked: ponte.chiama("apri", [modelData.tipo, parent.parent.valore]) }
                                 }
                                 Text { anchors.horizontalCenter: parent.horizontalCenter; text: modelData.t; color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 11 }
@@ -337,7 +337,7 @@ Finestra {
                         spacing: 10
                         Pulsante {
                             visible: !finestra.modifica && finestra.scelto !== "io" && !!finestra.aperto
-                            text: finestra.aperto && finestra.aperto.preferito ? "★ " + I18n.t("Preferito") : "☆ " + I18n.t("Aggiungi ai preferiti")
+                            text: finestra.aperto && finestra.aperto.preferito ? I18n.t("Tra i preferiti") : I18n.t("Aggiungi ai preferiti")
                             onClicked: { ponte.chiama("preferito", [finestra.scelto, !(finestra.aperto.preferito === true)]); finestra.ricarica() }
                         }
                         Pulsante {

@@ -135,7 +135,7 @@ Rectangle {
                 Layout.fillWidth: true
                 secondario: true
                 text: centro.stato.batteria && centro.stato.batteria.percentuale !== undefined
-                      ? I18n.t("Batteria") + " " + centro.stato.batteria.percentuale + "%" + (centro.stato.batteria.in_carica ? " ⚡" : "")
+                      ? I18n.t("Batteria") + " " + centro.stato.batteria.percentuale + "%" + (centro.stato.batteria.in_carica ? " · " + I18n.t("in carica") : "")
                       : Tema.nomeSistema
             }
             Pulsante { icona: "preferences-system"; onClicked: { shell.chiama("apri", ["impostazioni"]); centro.chiudi() } }

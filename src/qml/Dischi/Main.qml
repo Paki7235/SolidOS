@@ -105,7 +105,7 @@ Finestra {
     }
     Dialog {
         id: salute
-        function mostra(r) { testoSalute.text = r.ok ? ((r.superato ? "✅ " + I18n.t("Il disco è in buona salute") : "⚠️ " + I18n.t("Il disco segnala problemi: fai subito un backup")) + "\n" + I18n.t("Ore di accensione") + ": " + (r.ore || "?") + "\n" + I18n.t("Temperatura") + ": " + (r.temperatura || "?") + " °C") : r.messaggio; open() }
+        function mostra(r) { testoSalute.text = r.ok ? ((r.superato ? I18n.t("Il disco è in buona salute") : I18n.t("Attenzione: il disco segnala problemi: fai subito un backup")) + "\n" + I18n.t("Ore di accensione") + ": " + (r.ore || "?") + "\n" + I18n.t("Temperatura") + ": " + (r.temperatura || "?") + " °C") : r.messaggio; open() }
         title: I18n.t("Salute del disco")
         anchors.centerIn: parent
         standardButtons: Dialog.Ok

@@ -106,7 +106,7 @@ Finestra {
             Pulsante { text: "‹ " + I18n.t("Libreria"); onClicked: { finestra.pagina = "libreria"; if (!finestra.libreria.length) finestra.ricaricaLibreria() } }
             Pulsante { text: I18n.t("Apri…"); onClicked: dialogoApri.open() }
             Pulsante {
-                text: finestra.preferitaCorrente() ? "♥" : "♡"
+                text: finestra.preferitaCorrente() ? I18n.t("Tra le preferite") : I18n.t("Preferita")
                 enabled: !!finestra.corrente
                 onClicked: { if (!finestra.libreria.length) finestra.ricaricaLibreria(); finestra.alternaPreferita(finestra.corrente) }
             }
@@ -180,9 +180,9 @@ Finestra {
                 Text { text: I18n.t("Foto"); color: Tema.testo; font.family: Tema.font; font.pixelSize: 20; font.weight: Font.Bold; Layout.bottomMargin: 10; Layout.leftMargin: 6 }
                 Repeater {
                     model: [
-                        { id: "tutte", t: I18n.t("Libreria"), s: "▦" }, { id: "preferite", t: I18n.t("Preferite"), s: "♥" },
-                        { id: "schermate", t: I18n.t("Schermate"), s: "▭" }, { id: "scaricati", t: I18n.t("Scaricati"), s: "↓" },
-                        { id: "account", t: I18n.t("Dagli account"), s: "☁" }
+                        { id: "tutte", t: I18n.t("Libreria"), s: "griglia" }, { id: "preferite", t: I18n.t("Preferite"), s: "cuore" },
+                        { id: "schermate", t: I18n.t("Schermate"), s: "schermo" }, { id: "scaricati", t: I18n.t("Scaricati"), s: "scarica" },
+                        { id: "account", t: I18n.t("Dagli account"), s: "nuvola" }
                     ]
                     Rectangle {
                         Layout.fillWidth: true
@@ -192,7 +192,7 @@ Finestra {
                         HoverHandler { id: sopraVoce }
                         Row {
                             anchors.verticalCenter: parent.verticalCenter; x: 10; spacing: 10
-                            Text { text: modelData.s; width: 16; horizontalAlignment: Text.AlignHCenter; color: parent.parent.attivo ? "white" : Tema.accento; font.pixelSize: 14 }
+                            Simbolo { anchors.verticalCenter: parent.verticalCenter; nome: modelData.s; lato: 16; colore: parent.parent.attivo ? "#FFFFFF" : Tema.accento }
                             Text { text: modelData.t; color: parent.parent.attivo ? "white" : Tema.testo; font.family: Tema.font; font.pixelSize: 14 }
                         }
                         MouseArea { anchors.fill: parent; onClicked: { finestra.album = modelData.id; finestra.pagina = "libreria" } }
@@ -207,7 +207,7 @@ Finestra {
                     HoverHandler { id: sopraAcc }
                     Row {
                         anchors.verticalCenter: parent.verticalCenter; x: 10; spacing: 10
-                        Text { text: "⚙"; width: 16; horizontalAlignment: Text.AlignHCenter; color: parent.parent.attivo ? "white" : Tema.accento; font.pixelSize: 14 }
+                        Simbolo { anchors.verticalCenter: parent.verticalCenter; nome: "impostazioni"; lato: 16; colore: parent.parent.attivo ? "#FFFFFF" : Tema.accento }
                         Text { text: I18n.t("Account collegati"); color: parent.parent.attivo ? "white" : Tema.testo; font.family: Tema.font; font.pixelSize: 14 }
                     }
                     MouseArea { anchors.fill: parent; onClicked: { finestra.servizi = ponte.chiama0("servizi"); finestra.pagina = "account" } }
@@ -262,11 +262,10 @@ Finestra {
                                     color: finestra.coloriFonte[modelData.fonte] || "#666"
                                     Text { anchors.centerIn: parent; text: (modelData.fonte || "?").charAt(0).toUpperCase(); color: "white"; font.pixelSize: 10; font.weight: Font.Bold }
                                 }
-                                Text {
+                                Simbolo {
                                     visible: modelData.preferita === true || sopraFoto.hovered
                                     anchors.right: parent.right; anchors.bottom: parent.bottom; anchors.margins: 6
-                                    text: modelData.preferita ? "♥" : "♡"
-                                    color: "white"; style: Text.Raised; styleColor: "#80000000"; font.pixelSize: 16
+                                    nome: modelData.preferita ? "cuore-piena" : "cuore"; lato: 18; colore: "#FFFFFF"
                                     MouseArea { anchors.fill: parent; anchors.margins: -6; onClicked: finestra.alternaPreferita(modelData.percorso) }
                                 }
                                 HoverHandler { id: sopraFoto }
@@ -293,7 +292,7 @@ Finestra {
                 }
                 Text {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    text: finestra.album === "preferite" ? I18n.t("Tocca ♡ su una foto per ritrovarla qui") : I18n.t("Le foto di Immagini e Scaricati compaiono qui, insieme a quelle degli account collegati")
+                    text: finestra.album === "preferite" ? I18n.t("Tocca il cuore su una foto per ritrovarla qui") : I18n.t("Le foto di Immagini e Scaricati compaiono qui, insieme a quelle degli account collegati")
                     color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 13
                 }
             }
@@ -332,7 +331,7 @@ Finestra {
                         spacing: 12
                         Rectangle {
                             width: 36; height: 36; radius: 9; color: "#30A46C"
-                            Text { anchors.centerIn: parent; text: "⌂"; color: "white"; font.pixelSize: 18 }
+                            Simbolo { anchors.centerIn: parent; nome: "casa"; lato: 18; colore: "#FFFFFF" }
                         }
                         ColumnLayout {
                             Layout.fillWidth: true; spacing: 1
@@ -409,7 +408,7 @@ Finestra {
                                     id: trovati
                                     model: []
                                     Pulsante {
-                                        text: "⌂ " + modelData.nome + "  (" + modelData.indirizzo + ")"
+                                        text: modelData.nome + "  (" + modelData.indirizzo + ")"
                                         onClicked: indirizzo.text = modelData.indirizzo
                                     }
                                 }

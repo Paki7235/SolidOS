@@ -40,7 +40,7 @@ class PannelloRete(Pannello):
         elementi_reti = [{
             "id": r["ssid"], "titolo": r["ssid"],
             "sottotitolo": (T("Connessa") if r["connessa"] else "") + (" · " if r["connessa"] else "")
-                           + _forza(r["segnale"]) + (" · 🔒" if r["protetta"] else ""),
+                           + _forza(r["segnale"]) + (" · " + T("protetta") if r["protetta"] else ""),
             "icona": "network-wireless-signal-" + ("excellent" if r["segnale"] > 75 else "good" if r["segnale"] > 50 else "ok" if r["segnale"] > 25 else "weak"),
             "attivo": r["connessa"],
             "azioni": [{"id": "disconnetti", "testo": T("Disconnetti")}] if r["connessa"] else
@@ -202,7 +202,7 @@ class PannelloCondivisione(Pannello):
         nomi = {"quickshare": T("Telefoni con Quick Share"), "localsend": T("App LocalSend (telefoni e computer)"), "qr": T("Qualsiasi telefono con codice QR")}
         for chiave in ("quickshare", "localsend", "qr"):
             disponibile, motivo = stato.get(chiave, (False, T("Servizio non avviato")))
-            voci.append(info("stato-" + chiave, nomi[chiave], ("✅ " if disponibile else "⚠️ ") + str(motivo)))
+            voci.append(info("stato-" + chiave, nomi[chiave], (T("pronto") + " · " if disponibile else T("non disponibile") + " · ") + str(motivo)))
         voci.append(azione("registro", T("Registro dei trasferimenti"), T("Apri"),
                            T("Nel pannello Privacy trovi tutti i file inviati e ricevuti")))
         return voci

@@ -88,16 +88,18 @@ Finestra {
     component Tasto: Rectangle {
         id: t
         property string icona: ""
+        property string simbolo: ""           // disegno a linea di SolidOS (es. «puntina»)
         property string testo: ""
         property string suggerimento: ""
         property bool acceso: false
         signal premuto()
-        width: Math.max(32, etichetta.implicitWidth + (icona ? 30 : 16)); height: 30; radius: 7
+        width: Math.max(32, etichetta.implicitWidth + (icona || simbolo ? 30 : 16)); height: 30; radius: 7
         color: acceso ? "#33" + finestra.giallo.toString().substring(1) : (ma.pressed ? (Tema.chiaro ? "#1A000000" : "#26FFFFFF") : (ma.containsMouse ? (Tema.chiaro ? "#0F000000" : "#14FFFFFF") : "transparent"))
         Row {
             anchors.centerIn: parent
             spacing: 4
             Icona { visible: t.icona !== ""; nome: t.icona + (Tema.chiaro ? "?c" : ""); lato: 16; anchors.verticalCenter: parent.verticalCenter }
+            Simbolo { visible: t.simbolo !== ""; nome: t.simbolo; lato: 16; colore: Tema.testo; anchors.verticalCenter: parent.verticalCenter }
             Text { id: etichetta; visible: t.testo !== ""; text: t.testo; color: Tema.testo; font.family: Tema.font; font.pixelSize: 14; anchors.verticalCenter: parent.verticalCenter; textFormat: Text.RichText }
         }
         MouseArea { id: ma; anchors.fill: parent; hoverEnabled: true; onClicked: t.premuto() }
@@ -199,7 +201,11 @@ Finestra {
                                 anchors.verticalCenter: parent.verticalCenter
                                 x: 12; width: parent.width - 24
                                 spacing: 3
-                                Text { width: parent.width; text: (riga.modelData.fissata ? "📌 " : "") + riga.modelData.titolo; elide: Text.ElideRight; color: Tema.testo; font.family: Tema.font; font.pixelSize: 14; font.weight: Font.DemiBold }
+                                Row {
+                                    width: parent.width; spacing: 5
+                                    Simbolo { visible: riga.modelData.fissata === true; nome: "puntina"; lato: 13; colore: finestra.giallo; anchors.verticalCenter: parent.verticalCenter }
+                                    Text { width: parent.width - (riga.modelData.fissata ? 18 : 0); text: riga.modelData.titolo; elide: Text.ElideRight; color: Tema.testo; font.family: Tema.font; font.pixelSize: 14; font.weight: Font.DemiBold }
+                                }
                                 Row {
                                     width: parent.width
                                     spacing: 8
@@ -272,7 +278,7 @@ Finestra {
                     Tasto { testo: "<u>S</u>"; suggerimento: I18n.t("Sottolineato") + " (Ctrl+U)"; onPremuto: finestra.formatta("sottolineato") }
                     Tasto { testo: "<s>B</s>"; suggerimento: I18n.t("Barrato"); onPremuto: finestra.formatta("barrato") }
                     Rectangle { width: 1; height: 20; anchors.verticalCenter: parent.verticalCenter; color: Tema.chiaro ? "#1A000000" : "#1FFFFFFF" }
-                    Tasto { testo: "☑"; suggerimento: I18n.t("Lista di cose da fare") + " (Ctrl+Maiusc+L)"; onPremuto: finestra.formatta("cose") }
+                    Tasto { simbolo: "spunta"; suggerimento: I18n.t("Lista di cose da fare") + " (Ctrl+Maiusc+L)"; onPremuto: finestra.formatta("cose") }
                     Tasto { icona: "view-list-bullet-symbolic"; testo: ""; suggerimento: I18n.t("Elenco puntato"); onPremuto: finestra.formatta("puntato") }
                     Tasto { icona: "view-list-ordered-symbolic"; testo: ""; suggerimento: I18n.t("Elenco numerato"); onPremuto: finestra.formatta("numerato") }
                 }
@@ -287,7 +293,7 @@ Finestra {
                     }
                     Tasto {
                         visible: !finestra.cestino && finestra.scelta !== ""
-                        testo: "📌"; acceso: !!(finestra.notaScelta && finestra.notaScelta.fissata)
+                        simbolo: "puntina"; acceso: !!(finestra.notaScelta && finestra.notaScelta.fissata)
                         suggerimento: I18n.t("Fissa in alto")
                         onPremuto: { ponte.chiama("fissa", [finestra.scelta, !(finestra.notaScelta && finestra.notaScelta.fissata)]); finestra.aggiornaElenco() }
                     }
@@ -339,7 +345,7 @@ Finestra {
                 Layout.fillHeight: true
                 visible: finestra.scelta === ""
                 Item { width: 1; height: 160 }
-                Text { anchors.horizontalCenter: parent.horizontalCenter; text: "📝"; font.pixelSize: 48 }
+                Simbolo { anchors.horizontalCenter: parent.horizontalCenter; nome: "note"; lato: 48; colore: Tema.testoSecondario }
                 Text { anchors.horizontalCenter: parent.horizontalCenter; text: I18n.t("Scegli una nota o creane una nuova"); color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 14; topPadding: 8 }
                 Item { width: 1; height: 12 }
                 Pulsante { anchors.horizontalCenter: parent.horizontalCenter; principale: true; text: I18n.t("Nuova nota"); onClicked: finestra.nuova() }

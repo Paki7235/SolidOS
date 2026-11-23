@@ -135,7 +135,7 @@ Finestra {
                             RowLayout {
                                 anchors.fill: parent; anchors.leftMargin: 10; anchors.rightMargin: 10
                                 spacing: 10
-                                Text { text: "🖥"; font.pixelSize: 18 }
+                                Simbolo { nome: "schermo"; lato: 20; colore: Tema.accento }
                                 ColumnLayout {
                                     Layout.fillWidth: true; spacing: 0
                                     Text { text: modelData.nome; color: Tema.testo; font.family: Tema.font; font.pixelSize: 14; elide: Text.ElideRight; Layout.fillWidth: true }

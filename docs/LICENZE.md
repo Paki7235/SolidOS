@@ -57,3 +57,5 @@ Lo stato «da verificare» va confermato sul repository ufficiale prima dell'int
 | Bibata | cursori | GPL-3.0 | ok |
 
 **Marchi:** «AirDrop», «Quick Share», «Windows», «iPhone» sono citati solo per indicare compatibilità.
+
+**Simboli a linea** (`src/dati/icone/linea`, gli stessi di SolidOS Mobile, generati da `scripts/genera-icone-linea.py` del telefono): in parte ricavati da Lucide (licenza ISC, © Lucide Contributors), in parte disegnati per SolidOS.

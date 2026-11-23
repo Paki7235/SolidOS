@@ -74,7 +74,7 @@ class PannelloSolidID(Pannello):
                 icona = _icona_tipo(d["tipo"])
                 dettagli = [d.get("modello") or "", _quando(d.get("ultimo_visto", ""))]
                 if d.get("batteria") is not None:
-                    dettagli.append(f"🔋 {d['batteria']}%")
+                    dettagli.append(T("batteria {n}%", n=d["batteria"]))
                 elementi.append({"id": d["id"], "titolo": d["nome"] + (f" ({T('questo computer')})" if questo else ""),
                                  "sottotitolo": " · ".join(x for x in dettagli if x), "icona": icona, "attivo": questo,
                                  "azioni": [{"id": "rimuovi", "testo": T("Rimuovi"), "pericolosa": True}]})

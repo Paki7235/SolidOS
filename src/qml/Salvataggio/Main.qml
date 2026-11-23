@@ -247,7 +247,7 @@ Finestra {
     Dialog {
         id: esitoSalute
         function mostra(r) {
-            testoSalute.text = !r.ok ? r.messaggio : ((r.superato ? "✅ " + I18n.t("Il disco è in buona salute") : "⚠️ " + I18n.t("Il disco segnala un guasto: recupera subito i file")) +
+            testoSalute.text = !r.ok ? r.messaggio : ((r.superato ? I18n.t("Il disco è in buona salute") : I18n.t("Attenzione: il disco segnala un guasto: recupera subito i file")) +
                 "\n" + I18n.t("Ore di accensione") + ": " + (r.ore || "?") + "\n" + I18n.t("Settori riallocati") + ": " + r.settoriRiallocati +
                 "\n" + I18n.t("Settori in sospeso") + ": " + r.settoriInSospeso)
             open()

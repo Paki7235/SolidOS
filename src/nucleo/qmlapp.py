@@ -153,8 +153,15 @@ def _provider_icone():
 
         def requestPixmap(self, ident, richiesta, *_):
             lato = max(richiesta.width(), richiesta.height(), 0) or 48
-            nome = ident.split("?")[0]
-            icona = QIcon(nome) if nome.startswith("/") else QIcon.fromTheme(nome)
+            nome, _, opzioni = ident.partition("?")
+            # Simboli a linea di SolidOS («linea-…», gli stessi del telefono; licenza in docs/LICENZE.md)
+            linea = next((f for f in (CARTELLA_QML.parent / "icone" / "linea" / f"{nome}.svg",
+                                      CARTELLA_QML.parent / "dati" / "icone" / "linea" / f"{nome}.svg") if f.is_file()), None) \
+                if nome.startswith("linea-") else None
+            if linea:
+                icona = QIcon(str(linea))
+            else:
+                icona = QIcon(nome) if nome.startswith("/") else QIcon.fromTheme(nome)
             if icona.isNull() and not nome.startswith("/"):
                 # Icone proprie del sistema (es. Dov'è): Qt cerca le icone di riserva solo nella
                 # prima cartella «hicolor» che trova, quindi le nostre si cercano direttamente
@@ -170,6 +177,20 @@ def _provider_icone():
             if pixmap.isNull():
                 pixmap = QPixmap(lato, lato)
                 pixmap.fill()
+            # «?tema=colore-RRGGBB»: i simboli a linea prendono il colore chiesto (quello del tema)
+            if linea and "tema=colore-" in opzioni:
+                from PyQt6.QtGui import QColor, QPainter
+
+                colore = QColor("#" + opzioni.split("tema=colore-", 1)[1][:6])
+                tinta = QPixmap(pixmap.size())
+                tinta.setDevicePixelRatio(pixmap.devicePixelRatio())
+                tinta.fill(QColor(0, 0, 0, 0))
+                p = QPainter(tinta)
+                p.drawPixmap(0, 0, pixmap)
+                p.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceIn)
+                p.fillRect(tinta.rect(), colore)
+                p.end()
+                pixmap = tinta
             return pixmap, pixmap.size()
 
     return ProviderIcone()

@@ -22,7 +22,7 @@ Finestra {
             Layout.fillWidth: true
             visible: finestra.info.sospetto === true
             color: "#33E5484D"
-            Testo { width: parent.width; text: "⚠️ " + I18n.t("Attenzione: questo file sembra un documento ma in realtà è un programma. Non aprirlo se non sai da dove arriva.") }
+            Testo { width: parent.width; text: I18n.t("Attenzione: questo file sembra un documento ma in realtà è un programma. Non aprirlo se non sai da dove arriva.") }
         }
         RowLayout {
             Layout.fillWidth: true

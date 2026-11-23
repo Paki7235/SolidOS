@@ -80,7 +80,7 @@ Finestra {
         ColumnLayout {
             spacing: 10
             Titolo { text: I18n.t("Connettiti a Internet") }
-            Testo { secondario: true; text: ponte.chiama0("connesso") ? "✅ " + I18n.t("Sei già connesso.") : I18n.t("Scegli la tua rete Wi-Fi (puoi anche saltare questo passo).") }
+            Testo { secondario: true; text: ponte.chiama0("connesso") ? I18n.t("Sei già connesso.") : I18n.t("Scegli la tua rete Wi-Fi (puoi anche saltare questo passo).") }
             ListView {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
@@ -90,7 +90,7 @@ Finestra {
                     width: ListView.view.width
                     icona: "network-wireless"
                     titolo: modelData.ssid + (modelData.connessa ? "  ✓" : "")
-                    sottotitolo: (modelData.protetta ? "🔒 " : "") + modelData.segnale + "%"
+                    sottotitolo: modelData.segnale + "%" + (modelData.protetta ? " · " + I18n.t("protetta") : "")
                     onClicked: { password.ssid = modelData.ssid; if (modelData.protetta) password.open(); else ponte.avvia("connetti", [modelData.ssid, ""], "connetti") }
                 }
                 Testo { anchors.centerIn: parent; visible: parent.count === 0; secondario: true; text: I18n.t("Ricerca delle reti…") }
@@ -306,7 +306,7 @@ Finestra {
             Pulsante { text: I18n.t("Salva e verifica la compatibilità"); onClicked: ponte.avvia("condivisione", [vis.currentValue, nomeDisp.text], "condivisione") }
             Repeater {
                 model: Object.keys(finestra.statoCondivisione)
-                Testo { Layout.fillWidth: true; text: ({ quickshare: "Quick Share", localsend: "LocalSend", qr: "QR" })[modelData] + ": " + (finestra.statoCondivisione[modelData][0] ? "✅ " : "⚠️ ") + finestra.statoCondivisione[modelData][1] }
+                Testo { Layout.fillWidth: true; text: ({ quickshare: "Quick Share", localsend: "LocalSend", qr: "QR" })[modelData] + ": " + (finestra.statoCondivisione[modelData][0] ? I18n.t("pronto") + " · " : I18n.t("non disponibile") + " · ") + finestra.statoCondivisione[modelData][1] }
             }
             Item { Layout.fillHeight: true }
         }

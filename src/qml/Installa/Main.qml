@@ -48,7 +48,7 @@ Finestra {
         Testo { text: finestra.fase; visible: text !== ""; Layout.fillWidth: true }
         Testo {
             visible: finestra.esito !== null
-            text: finestra.esito ? ((finestra.esito.ok ? "✅ " + I18n.t("Installazione completata") : "⚠️ " + I18n.t("Installazione non riuscita")) + (finestra.esito.messaggio ? "\n" + finestra.esito.messaggio : "")) : ""
+            text: finestra.esito ? ((finestra.esito.ok ? I18n.t("Installazione completata") : I18n.t("Installazione non riuscita")) + (finestra.esito.messaggio ? "\n" + finestra.esito.messaggio : "")) : ""
             Layout.fillWidth: true
         }
         RowLayout {

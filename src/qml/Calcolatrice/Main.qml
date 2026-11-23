@@ -224,7 +224,7 @@ Finestra {
                     Layout.fillWidth: true
                     Text { Layout.fillWidth: true; text: finestra.conversione.nota || ""; color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 11; wrapMode: Text.WordWrap }
                     Pulsante { text: "C"; onClicked: finestra.cancella() }
-                    Pulsante { text: "⇅ " + I18n.t("Scambia"); onClicked: finestra.scambia() }
+                    Pulsante { text: I18n.t("Scambia"); onClicked: finestra.scambia() }
                 }
             }
 

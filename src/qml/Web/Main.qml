@@ -272,7 +272,7 @@ Finestra {
                                 RowLayout {
                                     anchors.fill: parent; anchors.leftMargin: 10; anchors.rightMargin: 10
                                     spacing: 10
-                                    Text { text: modelData.tipo === "preferito" ? "★" : "🕘"; color: Tema.testoSecondario; font.pixelSize: 13 }
+                                    Simbolo { nome: modelData.tipo === "preferito" ? "stella" : "cronologia"; lato: 14; colore: Tema.testoSecondario }
                                     Column {
                                         Layout.fillWidth: true
                                         Text { width: parent.width; text: modelData.titolo; elide: Text.ElideRight; color: Tema.testo; font.family: Tema.font; font.pixelSize: 13 }
@@ -368,7 +368,7 @@ Finestra {
             color: Tema.chiaro ? "#FDE2E1" : "#45201F"
             RowLayout {
                 anchors.fill: parent; anchors.leftMargin: 16; anchors.rightMargin: 10
-                Text { Layout.fillWidth: true; elide: Text.ElideRight; color: Tema.testo; font.family: Tema.font; font.pixelSize: 13; text: "⚠ " + I18n.t("Connessione non sicura: il certificato del sito non è valido.") + (avvisoCertificato.errore ? " " + avvisoCertificato.errore.description : "") }
+                Text { Layout.fillWidth: true; elide: Text.ElideRight; color: Tema.testo; font.family: Tema.font; font.pixelSize: 13; text: I18n.t("Connessione non sicura: il certificato del sito non è valido.") + (avvisoCertificato.errore ? " " + avvisoCertificato.errore.description : "") }
                 Pulsante { principale: true; text: I18n.t("Torna indietro"); onClicked: { avvisoCertificato.errore.rejectCertificate(); avvisoCertificato.errore = null } }
                 Pulsante { text: I18n.t("Continua comunque"); onClicked: { avvisoCertificato.errore.acceptCertificate(); avvisoCertificato.errore = null } }
             }
