@@ -39,6 +39,9 @@ firefox-esr
 ?remmina-plugin-rdp
 ?remmina-plugin-vnc
 ?wayvnc
+# Mappe: indicazioni a voce del navigatore
+?speech-dispatcher
+?espeak-ng
 
 # Aspetto
 papirus-icon-theme
