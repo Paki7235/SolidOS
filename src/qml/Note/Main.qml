@@ -1,4 +1,4 @@
-// Note: come «Note» di Apple. A sinistra le cartelle, al centro l'elenco delle note
+// Note. A sinistra le cartelle, al centro l'elenco delle note
 // (fissate in alto), a destra si scrive. Tutto si salva da solo.
 // Ctrl+N nuova nota · Ctrl+F cerca · Ctrl+B/I/U grassetto/corsivo/sottolineato ·
 // Ctrl+Maiusc+L lista di cose da fare · Ctrl+Maiusc+T titolo · Canc (nell'elenco) elimina

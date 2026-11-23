@@ -1,6 +1,6 @@
 # Condivisione Vicina
 
-Invia e ricevi file con **telefoni Android, iPhone, iPad, Mac e altri computer**.
+Invia e ricevi file con **telefoni, tablet e altri computer**.
 
 ## Inviare
 
@@ -14,9 +14,9 @@ Apri **Condivisione Vicina** dal menu S (o dal centro di controllo, Super + A): 
 
 | Dispositivo | Come | Note |
 |---|---|---|
-| **Android** | dal menu Condividi → **Quick Share** | telefono e computer sulla stessa rete Wi-Fi; per ricevere dal PC il telefono deve essere visibile a «Tutti» |
-| **iPhone, iPad** | **codice QR** con la fotocamera, oppure l'app LocalSend | nessuna installazione necessaria con il codice QR |
-| **Qualsiasi dispositivo con LocalSend** | app gratuita LocalSend | funziona ovunque, anche su iPhone |
+| **Telefoni con Quick Share** | dal menu Condividi → **Quick Share** | telefono e computer sulla stessa rete Wi-Fi; per ricevere dal PC il telefono deve essere visibile a «Tutti» |
+| **Tutti gli altri telefoni e tablet** | **codice QR** con la fotocamera, oppure l'app LocalSend | nessuna installazione necessaria con il codice QR |
+| **Qualsiasi dispositivo con LocalSend** | app gratuita LocalSend | funziona su telefoni e computer |
 | **Qualsiasi telefono** | **codice QR** | non serve installare nulla: inquadri il codice e usi il browser |
 
 ## Senza Wi-Fi in comune

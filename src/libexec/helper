@@ -353,7 +353,7 @@ def _monta_windows_rw(partizione: str) -> Path:
     esegui(["umount", partizione], stderr=subprocess.DEVNULL)
     if esegui(["mount", "-t", "ntfs3", partizione, str(punto)]) != 0:
         if esegui(["ntfs-3g", "-o", "remove_hiberfile", partizione, str(punto)]) != 0:
-            errore("impossibile aprire Windows in scrittura (ibernazione o disco cifrato)")
+            errore("impossibile aprire l'altro sistema in scrittura (ibernazione o disco cifrato)")
     return punto
 
 
@@ -362,7 +362,7 @@ def _sam(punto: Path) -> Path:
         if (punto / candidato).exists():
             return punto / candidato
     esegui(["umount", str(punto)])
-    errore("database degli account di Windows non trovato")
+    errore("database degli account dell'altro sistema non trovato")
 
 
 def cmd_windows_utenti(partizione: str):
@@ -378,7 +378,7 @@ def cmd_windows_utenti(partizione: str):
 
 
 def cmd_windows_password(partizione: str, utente: str):
-    """Svuota la password di un account LOCALE di Windows (non funziona con gli account Microsoft)."""
+    """Svuota la password di un account LOCALE dell'altro sistema installato (non funziona con gli account online)."""
     if not re.match(r"^[\w .-]{1,64}$", utente):
         errore("nome utente non valido")
     punto = _monta_windows_rw(partizione)
@@ -388,7 +388,7 @@ def cmd_windows_password(partizione: str, utente: str):
                            capture_output=True, text=True)
         if r.returncode != 0:
             errore("chntpw non è riuscito a modificare l'account")
-        print(f"Password di «{utente}» rimossa: all'avvio di Windows l'accesso non chiederà la password.")
+        print(f"Password di «{utente}» rimossa: all'avvio dell'altro sistema l'accesso non chiederà la password.")
     finally:
         esegui(["umount", str(punto)])
 

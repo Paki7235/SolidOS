@@ -14,7 +14,7 @@ Servizi:
   Google, dal 31/03/2025, lascia solo SCEGLIERE foto e album con il suo selettore: niente
   sincronizzazione di tutta la libreria.
 - Server di casa: un NAS (Synology, QNAP…), un router con disco o un computer di casa che
-  condivide le foto in WebDAV. Il PC SolidOS (e il Mac) lo fanno con
+  condivide le foto in WebDAV. Il PC SolidOS (e ogni computer con Python) lo fa con
   «python3 -m nucleo.fotoserver»: il telefono lo trova da solo sulla stessa rete Wi-Fi.
 - Amazon Foto: nessun accesso ufficiale per le app esterne.
 """

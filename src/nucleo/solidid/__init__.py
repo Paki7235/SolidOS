@@ -1,4 +1,4 @@
-"""Solid ID: l'account unico dei dispositivi SolidOS (come l'Apple ID), su Supabase.
+"""Solid ID: l'account unico dei dispositivi SolidOS, su Supabase.
 
 Solo librerie standard (urllib): niente dipendenze in più. L'indirizzo del progetto
 e la chiave PUBBLICA stanno nel branding (SOLIDID_URL, SOLIDID_CHIAVE); la sicurezza

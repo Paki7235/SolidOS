@@ -1,7 +1,7 @@
-"""Migrazione da Windows: documenti, foto, sfondo, preferiti del browser e reti Wi-Fi.
+"""Migrazione dal computer di prima: documenti, foto, sfondo, preferiti del browser e reti Wi-Fi.
 
-Le password Wi-Fi in Windows sono cifrate (DPAPI): il metodo affidabile è eseguire su
-Windows lo strumento «esporta-wifi.bat» (copiato sulla chiavetta) che salva le reti
+Le password Wi-Fi nell'altro sistema sono cifrate (DPAPI): il metodo affidabile è eseguire lì
+lo strumento «esporta-wifi.bat» (copiato sulla chiavetta) che salva le reti
 in file XML; la migrazione li cerca su tutti i dischi collegati.
 """
 
@@ -64,7 +64,7 @@ def _preferiti_firefox(utente: Path) -> list[tuple[str, str]]:
     return risultato
 
 
-# Cartelle tipiche di un utente su Windows, Mac e Linux (inglese e italiano) → cartella di qui
+# Cartelle tipiche di un utente sui vari sistemi operativi (inglese e italiano) → cartella di qui
 CARTELLE_NOTE = [
     (("Documents", "Documenti", "My Documents"), "Documenti", "DOCUMENTS"),
     (("Pictures", "Immagini", "Foto", "Photos", "My Pictures"), "Immagini", "PICTURES"),
@@ -101,7 +101,7 @@ def _dischi_esterni() -> list[dict]:
 
 
 def _utenti_in(cartella: Path) -> list[dict]:
-    """Utenti dentro un disco: Users/ (Windows, Mac), Utenti/, home/ (Linux)."""
+    """Utenti dentro un disco: Users/, Utenti/, home/."""
     utenti = []
     for nome in ("Users", "Utenti", "home"):
         base = cartella / nome
@@ -122,7 +122,7 @@ class BackendMigrazione(Backend):
         return _utenti_in(Path(percorso))
 
     def analizza(self, percorso: str) -> list:
-        """Cosa si può portare da una cartella qualsiasi (utente di un Mac, di Windows o di Linux,
+        """Cosa si può portare da una cartella qualsiasi (utente di un qualsiasi sistema operativo,
         oppure una cartella di backup): le cartelle note, oppure tutto il contenuto."""
         base = Path(percorso)
         utenti = _utenti_in(base)
@@ -136,7 +136,7 @@ class BackendMigrazione(Backend):
                     voci.append({"id": italiano, "nome": italiano, "xdg": xdg, "tipo": "cartella", "percorso": str(p),
                                  "dimensione": _dimensione_mb(p)})
                     break
-        # su Windows anche sfondo e preferiti del browser
+        # dal sistema di prima anche sfondo e preferiti del browser
         if (base / "AppData").is_dir():
             voci += [v for v in self.elementi(str(base)) if v["tipo"] != "cartella"]
         if not voci and base.is_dir():
@@ -236,12 +236,12 @@ class BackendMigrazione(Backend):
             return T("Nessun preferito trovato")
         righe = ["<!DOCTYPE NETSCAPE-Bookmark-file-1>", '<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">',
                  "<TITLE>Preferiti</TITLE>", "<H1>Preferiti</H1>", "<DL><p>",
-                 f"<DT><H3>{html.escape(T('Importati da Windows'))}</H3>", "<DL><p>"]
+                 f"<DT><H3>{html.escape(T('Importati dal computer di prima'))}</H3>", "<DL><p>"]
         adesso = int(time.time())
         for origine, titolo, url in voci:
             righe.append(f'<DT><A HREF="{html.escape(url)}" ADD_DATE="{adesso}">{html.escape(titolo)} ({origine})</A>')
         righe += ["</DL><p>", "</DL><p>"]
-        file = cartella_utente("DOCUMENTS", "Documenti") / T("Preferiti importati da Windows.html")
+        file = cartella_utente("DOCUMENTS", "Documenti") / T("Preferiti importati.html")
         file.parent.mkdir(parents=True, exist_ok=True)
         file.write_text("\n".join(righe), encoding="utf-8")
         return T("{n} preferiti salvati in «{f}»: in Firefox usa Segnalibri → Importa da HTML", n=len(voci), f=file.name)

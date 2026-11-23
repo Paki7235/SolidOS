@@ -1,6 +1,6 @@
 #!/bin/sh
 # Blocca lo schermo (Super+L, menu, inattività, standby).
-# Schermata in stile Mac (data e ora, foto, nome e, se c'è, la password): nucleo.blocco + gtklock.
+# Schermata di blocco (data e ora, foto, nome e, se c'è, la password): nucleo.blocco + gtklock.
 # Nella sessione live dalla chiavetta non si blocca: bloccare significherebbe
 # non poter più rientrare (l'utente live non ha una password sua).
 if grep -qw 'boot=live' /proc/cmdline 2>/dev/null; then

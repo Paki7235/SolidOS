@@ -6,7 +6,7 @@ Ogni formato ha un backend; le app vengono isolate quando possibile:
 - .AppImage  → ~/Applicazioni + voce di menu
 - Flatpak    → flatpak --user (sandbox)
 - .exe/.msi  → Wine, un prefisso separato per ogni programma
-- .dmg/.pkg  → non supportati (app macOS)
+- .dmg/.pkg  → non supportati (app per altri sistemi operativi)
 """
 
 from __future__ import annotations
@@ -65,16 +65,16 @@ def analizza(percorso: str) -> dict:
         info["isolamento"] = T("Gira in una sandbox con accesso limitato ai tuoi file.")
     elif tipo in ("exe", "msi") and _processore_arm() and not esiste("wine"):
         info["supportato"] = False
-        info["descrizione"] = T("Questo computer ha un processore ARM e il supporto per i programmi Windows non è "
+        info["descrizione"] = T("Questo computer ha un processore ARM e il supporto per i programmi di altri sistemi operativi non è "
                                 "installato. Cerca la stessa app nello Store: spesso c'è la versione per Linux.")
     elif tipo in ("exe", "msi") and _processore_arm():
-        info["isolamento"] = T("Programma Windows: gira con Wine in un ambiente separato. Questo computer ha un "
+        info["isolamento"] = T("Programma per un altro sistema operativo: gira con Wine in un ambiente separato. Questo computer ha un "
                                "processore ARM, quindi Box64 traduce il programma (fatto per Intel/AMD): funziona "
                                "più lento e non tutti i programmi partono.")
     elif tipo in ("exe", "msi"):
-        info["isolamento"] = T("Programma Windows: gira con Wine in un ambiente separato. Non tutti i programmi funzionano.")
+        info["isolamento"] = T("Programma per un altro sistema operativo: gira con Wine in un ambiente separato. Non tutti i programmi funzionano.")
     elif tipo == "mac":
-        info["descrizione"] = T("Le app per macOS non possono funzionare su {s}. Cerca un'alternativa nello store.",
+        info["descrizione"] = T("Questa app è per un altro sistema operativo e non può funzionare su {s}. Cerca un'alternativa nello store.",
                                 s=branding.nome())
     else:
         info["descrizione"] = T("Formato non riconosciuto come programma installabile.")
@@ -187,15 +187,15 @@ def nome_prefisso(percorso: str) -> str:
 
 def _wine(percorso, avanzamento):
     if not esiste("wine") and _processore_arm():
-        return {"ok": False, "messaggio": T("Su questo computer (processore ARM) il supporto per i programmi Windows "
+        return {"ok": False, "messaggio": T("Su questo computer (processore ARM) il supporto per i programmi di altri sistemi "
                                             "non è installato: cerca la stessa app nello Store.")}
     if not esiste("wine"):
-        return {"ok": False, "messaggio": T("Per i programmi Windows serve Wine: installalo dallo Store o con «sudo apt install wine».")}
+        return {"ok": False, "messaggio": T("Per i programmi di altri sistemi operativi serve Wine: installalo dallo Store o con «sudo apt install wine».")}
     prefisso = PREFISSI_WINE / nome_prefisso(percorso)
     prefisso.mkdir(parents=True, exist_ok=True)
     env = dict(os.environ, WINEPREFIX=str(prefisso), WINEDEBUG="-all", WINEDLLOVERRIDES="winemenubuilder.exe=e")
     if not (prefisso / "system.reg").exists():
-        avanzamento(T("Preparazione dell'ambiente Windows (solo la prima volta)…"))
+        avanzamento(T("Preparazione dell'ambiente per il programma (solo la prima volta)…"))
         subprocess.run(["wineboot", "--init"], env=env, capture_output=True, timeout=600, check=False)
     avanzamento(T("Avvio del programma di installazione: segui le istruzioni nella sua finestra."))
     cmd = ["wine", "msiexec", "/i", percorso] if percorso.lower().endswith(".msi") else ["wine", percorso]

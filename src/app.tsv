@@ -20,7 +20,7 @@ condividi	nucleo.condivisione.selettore	Condividi	localsend	Utility;Network;	Inv
 spazi	nucleo.spazi
 barra	nucleo.barra	Barra Unica	system-search	Utility;	Cerca e agisci con una scorciatoia	si
 salvataggio	nucleo.salvataggio	Salvataggio	system-help	System;	Recupera file e ripara il computer	no
-migrazione	nucleo.migrazione	Trasferisci file	org.x.Warpinator	System;Utility;	Porta qui documenti, foto e musica da Windows, Mac, dischi esterni o dal telefono	no
+migrazione	nucleo.migrazione	Trasferisci file	org.x.Warpinator	System;Utility;	Porta qui documenti, foto e musica dal computer di prima, da dischi esterni o dal telefono	no
 chiavetta	nucleo.chiavetta	Crea chiavetta @OS_NAME@	mintstick	System;	Crea una chiavetta avviabile con salvataggio dei dati	no
 benvenuto	nucleo.benvenuto	Benvenuto	org.gnome.Tour	System;	Configurazione iniziale	si
 privacy	nucleo.privacy
@@ -31,7 +31,7 @@ documenti	nucleo.apps.documenti	Documenti PDF	org.gnome.Papers	Office;Viewer;	Le
 calcolatrice	nucleo.apps.calcolatrice	Calcolatrice	org.gnome.Calculator	Utility;Calculator;	Calcoli semplici e scientifici	no	
 archivi	nucleo.apps.archivi	Archivi	org.gnome.FileRoller	Utility;Archiving;	Apri, estrai e crea archivi zip	no	application/zip;application/x-tar;application/x-compressed-tar;application/x-bzip-compressed-tar;application/x-xz-compressed-tar;application/x-7z-compressed;application/vnd.rar;application/x-rar;application/gzip;
 file	nucleo.apps.file	File	system-file-manager	System;FileManager;Utility;	Sfoglia file, cartelle, rete e dispositivi	no	inode/directory;
-note	nucleo.apps.note	Note	accessories-notes	Office;Utility;	Appunti veloci, liste di cose da fare e idee, come su iPhone e Mac	no	
+note	nucleo.apps.note	Note	accessories-notes	Office;Utility;	Appunti veloci, liste di cose da fare e idee	no	
 dove	nucleo.apps.dove	Dov'è	org.gnome.Maps	Utility;Network;	Trova i tuoi dispositivi: posizione sulla mappa, fai suonare, blocca	no	
 solidid	nucleo.solidid
 mobile	nucleo.mobile	@OS_NAME@ Mobile	@OS_ID@-logo	Utility;	Anteprima dell'interfaccia per telefoni: blocco, Home, Libreria app, Centro di controllo e Personalizza	no	

@@ -1,6 +1,7 @@
-# Comandi di Windows (Prompt dei comandi e PowerShell) e del Mac nel Terminale.
+# Comandi di altri sistemi operativi nel Terminale (prompt dei comandi, shell a oggetti,
+# terminale Unix).
 #
-# Chi arriva da Windows o dal Mac può scrivere i comandi che conosce: qui diventano
+# Chi arriva da un altro sistema operativo può scrivere i comandi che conosce: qui diventano
 # l'equivalente Linux. I comandi Linux restano tutti uguali.
 # Caricato da /etc/bash.bashrc solo nelle shell interattive. «comandi» mostra l'elenco.
 
@@ -9,10 +10,10 @@ case $- in *i*) ;; *) return 0 ;; esac
 
 __nc_nota() { printf '\033[2m(%s)\033[0m\n' "$*" >&2; }
 __nc_c() { command -v "$1" >/dev/null 2>&1; }
-# Le opzioni stile Windows («/s», «/q», «/a»…) in minuscolo, per confrontarle
+# Le opzioni con la barra («/s», «/q», «/a»…) in minuscolo, per confrontarle
 __nc_min() { printf '%s' "$1" | tr '[:upper:]' '[:lower:]'; }
 
-# ══ Windows: Prompt dei comandi ═══════════════════════════════════════════════
+# ══ Altri sistemi: prompt dei comandi ═════════════════════════════════════════
 alias cls='clear'
 alias cd..='cd ..'
 alias chdir='cd'
@@ -20,7 +21,7 @@ alias md='mkdir -p'
 alias ver='__nc_ver'
 alias winver='__nc_ver'
 
-# «type FILE» mostra il file come su Windows; «type comando» resta quello di Linux
+# «type FILE» mostra il file come nel prompt dei comandi; «type comando» resta quello di Linux
 type() {
 	if [ $# -ge 1 ] && [ "${1#-}" = "$1" ] && [ -f "${1//\\//}" ]; then cat -- "${@//\\//}"; else builtin type "$@"; fi
 }
@@ -153,7 +154,7 @@ findstr() {
 	grep --color=auto "${opz[@]}" -- "${args[@]}"
 }
 fc() {
-	# «fc» in bash è anche lo storico: con due file confronta come Windows
+	# «fc» in bash è anche lo storico: con due file confronta i file
 	if [ $# -ge 2 ] && [ -e "${1//\\//}" ]; then diff --color=auto -- "${1//\\//}" "${2//\\//}"; else builtin fc "$@"; fi
 }
 comp() { cmp -- "${1//\\//}" "${2//\\//}"; }
@@ -232,7 +233,7 @@ winget() {
 }
 alias choco='winget'
 
-# ══ Windows: PowerShell ═══════════════════════════════════════════════════════
+# ══ Altri sistemi: shell a oggetti (Get-…, Set-…) ════════════════════════════
 alias Get-ChildItem='ls -la' gci='ls -la'
 alias Set-Location='cd' sl='cd'
 alias Get-Location='pwd' gl='pwd'
@@ -284,7 +285,7 @@ alias spps='Stop-Process' kill.exe='Stop-Process'
 Test-Connection() { ping -c 4 "${@: -1}"; }
 Test-NetConnection() { ping -c 4 "${@: -1}"; }
 
-# ══ Mac (Terminale di macOS) ══════════════════════════════════════════════════
+# ══ Altri sistemi: terminale Unix (open, pbcopy…) ════════════════════════════
 open() {
 	if [ "${1:-}" = "-a" ] && [ -n "${2:-}" ]; then
 		local app="$2"; shift 2
@@ -389,7 +390,7 @@ md5() { md5sum "$@"; }
 qlmanage() { [ "${1:-}" = "-p" ] && shift; open "$@"; }
 defaults() { __nc_nota "su questo sistema le preferenze si cambiano in Impostazioni"; control; }
 
-# ══ Scrivere come su Windows: maiuscole, «.exe», «.bat» ══════════════════════
+# ══ Maiuscole, «.exe», «.bat» come negli altri sistemi ═══════════════════════
 # DIR, Cls, IPCONFIG, notepad.exe… funzionano lo stesso.
 if declare -F command_not_found_handle >/dev/null; then
 	eval "__nc_cnf_originale() $(declare -f command_not_found_handle | tail -n +2)"
@@ -407,12 +408,12 @@ command_not_found_handle() {
 		*.exe) if __nc_c wine && [ -f "$nome" ]; then wine "$nome" "$@"; return; fi ;;
 	esac
 	if declare -F __nc_cnf_originale >/dev/null; then __nc_cnf_originale "$nome" "$@"; return; fi
-	echo "«$nome»: comando non trovato. Scrivi «comandi» per vedere quelli di Windows e Mac che puoi usare." >&2
+	echo "«$nome»: comando non trovato. Scrivi «comandi» per vedere quelli degli altri sistemi operativi che puoi usare." >&2
 	return 127
 }
 
 # ══ Elenco ════════════════════════════════════════════════════════════════════
-# «comandi» = tutto; «comandi linux», «comandi windows», «comandi mac» = solo una parte
+# «comandi» = tutto; «comandi linux», «comandi prompt», «comandi unix» = solo una parte
 __nc_linux() {
 	cat <<'FINE'
  LINUX (i comandi di questo sistema)
@@ -451,7 +452,7 @@ FINE
 }
 __nc_windows() {
 	cat <<'FINE'
- WINDOWS (Prompt dei comandi)            LINUX equivalente
+ PROMPT DEI COMANDI (altri sistemi)      LINUX equivalente
  dir  dir /a  dir /s                     ls -lh   ls -A   ls -R
  cd..  cd  md  rd /s                     cd ..    cd      mkdir   rm -r (nel Cestino)
  copy  xcopy  robocopy /MIR              cp       cp -r   rsync -a --delete
@@ -467,7 +468,7 @@ __nc_windows() {
  winget install|search|upgrade           apt (c'è anche lo Store)
  NOMI MAIUSCOLI e .exe vanno bene: DIR, Cls, notepad.exe; i programmi .exe partono con Wine
 
- POWERSHELL
+ SHELL A OGGETTI (altri sistemi)
  Get-ChildItem  Set-Location  Get-Content  Copy-Item  Move-Item  Remove-Item
  Rename-Item  New-Item -ItemType Directory  Get-Process  Stop-Process -Name
  Clear-Host  Test-Connection  Get-NetIPAddress  Invoke-WebRequest  Select-String
@@ -476,8 +477,8 @@ FINE
 }
 __nc_mac() {
 	cat <<'FINE'
- MAC (Terminale di macOS)
- open FILE   open -a Safari   open -R FILE   pbcopy   pbpaste   say "ciao"
+ TERMINALE UNIX (altri sistemi)
+ open FILE   open -a Firefox   open -R FILE   pbcopy   pbpaste   say "ciao"
  sw_vers  system_profiler  diskutil list|info|eject  caffeinate  ditto  mdfind
  softwareupdate -l|-ia   brew install|search|upgrade   networksetup   ifconfig
  afplay  screencapture  pmset sleepnow  launchctl  dscacheutil -flushcache  md5
@@ -486,11 +487,11 @@ FINE
 comandi() {
 	case "$(__nc_min "${1:-tutti}")" in
 		linux) __nc_linux ;;
-		windows|win|powershell) __nc_windows ;;
-		mac|macos) __nc_mac ;;
+		prompt|windows|win|powershell|oggetti) __nc_windows ;;
+		unix|mac|macos) __nc_mac ;;
 		*)
-			echo "Nel Terminale funzionano i comandi di Linux e anche quelli che conosci da Windows e dal Mac."
-			echo "Solo una parte:  comandi linux  ·  comandi windows  ·  comandi mac"
+			echo "Nel Terminale funzionano i comandi di Linux e anche quelli che conosci da altri sistemi operativi."
+			echo "Solo una parte:  comandi linux  ·  comandi prompt  ·  comandi unix"
 			echo
 			__nc_linux; echo; __nc_windows; echo; __nc_mac ;;
 	esac
@@ -499,6 +500,6 @@ alias aiuto-comandi='comandi' aiuto='comandi' help.exe='comandi'
 
 # Al primo Terminale aperto, una riga per far sapere che esistono
 if [ ! -e "${XDG_CONFIG_HOME:-$HOME/.config}/.comandi-visti" ] && [ -d "${XDG_CONFIG_HOME:-$HOME/.config}" ]; then
-	printf '\033[2mCi sono i comandi di Linux e anche quelli di Windows (dir, cls, ipconfig…) e del Mac (open, pbcopy…). Scrivi «comandi» per l’elenco (o «comandi linux»).\033[0m\n'
+	printf '\033[2mCi sono i comandi di Linux e anche quelli di altri sistemi operativi (dir, cls, ipconfig, open, pbcopy…). Scrivi «comandi» per l’elenco (o «comandi linux»).\033[0m\n'
 	: > "${XDG_CONFIG_HOME:-$HOME/.config}/.comandi-visti" 2>/dev/null
 fi

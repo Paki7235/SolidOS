@@ -3,7 +3,7 @@
 Stesso archivio e stesse funzioni dei Contatti di SolidOS Mobile:
 ~/.local/share/<os>/telefono/contatti.json e mia-scheda.json, schede con nome, azienda,
 tre numeri, due email, indirizzo, compleanno, sito, social e note, preferiti, importazione
-ed esportazione vCard (.vcf: il formato di Android, iPhone, Gmail e Outlook).
+ed esportazione vCard (.vcf: il formato standard dei contatti di telefoni e programmi di posta).
 """
 
 from __future__ import annotations
@@ -80,7 +80,7 @@ def salva_contatto(nome: str, numero: str, ident: str = "", email: str = "", not
     return {"ok": True, "messaggio": T("Contatto salvato"), "id": voce["id"]}
 
 
-# Campi della scheda (come quella dell'iPhone). «nome» è nome e cognome insieme.
+# Campi della scheda. «nome» è nome e cognome insieme.
 CAMPI = ("nome", "azienda", "numero", "numero2", "numero3", "email", "email2", "indirizzo",
          "compleanno", "sito", "social", "note")
 
@@ -134,7 +134,7 @@ def salva_scheda(dati: dict) -> dict:
     return {"ok": True, "messaggio": T("Contatto salvato"), "id": voce["id"]}
 
 
-# ── vCard (.vcf): il formato dei contatti di Android, iPhone, Gmail e Outlook ──
+# ── vCard (.vcf): il formato standard dei contatti ──
 def _valore_vcard(riga: str) -> str:
     valore = riga.split(":", 1)[1] if ":" in riga else ""
     return valore.replace("\\,", ",").replace("\\;", ";").replace("\\n", " ").strip()

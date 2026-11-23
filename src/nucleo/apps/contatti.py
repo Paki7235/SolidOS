@@ -1,4 +1,4 @@
-"""Contatti (come sul Mac e sul telefono): elenco con ricerca e lettere, scheda grande con
+"""Contatti (come sul telefono): elenco con ricerca e lettere, scheda grande con
 le azioni (email, sito, mappa), modifica, preferiti, «La mia scheda», importa ed esporta vCard.
 Stesso archivio dei Contatti del telefono (nucleo/rubrica.py)."""
 

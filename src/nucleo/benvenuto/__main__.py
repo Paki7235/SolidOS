@@ -1,6 +1,6 @@
 """Benvenuto: configurazione guidata al primo avvio.
 
-Passi: lingua, Wi-Fi, account, aspetto, importazione da Windows, prestazioni,
+Passi: lingua, Wi-Fi, account, aspetto, importazione dal computer di prima, prestazioni,
 Condivisione Vicina. Nella sessione live c'è anche il pulsante «Installa».
 """
 

@@ -46,7 +46,7 @@ else
 	scrivi "AUTOTEST-DOCK ERRORE: l'app aperta dal dock non è una finestra normale"
 fi
 immagine 02-dal-dock
-# Dock in stile Mac: con l'app ingrandita deve sparire (e lasciare lo spazio all'app)
+# Dock con la barra in alto: con l'app ingrandita deve sparire (e lasciare lo spazio all'app)
 come_utente python3 - >"$USCITA" 2>&1 <<'PY'
 import time
 from nucleo.shell.finestre import Finestre
@@ -104,7 +104,7 @@ mouse esc 0 tasto
 mouse 60 93 destro
 immagine scrivania-menu-icona
 mouse esc 0 tasto
-# Barra unica in basso (stile Windows) e tema chiaro
+# Barra unica in basso e tema chiaro
 come_utente python3 -c "from nucleo.impostazioni.pannelli_aspetto import PannelloPannello as P; P().imposta('barra', 'windows')" >/dev/null 2>&1
 sleep 5
 immagine barra-windows
@@ -191,7 +191,7 @@ for f in "${ELENCO[@]}"; do
 	sleep 2
 done
 
-# ── Galleria: tutto anche col tema chiaro, e con la barra stile Windows ──────
+# ── Galleria: tutto anche col tema chiaro, e con la barra unica ──────
 aspetto() { come_utente python3 -c "from nucleo.impostazioni.pannelli_aspetto import PannelloAspetto as P, PannelloPannello as Q; P().imposta('tema', '$1'); Q().imposta('barra', '$2')" >/dev/null 2>&1; sleep 5; }
 pannelli_shell() { # PREFISSO
 	immagine "$1-scrivania"
@@ -221,7 +221,7 @@ done
 aspetto scuro mac
 scrivi "AUTOTEST-GALLERIA fatta"
 
-# ── Schermata di accesso (stile Mac) vista dentro la sessione ─────────────────
+# ── Schermata di accesso vista dentro la sessione ─────────────────
 setsid runuser -u "$UTENTE" -- env "${AMBIENTE[@]}" python3 -m nucleo.greeter >/tmp/autotest-greeter.log 2>&1 &
 pid=$!; sleep 12; immagine accesso
 grep -aiE 'error|traceback|referenceerror|typeerror' /tmp/autotest-greeter.log | head -15 | sed 's/^/AUTOTEST-LOG greeter: /' >"$USCITA"
@@ -234,7 +234,7 @@ pid=$!; sleep 15; immagine file-rete
 grep -aiE 'error|traceback|referenceerror|typeerror' /tmp/autotest-rete.log | head -15 | sed 's/^/AUTOTEST-LOG file-rete: /' >"$USCITA"
 pkill -KILL -s "$pid" 2>/dev/null; pkill -KILL -u "$UTENTE" -f 'nucleo.apps.file' 2>/dev/null; sleep 2
 
-# ── Terminale: comandi di Windows e del Mac ─────────────────────────────────
+# ── Terminale: comandi di altri sistemi ─────────────────────────────────
 come_utente bash -ic 'cd /etc; dir /b | head -3; DIR /b | head -2; ver; sw_vers; ipconfig | head -3; where ls; type ls; Get-ChildItem /usr | head -2; comandi | head -3' 2>&1 \
 	| grep -v 'no job control\|cannot set terminal' | head -30 | sed 's/^/AUTOTEST-TERM /' >"$USCITA"
 

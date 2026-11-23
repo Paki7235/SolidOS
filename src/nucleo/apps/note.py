@@ -1,4 +1,4 @@
-"""Note: appunti veloci come «Note» di Apple.
+"""Note: appunti veloci.
 
 Cartelle, note fissate in alto, ricerca, testo formattato (titolo, intestazione,
 grassetto, corsivo, sottolineato, barrato, elenchi puntati e numerati, liste di
@@ -258,7 +258,7 @@ class BackendNote(Backend):
         cur.beginEditBlock()
         cur.movePosition(QTextCursor.MoveOperation.Right, QTextCursor.MoveMode.KeepAnchor, 1)
         cur.insertText("☑" if fatto else "☐")
-        # le cose fatte diventano grigie e barrate, come su Apple
+        # le cose fatte diventano grigie e barrate
         riga = QTextCursor(blocco)
         riga.movePosition(QTextCursor.MoveOperation.Right, QTextCursor.MoveMode.MoveAnchor, 2)
         riga.movePosition(QTextCursor.MoveOperation.EndOfBlock, QTextCursor.MoveMode.KeepAnchor)

@@ -137,10 +137,10 @@ if [[ -d $SRC ]]; then
 	[[ -d $SRC/dati ]] && rsync_semplice "$SRC/dati" "$CHROOT/usr/share/nucleo"
 	# Icone proprie anche nel tema standard (per i programmi che non sono di Qt)
 	[[ -d $SRC/dati/icone/hicolor ]] && rsync_semplice "$SRC/dati/icone/hicolor" "$CHROOT/usr/share/icons/hicolor"
-	# Strumento per esportare le reti Wi-Fi da Windows, nella radice della chiavetta
+	# Strumento per esportare le reti Wi-Fi dal computer di prima, nella radice della chiavetta
 	if [[ -d $SRC/dati/windows ]]; then
-		mkdir -p "$BINARY/windows"
-		cp -p "$SRC"/dati/windows/* "$BINARY/windows/"
+		mkdir -p "$BINARY/importa-wifi"
+		cp -p "$SRC"/dati/windows/* "$BINARY/importa-wifi/"
 	fi
 	for f in "$SRC"/libexec/*; do
 		[[ -f $f ]] || continue

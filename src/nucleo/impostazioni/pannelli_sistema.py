@@ -209,7 +209,7 @@ class PannelloAggiornamenti(Pannello):
         disponibili = uscita(["apt-get", "-s", "-o", "Debug::NoLocking=1", "upgrade"], timeout=60).count("\nInst ")
         so = aggiornamento.controlla()
         voci_solidos = [azione("software", T("Aggiornamento software"), T("Apri"),
-                               T("Come su Mac e iPhone: cosa c'è di nuovo, quanto pesa, barra di avanzamento e riavvio")),
+                               T("Cosa c'è di nuovo, quanto pesa, barra di avanzamento e riavvio")),
                         info("versione", T("Versione di {s}", s=branding.nome()),
                              T("build {n}", n=so["installata"]) if so["installata"] else T("non indicata"))]
         if so["nuova"]:

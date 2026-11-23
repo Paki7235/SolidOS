@@ -216,9 +216,9 @@ class PannelloPannello(Pannello):
         return [
             intestazione(T("Disposizione")),
             scelta("barra", T("Stile"), "windows" if pref.get("barra") == "windows" else "mac",
-                   [("mac", T("Barra in alto e Dock (come Mac)")),
-                    ("windows", T("Una barra in basso (come Windows)"))]),
-            info("spiegazione", T("Come Windows: menu S, app, orologio, Wi-Fi e centro di controllo in basso"), ""),
+                   [("mac", T("Barra in alto e Dock")),
+                    ("windows", T("Una barra unica in basso"))]),
+            info("spiegazione", T("Barra unica: menu S, app, orologio, Wi-Fi e centro di controllo in basso"), ""),
             intestazione(T("Dock")),
             scelta("dockLato", T("Dimensione delle icone"), str(pref.get("dockLato", 48)),
                    [("40", T("Piccole")), ("48", T("Medie")), ("56", T("Grandi"))]),

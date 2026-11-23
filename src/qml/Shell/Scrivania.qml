@@ -1,4 +1,4 @@
-// Scrivania (come Windows e Mac): sfondo e icone di ~/Scrivania sotto tutte le finestre.
+// Scrivania: sfondo e icone di ~/Scrivania sotto tutte le finestre.
 // · clic seleziona, Ctrl/Maiusc+clic o rettangolo trascinando sul vuoto selezionano più icone
 // · doppio clic (o Invio) apre; tasto destro: menu con Nuovo ›, Visualizza ›, Ordina per ›, Incolla…
 // · le icone si spostano trascinandole (la posizione viene ricordata); su una cartella vi entrano
@@ -56,7 +56,7 @@ Window {
         return c
     }
     // Posizione di ogni icona: quella salvata se libera, altrimenti la prima libera
-    // dall'alto a sinistra, colonna per colonna (come Windows).
+    // dall'alto a sinistra, colonna per colonna.
     function disponi(arr, cf, nR, nC) {
         var pos = cf.posizioni || {}, occupate = {}, out = [], liberi = []
         var lista = ordinati(arr, cf.ordina)
@@ -347,7 +347,7 @@ Window {
                 source: icona.e.anteprima || ("image://icona/" + (icona.e.percorso === "cestino:" && scrivania.cestinoPieno ? "user-trash-full" : icona.e.icona))
                 asynchronous: true
             }
-            // freccina dei collegamenti alle app (come Windows)
+            // freccina dei collegamenti alle app
             Rectangle {
                 visible: !!icona.e.collegamento
                 x: (icona.width - scrivania.lato) / 2 - 2; y: 6 + scrivania.lato - 14

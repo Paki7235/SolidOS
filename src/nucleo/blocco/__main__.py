@@ -1,4 +1,4 @@
-"""Schermata di blocco in stile Mac: in alto data e ora grandi, in basso la foto,
+"""Schermata di blocco: in alto data e ora grandi, in basso la foto,
 il nome dell'utente e — solo se l'account ha una password — il campo per scriverla.
 Senza password basta premere Invio o «Entra».
 
@@ -267,7 +267,7 @@ def _stile(sfondo: str, foto: str, accento: str, serve_password: bool) -> str:
     sfondo_css = f'url("{_css_url(sfondo)}")' if sfondo and Path(sfondo).exists() else "none"
     if foto:
         avatar = f'background-image: url("{_css_url(foto)}"); background-size: cover; background-position: center;'
-    else:   # come sul Mac: cerchio grigio con le iniziali
+    else:   # cerchio grigio con le iniziali
         avatar = "background-image: linear-gradient(to bottom, #A3A8B4, #7C818D);"
     campo_nascosto = "" if serve_password else """
 #input-field { opacity: 0; min-width: 0; padding: 0; margin: 0; }

@@ -199,7 +199,7 @@ class PannelloCondivisione(Pannello):
             azione("scegli-cartella", T("Cambia cartella"), T("Scegli…"), file=True),
             intestazione(T("Compatibilità")),
         ]
-        nomi = {"quickshare": T("Telefoni Android (Quick Share)"), "localsend": T("App LocalSend (iPhone, Android, Windows, Mac)"), "qr": T("Qualsiasi telefono con codice QR")}
+        nomi = {"quickshare": T("Telefoni con Quick Share"), "localsend": T("App LocalSend (telefoni e computer)"), "qr": T("Qualsiasi telefono con codice QR")}
         for chiave in ("quickshare", "localsend", "qr"):
             disponibile, motivo = stato.get(chiave, (False, T("Servizio non avviato")))
             voci.append(info("stato-" + chiave, nomi[chiave], ("✅ " if disponibile else "⚠️ ") + str(motivo)))

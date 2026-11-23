@@ -1,7 +1,7 @@
-"""Compatibilità con Quick Share / Nearby Share di Android (rete locale).
+"""Compatibilità con Quick Share / Nearby Share dei telefoni (rete locale).
 
 Implementazione del protocollo documentato dai progetti open source NearDrop
-(macOS) e RQuickShare (Linux):
+e RQuickShare:
 - scoperta mDNS del servizio «_FC9F5ED42C8A._tcp»;
 - annuncio BLE (UUID 0xFE2C) per far comparire il PC sui telefoni vicini;
 - connessione TCP con frame protobuf preceduti dalla lunghezza;
@@ -411,7 +411,7 @@ class BackendQuickShare(Backend):
             richiesta = await canale.leggi()
             cr = sotto(sotto(richiesta, 2), 2)
             nome_mittente, _ = nome_da_info(primo(cr, 6, b""))
-            nome_mittente = nome_mittente or primo(cr, 2, b"").decode("utf-8", "replace") or T("Telefono Android")
+            nome_mittente = nome_mittente or primo(cr, 2, b"").decode("utf-8", "replace") or T("Telefono")
             id_mittente = f"quickshare:{primo(cr, 1, b'').decode('utf-8', 'replace')}:{nome_mittente}"
             pin = await ukey2_server(canale)
             await canale.leggi()                                # ConnectionResponse del telefono

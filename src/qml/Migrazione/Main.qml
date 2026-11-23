@@ -1,5 +1,5 @@
 // Trasferisci file: porta qui documenti, foto, musica… da qualsiasi posto, in tre passi.
-// 1. Da dove?  (Windows · disco esterno/chiavetta/Mac · telefono · altro computer in rete)
+// 1. Da dove?  (altro sistema su questo PC · disco esterno/chiavetta · telefono · altro computer in rete)
 // 2. Cosa?     (le cartelle trovate, già tutte selezionate)
 // 3. Fatto     (con il pulsante per aprire i file copiati)
 import QtQuick
@@ -34,8 +34,8 @@ Finestra {
         var r = ponte.chiama("apri", [p.percorso])
         occupato = false
         if (!r.ok) { finestra.avviso(r.messaggio || I18n.t("Impossibile aprire il disco")); return }
-        if (r.utenti.length === 1) { occupato = true; origine = "Windows · " + r.utenti[0].nome; passo = 1; ponte.avvia("elementi", [r.utenti[0].percorso], "elementi") }
-        else { utenti = r.utenti; origine = "Windows"; passo = 4 }
+        if (r.utenti.length === 1) { occupato = true; origine = I18n.t("Sistema precedente") + " · " + r.utenti[0].nome; passo = 1; ponte.avvia("elementi", [r.utenti[0].percorso], "elementi") }
+        else { utenti = r.utenti; origine = I18n.t("Sistema precedente"); passo = 4 }
     }
     function scegliDisco(d) {
         var u = ponte.chiama("utentiIn", [d.percorso])
@@ -107,7 +107,7 @@ Finestra {
                     Sorgente {
                         required property var modelData
                         icona: "drive-harddisk"
-                        titolo: I18n.t("Windows su questo computer") + " · " + (modelData.etichetta || modelData.percorso)
+                        titolo: I18n.t("Altro sistema operativo su questo computer") + " · " + (modelData.etichetta || modelData.percorso)
                         testo: modelData.dimensione + " GB · " + I18n.t("anche sfondo e preferiti del browser")
                         onScelta: finestra.apriWindows(modelData)
                     }
@@ -118,7 +118,7 @@ Finestra {
                         required property var modelData
                         icona: "drive-removable-media"
                         titolo: modelData.nome
-                        testo: I18n.t("Disco esterno, chiavetta o disco di un Mac / di un altro PC")
+                        testo: I18n.t("Disco esterno, chiavetta o disco di un altro computer")
                         onScelta: finestra.scegliDisco(modelData)
                     }
                 }
@@ -131,7 +131,7 @@ Finestra {
                 Sorgente {
                     icona: "phone"
                     titolo: I18n.t("Dal telefono")
-                    testo: I18n.t("Android con Quick Share, iPhone inquadrando un codice QR: i file arrivano in Scaricati › Ricevuti")
+                    testo: I18n.t("Con Quick Share oppure inquadrando un codice QR: i file arrivano in Scaricati › Ricevuti")
                     onScelta: ponte.chiama0("apriCondivisione")
                 }
                 Sorgente {

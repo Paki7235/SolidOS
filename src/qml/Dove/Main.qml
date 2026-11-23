@@ -1,4 +1,4 @@
-// Dov'è: trova i tuoi dispositivi (come «Dov'è» di Apple).
+// Dov'è: trova i tuoi dispositivi.
 // Senza Solid ID: accesso o creazione dell'account. Con il Solid ID: a sinistra l'elenco
 // dei dispositivi, a destra la mappa; per quello scelto: Fai suonare, Blocca, Indicazioni.
 import QtQuick

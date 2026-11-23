@@ -1,4 +1,4 @@
-// Menu Start (come su Windows): ricerca, tutte le app, pulsanti di sistema.
+// Menu Start: ricerca, tutte le app, pulsanti di sistema.
 // Si apre con un clic sul logo in alto a sinistra o premendo da solo il tasto Super.
 import QtQuick
 import QtQuick.Controls

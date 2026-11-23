@@ -13,7 +13,7 @@ Aggiornato: 5 novembre 2026.
 | 5 | Calamares su Btrfs, snapper, «Torna a ieri», aggiornamenti sicuri, Linea del Tempo | `etc/calamares`, `etc/grub.d`, `lineadeltempo/` |
 | 6 | Condivisione Vicina: QR, LocalSend, Quick Share, AirDrop (beta), BLE, firewall | `src/nucleo/condivisione` |
 | 7 | Spazi di vita, Barra Unica con 43 azioni | `spazi/`, `barra/`, `dati/azioni` |
-| 8 | Modalità Salvataggio, Migrazione da Windows, chiavetta persistente | `salvataggio/`, `migrazione/`, `chiavetta/` |
+| 8 | Modalità Salvataggio, Migrazione dal computer di prima, chiavetta persistente | `salvataggio/`, `migrazione/`, `chiavetta/` |
 | 9 | Benvenuto, registro privacy, profilo «PC vecchio» | `benvenuto/`, `privacy/`, `libexec/profilo-prestazioni` |
 | 10 | Guida offline, controlli statici, zoom, documentazione | `dati/guida`, `scripts/controlla.sh` |
 
@@ -44,4 +44,4 @@ Aree a rischio, in ordine:
 1. Compilare la ISO (`./build.sh` con Docker/Podman, oppure GitHub Actions).
 2. `./test-vm.sh` e `./test-vm.sh --uefi`, poi la lista «Cosa controllare» del README.
 3. Installazione in QEMU con `./test-vm.sh --uefi --disco`.
-4. Prove su un PC reale con telefono Android e iPhone (con chiavetta Wi-Fi per AirDrop).
+4. Prove su un PC reale con due telefoni di sistemi diversi (con chiavetta Wi-Fi compatibile).

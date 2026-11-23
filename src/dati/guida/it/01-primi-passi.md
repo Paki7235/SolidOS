@@ -18,7 +18,7 @@ Benvenuto in **{{OS_NAME}}**: il sistema che non si rompe, non rallenta e ricord
 | **Stamp** | Cattura lo schermo (Maiusc + Stamp per più opzioni) |
 | **Ctrl + Maiusc + Esc** | Monitor di sistema |
 
-Il tasto **Super** è quello con il logo di Windows.
+Il tasto **Super** è quello con il simbolo, tra Ctrl e Alt.
 
 ## Dove trovo le cose
 

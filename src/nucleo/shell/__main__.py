@@ -315,14 +315,14 @@ class BackendShell(Backend):
 
     def finestraGrande(self) -> bool:
         """C'è un'app ingrandita o a tutto schermo (non ridotta nel Dock)? Con il Dock
-        in stile Mac, in quel caso il Dock si nasconde e riappare portando il mouse in basso."""
+        con la barra in alto, in quel caso il Dock si nasconde e riappare portando il mouse in basso."""
         if not self.finestre:
             return False
         return any((f.get("massimizzata") or f.get("schermoIntero")) and not f.get("minimizzata")
                    for f in self.finestre.elenco())
 
     def appAttiva(self, azione: str) -> bool:
-        """Comandi del menu dell'app (barra in alto) e delle scorciatoie tipo Mac:
+        """Comandi del menu dell'app (barra in alto) e delle scorciatoie con Super:
         nascondi · ingrandisci · chiudi (finestra) · esci (tutte le finestre dell'app)."""
         if not self.finestre:
             return False
@@ -341,7 +341,7 @@ class BackendShell(Backend):
                     self.finestre.chiudi(altra["id"])
             return True
         if azione == "scrivania":
-            # Super+D come su Windows: riduce tutto; la seconda volta rimette com'era
+            # Super+D: riduce tutto; la seconda volta rimette com'era
             aperte = [x for x in self.finestre.elenco() if not x["minimizzata"]]
             if aperte:
                 self._scrivania = [x["id"] for x in aperte]

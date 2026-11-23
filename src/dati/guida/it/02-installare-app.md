@@ -14,9 +14,9 @@ Fai doppio clic sul file: si apre **Installa con {{OS_NAME}}**, che riconosce il
 | `.rpm` | in un contenitore Fedora separato |
 | `.AppImage` | nella cartella *Applicazioni* della tua home, con voce nel menu |
 | `.flatpakref`, `.flatpak` | in una sandbox Flatpak |
-| `.exe`, `.msi` | con Wine, in un ambiente Windows separato per ogni programma |
+| `.exe`, `.msi` | con Wine, in un ambiente separato per ogni programma |
 
-**Le app per macOS (`.dmg`, `.pkg`) non possono funzionare**: lo store ti propone un'alternativa.
+**Le app `.dmg` e `.pkg` di altri sistemi operativi non possono funzionare**: lo store ti propone un'alternativa.
 
 ## Dalla Barra Unica
 

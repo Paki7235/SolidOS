@@ -1,4 +1,4 @@
-// Menu a tendina come su Windows 11: un clic apre l'elenco completo sotto il campo
+// Menu a tendina: un clic apre l'elenco completo sotto il campo
 // (o sopra, se sotto non c'è posto), la scelta attuale ha la barretta colorata,
 // un clic su un'opzione la sceglie e chiude. La rotellina del mouse non cambia
 // il valore per sbaglio mentre si scorre la pagina.
@@ -26,7 +26,7 @@ ComboBox {
                : (scelta.hovered ? (Tema.chiaro ? "#F7F7F9" : "#34353C") : (Tema.chiaro ? "#FFFFFF" : Tema.superficieAlta))
         border.width: 1
         border.color: Tema.chiaro ? "#D9D9DE" : "#14FFFFFF"
-        // linea inferiore come Windows 11 (accento quando è aperto)
+        // linea inferiore (accento quando è aperto)
         Rectangle {
             anchors.bottom: parent.bottom
             anchors.left: parent.left; anchors.right: parent.right

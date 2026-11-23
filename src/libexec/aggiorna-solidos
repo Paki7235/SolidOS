@@ -43,7 +43,7 @@ def esito(messaggio: str, codice: int = 0):
     sys.exit(codice)
 
 
-# Avanzamento per «Aggiornamento software» (leggibile da tutti, come su Mac e iPhone)
+# Avanzamento per «Aggiornamento software» (leggibile da tutti)
 AVANZAMENTO = Path("/run/nucleo-aggiornamento.json")
 
 

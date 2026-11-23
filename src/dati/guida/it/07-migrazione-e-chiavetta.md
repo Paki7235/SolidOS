@@ -1,12 +1,12 @@
-# Migrazione da Windows e chiavetta portatile
+# Migrazione dal computer di prima e chiavetta portatile
 
-## Portare i file da Windows
+## Portare i file dal computer di prima
 
-Apri **Migrazione da Windows**: importa Documenti, Immagini, Musica, Video, Scrivania, Scaricati, sfondo e preferiti di Edge, Chrome e Firefox.
+Apri **Trasferisci file**: importa Documenti, Immagini, Musica, Video, Scrivania, Scaricati, sfondo e preferiti dei browser.
 
-**Reti Wi-Fi**: Windows protegge le password Wi-Fi, quindi serve un passaggio su Windows:
+**Reti Wi-Fi**: l'altro sistema operativo protegge le password Wi-Fi, quindi serve un passaggio sul computer di prima:
 
-1. Copia `esporta-wifi.bat` (cartella *windows* della chiavetta di installazione) sul Desktop di Windows.
+1. Copia `esporta-wifi.bat` (cartella *importa-wifi* della chiavetta di installazione) sul desktop del computer di prima.
 2. Fai doppio clic: crea la cartella *Reti Wi-Fi esportate*.
 3. Avvia {{OS_NAME}} e apri la Migrazione: le reti vengono importate.
 

@@ -1,4 +1,4 @@
-// Schermata di accesso a tutto schermo, in stile Mac (come la schermata di blocco):
+// Schermata di accesso a tutto schermo (come la schermata di blocco):
 // in alto data e ora grandi, in basso la foto, il nome e — solo se serve — la password.
 // Più persone: le foto una accanto all'altra, si sceglie con un clic.
 import QtQuick

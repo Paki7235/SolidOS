@@ -30,7 +30,7 @@ class BackendSalvataggio(Backend):
         return windows.cartelle_utente(percorso_utente)
 
     def destinazioni(self) -> list:
-        """Dischi esterni montati e scrivibili (escluso quello di Windows)."""
+        """Dischi esterni montati e scrivibili (escluso quello dell'altro sistema)."""
         import os
         from pathlib import Path
 
@@ -85,7 +85,7 @@ class BackendSalvataggio(Backend):
         r = helper("clona", sorgente, destinazione, timeout=86400)
         return {"ok": r.returncode == 0, "messaggio": r.stderr.strip()[-300:]}
 
-    # ── Password Windows ────────────────────────────────────────────────────
+    # ── Password dell'altro sistema ────────────────────────────────────────────────────
     def utentiWindows(self, partizione: str) -> dict:
         r = helper("windows-utenti", partizione, timeout=120)
         if r.returncode != 0:

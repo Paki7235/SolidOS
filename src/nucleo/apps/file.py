@@ -308,15 +308,14 @@ class BackendFile(Backend):
             return False
 
     def terminaleDispositivo(self, ip: str, nome: str = "", utente: str = "") -> dict:
-        """Terminale collegato a un computer della rete con SSH (Mac, Linux, Windows con OpenSSH)."""
+        """Terminale collegato a un computer della rete con SSH."""
         import shlex
 
         if not self._porta_aperta(ip, 22):
             return {"ok": False, "info": True, "errore": T(
                 "«{n}» non accetta collegamenti dal terminale (SSH). Per attivarli:\n"
-                "• Mac: Impostazioni di Sistema › Generali › Condivisione › Accesso remoto\n"
-                "• Windows: Impostazioni › Sistema › Funzionalità facoltative › Server OpenSSH\n"
-                "• Linux: installa «openssh-server»", n=nome or ip)}
+                "• sull'altro computer attiva l'accesso remoto (SSH) nelle impostazioni di condivisione\n"
+                "• su un sistema Linux: installa «openssh-server»", n=nome or ip)}
         if utente:
             comando = f"ssh {shlex.quote(utente + '@' + ip)}"
         else:
@@ -354,9 +353,7 @@ class BackendFile(Backend):
                     "errore": T("«{n}» accetta SSH: scrivi nome utente e password per vedere i suoi file", n=nome or ip)}
         return {"ok": False, "info": True, "errore": T(
             "«{n}» è collegato alla rete ma non condivide cartelle.\n"
-            "• Mac: Impostazioni di Sistema › Generali › Condivisione › Condivisione file "
-            "(in «Opzioni» attiva «Condividi file e cartelle usando SMB»)\n"
-            "• Windows: Esplora file › clic destro su una cartella › Proprietà › Condivisione\n"
+            "• sull'altro computer condividi una cartella in rete (SMB) dalle impostazioni di condivisione\n"
             "• Per mandare file al volo usa Condivisione Vicina.", n=nome or ip)}
 
     # ── Operazioni ─────────────────────────────────────────────────────────
@@ -456,7 +453,7 @@ class BackendFile(Backend):
 
     def trasferisci(self, uris, cartella: str, modo="auto", _svuota: bool = False) -> dict:
         """Copia o sposta (anche cartelle intere) con la barra di avanzamento.
-        modo: «auto» (come Windows: sposta sullo stesso disco, copia su un altro), «copia», «sposta».
+        modo: «auto» (sposta sullo stesso disco, copia su un altro), «copia», «sposta».
         Per compatibilità accetta anche True (= sposta) / False (= auto)."""
         from .. import trasferimenti
 

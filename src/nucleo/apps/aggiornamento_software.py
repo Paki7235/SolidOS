@@ -1,4 +1,4 @@
-"""Aggiornamento software (come su Mac e iPhone): cerca la nuova versione di SolidOS,
+"""Aggiornamento software: cerca la nuova versione di SolidOS,
 mostra cosa cambia e quanto pesa, la installa con una barra di avanzamento e propone
 di riavviare. Con «--avvisa» resta in ascolto nella sessione e manda una notifica
 (con il pulsante «Aggiorna») quando esce una nuova versione.

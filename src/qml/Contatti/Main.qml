@@ -1,4 +1,4 @@
-// Contatti, come sul Mac e sul telefono: a sinistra l'elenco con ricerca, «La mia scheda»
+// Contatti, come sul telefono: a sinistra l'elenco con ricerca, «La mia scheda»
 // e le lettere; a destra la scheda grande con le azioni e i dati, «Modifica» per cambiarli.
 // Stessa rubrica del telefono; importa ed esporta i file vCard (.vcf).
 import QtQuick
@@ -54,7 +54,7 @@ Finestra {
         var p = (nome || "?").trim().split(/\s+/)
         return (p[0].charAt(0) + (p.length > 1 ? p[p.length - 1].charAt(0) : "")).toUpperCase()
     }
-    function tinta(nome) {   // colore fisso per persona, come le iniziali su Mac
+    function tinta(nome) {   // colore fisso per persona
         var colori = ["#6E8BFF", "#F2994A", "#27AE60", "#EB5757", "#9B51E0", "#2D9CDB", "#E5A50A", "#D96BA0"]
         var h = 0
         for (var i = 0; i < (nome || "").length; i++) h = (h * 31 + nome.charCodeAt(i)) % 997
@@ -232,7 +232,7 @@ Finestra {
                         }
                     }
 
-                    // Azioni rapide (come i pulsanti tondi del Mac)
+                    // Azioni rapide (pulsanti tondi)
                     Row {
                         visible: !finestra.modifica && !!finestra.aperto
                         Layout.alignment: Qt.AlignHCenter

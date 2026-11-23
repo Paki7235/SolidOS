@@ -1,4 +1,4 @@
-"""Dov'è: trova i tuoi dispositivi (come «Dov'è» di Apple).
+"""Dov'è: trova i tuoi dispositivi.
 
 Mappa OpenStreetMap con la posizione dei dispositivi del Solid ID, e per ognuno:
 Fai suonare, Blocca con un messaggio, Aggiorna posizione, Indicazioni.

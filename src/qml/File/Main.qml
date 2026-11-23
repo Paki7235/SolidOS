@@ -78,7 +78,7 @@ Finestra {
                 { t: I18n.t("Documento di testo"), f: function () { var r = ponte.chiama("nuovoFile", [finestra.uri, I18n.t("Nuovo documento") + ".txt"]); finestra.esito(r); if (r.ok) finestra.inRinomina = r.uri } }]
     }
     function nuovaCartella() { var r = ponte.chiama("nuovaCartella", [finestra.uri]); finestra.esito(r); if (r.ok) finestra.inRinomina = r.uri }
-    // Trascinare o incollare: «auto» come Windows (stesso disco = sposta, altro disco = copia)
+    // Trascinare o incollare: «auto» (stesso disco = sposta, altro disco = copia)
     function trasferisci(u, dest, modo) {
         if (!u.length || finestra.dati.cestino) return
         finestra.caricamento = true

@@ -45,7 +45,7 @@ Finestra {
             TabButton { text: I18n.t("Recupera file") }
             TabButton { text: I18n.t("Controlla disco e memoria") }
             TabButton { text: I18n.t("Clona disco") }
-            TabButton { text: I18n.t("Password di Windows") }
+            TabButton { text: I18n.t("Password dell'altro sistema") }
         }
         BarraProgresso {
             Layout.fillWidth: true
@@ -67,7 +67,7 @@ Finestra {
                 ColumnLayout {
                     Layout.preferredWidth: 340
                     Layout.fillHeight: true
-                    Titolo { livello: 3; text: "1. " + I18n.t("Scegli il disco di Windows") }
+                    Titolo { livello: 3; text: "1. " + I18n.t("Scegli il disco dell'altro sistema operativo") }
                     ListView {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 200
@@ -185,10 +185,10 @@ Finestra {
                 Item { Layout.fillHeight: true }
             }
 
-            // ── Password Windows ─────────────────────────────────────────
+            // ── Password dell'altro sistema ─────────────────────────────────────────
             ColumnLayout {
                 spacing: 12
-                Testo { Layout.fillWidth: true; text: I18n.t("Rimuove la password di un account LOCALE di Windows, per entrare di nuovo nel tuo computer. Non funziona con gli account Microsoft (email) né con dischi cifrati senza chiave. Usalo solo sui tuoi account.") }
+                Testo { Layout.fillWidth: true; text: I18n.t("Rimuove la password di un account LOCALE dell'altro sistema operativo installato, per entrare di nuovo nel tuo computer. Non funziona con gli account online (email) né con dischi cifrati senza chiave. Usalo solo sui tuoi account.") }
                 RowLayout {
                     Scelta { id: partWin; model: finestra.partizioni.filter(function (p) { return !p.bitlocker }).map(function (p) { return { testo: (p.etichetta || p.percorso) + " (" + p.dimensione + " GB)", valore: p.percorso } }) }
                     Pulsante { text: I18n.t("Mostra gli account"); onClicked: { finestra.occupato = "…"; ponte.avvia("utentiWindows", [partWin.currentValue], "utentiWindows") } }

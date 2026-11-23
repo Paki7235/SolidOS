@@ -32,7 +32,7 @@ SolidOS/
 │   │   └── branding.py  i18n.py  ponte.py  qmlapp.py  sistema.py  …
 │   ├── qml/                      SolidUI (componenti) + una cartella per app
 │   ├── libexec/                  helper privilegiato e script di sistema
-│   └── dati/                     guida, azioni della Barra Unica, Spazi, vetrina dello store, strumento Windows
+│   └── dati/                     guida, azioni della Barra Unica, Spazi, vetrina dello store, strumento per esportare il Wi-Fi
 ├── packaging/debian/             Regole di pacchettizzazione .deb per ogni componente
 ├── dbus/                         Interfacce XML org.<OS_ID>.*
 ├── i18n/                         Traduzioni (.ts Qt, .po gettext) — it predefinito, en

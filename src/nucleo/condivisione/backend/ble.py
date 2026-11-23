@@ -1,6 +1,6 @@
 """Annunci Bluetooth LE tramite BlueZ (D-Bus di sistema).
 
-- Quick Share: servizio 0xFE2C, fa comparire il PC sui telefoni Android vicini.
+- Quick Share: servizio 0xFE2C, fa comparire il PC sui telefoni vicini.
 Nota: niente «from __future__ import annotations» (dbus-next legge le annotazioni).
 """
 

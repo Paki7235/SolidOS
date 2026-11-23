@@ -1,4 +1,4 @@
-// Foto dell'account in un cerchio, come sul Mac; senza foto, le iniziali su fondo grigio.
+// Foto dell'account in un cerchio; senza foto, le iniziali su fondo grigio.
 // account: { foto: "file:///…", iniziali: "MR" } (vedi nucleo/account.py)
 import QtQuick
 

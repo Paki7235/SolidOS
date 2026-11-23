@@ -1,6 +1,6 @@
 """Condivisione Vicina: servizio unico per inviare e ricevere file con telefoni e computer.
 
-Backend (in ordine di preferenza predefinito): Quick Share (Android),
+Backend (in ordine di preferenza predefinito): Quick Share,
 LocalSend (tutte le piattaforme con l'app), QR (qualsiasi telefono con un browser).
 Il servizio espone l'interfaccia D-Bus org.<OS_ID>.Condivisione1 sul bus di sessione.
 """

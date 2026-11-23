@@ -1,5 +1,5 @@
 // «Condividi»: visibilità del computer, dispositivi vicini (Quick Share, LocalSend),
-// codice QR (per iPhone e qualsiasi telefono) e stato di ogni sistema (diagnosi).
+// codice QR (per qualsiasi telefono) e stato di ogni sistema (diagnosi).
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -91,8 +91,8 @@ Finestra {
                         wrapMode: Text.Wrap
                         color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 12; lineHeight: 1.2
                         text: I18n.t("Sul telefono apri la foto o il file → Condividi.") + "\n"
-                              + "• Android: " + I18n.t("Quick Share, poi scegli questo computer (stessa rete Wi-Fi, Bluetooth acceso).") + "\n"
-                              + "• iPhone: " + I18n.t("usa il Codice QR qui sotto con la fotocamera, oppure l'app LocalSend.") + "\n"
+                              + "• Quick Share: " + I18n.t("dal menu Condividi del telefono scegli questo computer (stessa rete Wi-Fi, Bluetooth acceso).") + "\n"
+                              + "• " + I18n.t("Altri telefoni") + ": " + I18n.t("usa il Codice QR qui sotto con la fotocamera, oppure l'app LocalSend.") + "\n"
                               + I18n.t("I file arrivano nella cartella Scaricati › Ricevuti.")
                     }
                 }
@@ -118,7 +118,7 @@ Finestra {
                 ColumnLayout {
                     spacing: 8
                     BarraProgresso { Layout.fillWidth: true; indeterminate: true }
-                    Testo { secondario: true; Layout.fillWidth: true; text: I18n.t("Ricerca in corso… Sul telefono metti la ricezione su «Tutti»: Quick Share su Android, oppure apri LocalSend sul telefono.") }
+                    Testo { secondario: true; Layout.fillWidth: true; text: I18n.t("Ricerca in corso… Sul telefono metti la ricezione su «Tutti» in Quick Share, oppure apri LocalSend sul telefono.") }
                     ListView {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
@@ -158,7 +158,7 @@ Finestra {
                         horizontalAlignment: Text.AlignHCenter
                         secondario: true
                         visible: !!(finestra.qr && !finestra.qr.errore)
-                        text: I18n.t("Funziona con qualsiasi telefono, anche iPhone, senza installare nulla. Vale per un solo telefono, in questa rete, per 10 minuti.")
+                        text: I18n.t("Funziona con qualsiasi telefono, senza installare nulla. Vale per un solo telefono, in questa rete, per 10 minuti.")
                     }
                     Pulsante {
                         Layout.alignment: Qt.AlignHCenter

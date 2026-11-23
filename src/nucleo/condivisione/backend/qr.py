@@ -181,8 +181,7 @@ class BackendQR(Backend):
         if not file:
             return web.json_response({"ok": False})
         agente = richiesta.headers.get("User-Agent", "")
-        dispositivo = "iPhone" if "iPhone" in agente else ("iPad" if "iPad" in agente else
-                      ("Android" if "Android" in agente else T("Telefono")))
+        dispositivo = T("Tablet") if "iPad" in agente or "Tablet" in agente else T("Telefono")
         t = Trasferimento(direzione="ricevi", backend="qr", dispositivo=dispositivo, file=file)
         ok = await self.gestore.chiedi_conferma(t, "", utente_avviato=True)
         return web.json_response({"ok": ok, "id": t.id if ok else ""})

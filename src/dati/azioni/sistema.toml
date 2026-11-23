@@ -316,7 +316,7 @@ comando = ["wvkbd-mobintl", "-L", "280"]
 
 [[azione]]
 id = "migrazione"
-titolo = "Importa da Windows"
+titolo = "Importa dal computer di prima"
 icona = "folder-download"
 frasi = ["importa da windows", "migrazione", "copia da windows", "vecchio computer"]
 comando = ["@OS_ID@-migrazione"]

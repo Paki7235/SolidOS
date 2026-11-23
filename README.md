@@ -14,13 +14,13 @@ Controlli statici: `./scripts/controlla.sh`.
 Documenti: [Architettura](docs/ARCHITETTURA.md) · [Condivisione Vicina](docs/CONDIVISIONE-VICINA.md) ·
 [Struttura](docs/STRUTTURA.md) · [Roadmap](docs/ROADMAP.md) · [Licenze](docs/LICENZE.md) · [Stato](docs/STATO.md)
 
-## Creare la chiavetta di installazione (Windows, con Rufus)
+## Creare la chiavetta di installazione (da un altro computer, con Rufus o balenaEtcher)
 
 1. Scarica la ISO **x86_64** dalle [Releases](https://github.com/Paki7235/SolidOS/releases) (un solo file `.iso`).
 2. Apri **Rufus**, scegli la chiavetta e la ISO e premi *Avvia*. Se Rufus chiede la modalità,
    scegli **Scrivi in modalità immagine DD**.
 3. Avvia il PC dalla chiavetta (F12, F11 o Esc all'accensione).
-4. Come con Windows si apre **solo l'installatore, a tutto schermo** (niente desktop di prova).
+4. Si apre **solo l'installatore, a tutto schermo** (niente desktop di prova).
    Puoi installare SolidOS sul disco del PC **o su un'altra chiavetta/disco USB** collegato. Se lo schermo
    resta nero o la grafica non va, riavvia e scegli **Installa SolidOS (grafica sicura)**.
 
@@ -35,7 +35,7 @@ iniziali: lingua, Wi-Fi, **nome e password** (o nessuna password), Solid ID, asp
 
 La build gira in un contenitore Debian 13 amd64, su qualsiasi sistema.
 
-### macOS (anche Apple Silicon)
+### Da un altro sistema operativo (anche con processore ARM)
 
 ```bash
 brew install colima docker qemu
@@ -83,7 +83,7 @@ e `licenze-pacchetti.tsv`.
 ```
 
 Altre opzioni: `--ram 1024` (simula un PC vecchio), `--cpu 4`, `--disco` (disco vuoto per l'installer), `--stampa`.
-Su Mac Apple Silicon la VM è emulata: avvio in qualche minuto, desktop lento. Va bene per verificare avvio
+Su un computer con processore ARM la VM è emulata: avvio in qualche minuto, desktop lento. Va bene per verificare avvio
 e RAM; per la fluidità usa un PC reale (scrivi la ISO su chiavetta con `dd` o balenaEtcher).
 
 ## Provare in VirtualBox
@@ -109,7 +109,7 @@ In macchina virtuale la grafica usa automaticamente il rendering software. Quick
 non sono provabili in VirtualBox (servono Wi-Fi e Bluetooth reali); il codice QR e LocalSend
 funzionano se la rete della VM è in modalità **Scheda con bridge**.
 
-> Su Mac con processore Apple (M1–M5) VirtualBox può avviare solo sistemi ARM: questa ISO x86_64
+> Su un computer con processore ARM VirtualBox può avviare solo sistemi ARM: questa ISO x86_64
 > va provata su un PC con processore Intel/AMD oppure con QEMU (`./test-vm.sh`, emulato e lento).
 
 ### Cosa controllare
@@ -125,11 +125,11 @@ funzionano se la rete della VM è in modalità **Scheda con bridge**.
 
 ## Limiti dichiarati
 
-- Le app macOS (`.dmg`, `.app`, `.pkg`) **non** sono supportate.
-- AirDrop è **beta**: richiede una scheda Wi-Fi con modalità monitor e iniezione e l'iPhone su «Tutti per 10 minuti».
+- Le app `.dmg`, `.app` e `.pkg` di altri sistemi operativi **non** sono supportate.
+- Lo scambio file diretto con alcuni telefoni è **beta**: richiede una scheda Wi-Fi con modalità monitor e iniezione.
 - La barra delle applicazioni è ancora `lxqt-panel` (tema proprio); notifiche, centro di controllo,
   OSD e Barra Unica sono della shell propria.
-- APFS (dischi Mac recenti) non è supportato in questa versione; HFS+ in sola lettura.
+- Il file system APFS non è supportato in questa versione; HFS+ in sola lettura.
 
 ## Licenza
 

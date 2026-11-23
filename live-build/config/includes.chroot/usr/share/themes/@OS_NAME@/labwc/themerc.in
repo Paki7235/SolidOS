@@ -1,5 +1,5 @@
 # Tema delle finestre di @OS_NAME@ per labwc: grafite neutro; pulsanti chiari
-# a destra come su Windows: riduci, ingrandisci, chiudi (rosso al passaggio).
+# a destra: riduci, ingrandisci, chiudi (rosso al passaggio).
 
 border.width: 0
 padding.height: 8

@@ -2,7 +2,7 @@
 
 Quando compare un file system su un'unità rimovibile o USB:
 - lo monta (NTFS con ntfs3, HFS+ e APFS in sola lettura secondo udisks2.conf);
-- se NTFS è «sporco» (Windows in ibernazione/avvio rapido) riprova in sola lettura e lo spiega;
+- se NTFS è «sporco» (l'altro sistema in ibernazione/avvio rapido) riprova in sola lettura e lo spiega;
 - mostra una notifica con «Apri».
 Le partizioni cifrate (LUKS, BitLocker) vengono segnalate: lo sblocco si fa dal file manager o da Dischi.
 """
@@ -68,8 +68,8 @@ class Automount:
             if tipo == "ntfs" and ("dirty" in messaggio or "hibernat" in messaggio.lower() or "wrong fs" in messaggio):
                 fs.Mount({"options": "ro"}, reply_handler=lambda p: notifica(
                     T("{e} aperta in sola lettura", e=etichetta),
-                    T("Windows non è stato spento completamente (ibernazione o «avvio rapido»). "
-                      "Per scrivere sul disco, spegni Windows con Maiusc+Arresta."), icona="dialog-warning"),
+                    T("L'altro sistema operativo su questo disco non è stato spento del tutto (ibernazione o «avvio rapido»). "
+                      "Per scrivere sul disco, spegnilo tenendo premuto Maiusc mentre scegli Arresta."), icona="dialog-warning"),
                     error_handler=lambda e: None)
             elif "NotAuthorized" not in messaggio and "AlreadyMounted" not in messaggio:
                 notifica(T("Impossibile aprire {e}", e=etichetta), messaggio[:200], icona="dialog-error")

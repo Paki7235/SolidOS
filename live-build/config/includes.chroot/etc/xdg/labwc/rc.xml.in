@@ -51,7 +51,7 @@
     <repeatRate>25</repeatRate>
     <repeatDelay>600</repeatDelay>
 
-    <!-- Finestre (come su Windows) -->
+    <!-- Finestre -->
     <keybind key="A-Tab"><action name="NextWindow" /></keybind>
     <keybind key="A-S-Tab"><action name="PreviousWindow" /></keybind>
     <keybind key="A-F4"><action name="Close" /></keybind>
@@ -73,10 +73,10 @@
     <keybind key="W-a"><action name="Execute" command="@OS_ID@-ctl controllo" /></keybind>
     <keybind key="W-n"><action name="Execute" command="@OS_ID@-ctl notifiche" /></keybind>
     <keybind key="W-p"><action name="Execute" command="@OS_ID@-ctl prestazioni" /></keybind>
-    <!-- Come su Windows: Super da solo apre Start, Super+D mostra la scrivania -->
+    <!-- Super da solo apre Start, Super+D mostra la scrivania -->
     <keybind key="Super_L" onRelease="yes"><action name="Execute" command="@OS_ID@-ctl start" /></keybind>
     <keybind key="W-d"><action name="Execute" command="@OS_ID@-ctl app scrivania" /></keybind>
-    <!-- Come sul Mac, con Super al posto di Cmd -->
+    <!-- Scorciatoie con Super -->
     <keybind key="W-q"><action name="Execute" command="@OS_ID@-ctl app esci" /></keybind>
     <keybind key="W-w"><action name="Close" /></keybind>
     <keybind key="W-m"><action name="Iconify" /></keybind>

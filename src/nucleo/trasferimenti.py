@@ -1,6 +1,6 @@
 """Copia e spostamento di file e cartelle (GIO), usati da File e dalla Scrivania.
 
-Come su Windows, trascinando senza tasti:
+Trascinando senza tasti:
 - sullo stesso disco i file vengono SPOSTATI;
 - su un altro disco (chiavetta, rete…) vengono COPIATI.
 Ctrl forza la copia, Maiusc lo spostamento. I nomi già presenti diventano «nome (2)».

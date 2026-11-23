@@ -327,7 +327,7 @@ QtObject {
         tenuta: menuDock.visible
         onMenu: function (voce, centroX) { menuDock.apri(voce, centroX) }
     }
-    // Barra unica in basso (stile Windows): sostituisce barra in alto e Dock
+    // Barra unica in basso: sostituisce barra in alto e Dock
     property Window barraApplicazioni: BarraApplicazioni {
         id: barraApplicazioni
         stato: barraSuperiore.stato

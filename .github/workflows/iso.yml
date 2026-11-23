@@ -1,5 +1,5 @@
-# Build delle ISO su GitHub: amd64 (PC Intel/AMD) e arm64 (macchine virtuali su Mac
-# Apple Silicon e PC ARM), ognuna sul proprio runner nativo.
+# Build delle ISO su GitHub: amd64 (PC Intel/AMD) e arm64 (macchine virtuali su
+# computer con processore ARM e PC ARM), ognuna sul proprio runner nativo.
 # Ogni ISO è pubblicata come UN SOLO FILE nella Release «build-N» (limite di GitHub:
 # 2 GiB per file; la build si ferma con un errore chiaro se la ISO lo supera).
 name: Build ISO
@@ -34,8 +34,8 @@ jobs:
           gh release create "$TAG" --repo "${{ github.repository }}" --target "${{ github.sha }}" --draft \
             --title "SolidOS $TAG" --notes "SolidOS compilato da ${{ github.sha }}.
 
-          - **solidos-…-amd64.iso**: PC Intel/AMD (anche Mac Intel). Scrivila su una chiavetta (Crea chiavetta, balenaEtcher, Rufus in modalità DD) oppure usala in una macchina virtuale.
-          - **solidos-…-arm64.iso**: macchine virtuali sui Mac con Apple Silicon (UTM, Parallels, VMware Fusion) e PC ARM con UEFI.
+          - **solidos-…-amd64.iso**: PC con processore Intel/AMD. Scrivila su una chiavetta (Crea chiavetta, balenaEtcher, Rufus in modalità DD) oppure usala in una macchina virtuale.
+          - **solidos-…-arm64.iso**: macchine virtuali sui computer con processore ARM (UTM, Parallels, VMware Fusion, VirtualBox) e PC ARM con UEFI.
 
           Ogni ISO è un file unico, pronto da usare: scaricala e basta."
 

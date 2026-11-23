@@ -2,7 +2,7 @@
 
 Tre fonti, unite per indirizzo IP:
 - mDNS/Bonjour (avahi-browse): nomi e servizi annunciati (computer con cartelle
-  condivise, stampanti, TV e Chromecast, iPhone e Mac, NAS…);
+  condivise, stampanti, TV, telefoni, computer, NAS…);
 - tabella dei vicini (ip neigh) dopo un «tocco» UDP a ogni indirizzo della rete,
   così compaiono anche telefoni, prese smart e tutto ciò che non si annuncia;
 - nome dal DNS del modem (molti modem conoscono i nomi assegnati con DHCP).
@@ -82,7 +82,7 @@ def _produttore(mac: str) -> str:
     if not mac or len(mac) < 8:
         return ""
     primo = int(mac[:2], 16)
-    if primo & 2:   # indirizzo «casuale» (privacy di iPhone e Android): nessun produttore
+    if primo & 2:   # indirizzo «casuale» (privacy dei telefoni): nessun produttore
         return ""
     if _oui_cache is None:
         _oui_cache = {}
@@ -96,7 +96,7 @@ def _produttore(mac: str) -> str:
             except OSError:
                 continue
     nome = _oui_cache.get(mac[:8].lower(), "")
-    # «Apple, Inc.» → «Apple»
+    # «Nome, Inc.» → «Nome»
     return re.sub(r",?\s+(inc|ltd|co|corp|corporation|limited|gmbh|s\.?p\.?a|technologies|technology|electronics)\.?.*$", "", nome, flags=re.I)
 
 
@@ -236,7 +236,7 @@ def cerca(attesa: float = 2.5) -> list[dict]:
                         tipo = t
                         break
                 if not tipo and produttore.lower().startswith("apple"):
-                    tipo = "telefono"   # senza servizi annunciati, quasi sempre un iPhone/iPad
+                    tipo = "telefono"   # senza servizi annunciati, quasi sempre un telefono o un tablet
             descrizione, icona = TIPI.get(tipo, TIPI[""])
             if not nome:
                 nome = f"{produttore} ({ip})" if produttore else (descrizione if tipo == "modem" else f"{T('Dispositivo')} {ip}")

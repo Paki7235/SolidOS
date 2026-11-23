@@ -98,7 +98,7 @@ Finestra {
         standardButtons: Dialog.Cancel | Dialog.Ok
         ColumnLayout {
             Testo { text: I18n.t("Tutti i dati della partizione verranno cancellati."); color: Tema.pericolo }
-            Scelta { id: tipoFs; model: [{ testo: "exFAT (" + I18n.t("compatibile con tutto") + ")", valore: "exfat" }, { testo: "FAT32", valore: "vfat" }, { testo: "NTFS (Windows)", valore: "ntfs" }, { testo: "ext4 (Linux)", valore: "ext4" }] }
+            Scelta { id: tipoFs; model: [{ testo: "exFAT (" + I18n.t("compatibile con tutto") + ")", valore: "exfat" }, { testo: "FAT32", valore: "vfat" }, { testo: "NTFS (" + I18n.t("altri sistemi operativi") + ")", valore: "ntfs" }, { testo: "ext4 (Linux)", valore: "ext4" }] }
             CampoTesto { id: etichetta; placeholderText: I18n.t("Nome del disco") }
         }
         onAccepted: finestra.lavora("formatta", [percorso, tipoFs.currentValue, etichetta.text], I18n.t("Formattazione…"))

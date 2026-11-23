@@ -1,4 +1,4 @@
-// Barra delle applicazioni come su Windows 11: una sola barra in basso.
+// Barra delle applicazioni: una sola barra in basso.
 // Al centro il pulsante S (Start), le app fissate e aperte e il Cestino;
 // a destra rete, volume, batteria (centro di controllo) e data/ora (notifiche);
 // all'estremità destra la striscia «Mostra desktop».
@@ -297,7 +297,7 @@ Window {
                 Text { id: testoData; anchors.right: parent.right; text: barra.giorno; color: Tema.testoVetro; font.family: Tema.font; font.pixelSize: 12; font.features: ({ "tnum": 1 }) }
             }
         }
-        // Striscia «Mostra desktop» (come su Windows)
+        // Striscia «Mostra desktop»
         Rectangle {
             width: 10; height: barra.altezza
             color: mostraDesktop.containsMouse ? Tema.sopra : "transparent"

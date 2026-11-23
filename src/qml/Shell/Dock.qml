@@ -18,8 +18,8 @@ Window {
     property bool appenaTrascinato: false
     readonly property int quanteFissate: voci.filter(function (v) { return v.fissata }).length
     property bool cestinoPieno: false
-    // Come su Mac: con un'app ingrandita o a tutto schermo il Dock si nasconde e
-    // riappare portando il mouse sul bordo in basso (lo stile Windows resta fisso).
+    // Con un'app ingrandita o a tutto schermo il Dock si nasconde e
+    // riappare portando il mouse sul bordo in basso (la barra unica in basso resta fissa).
     property bool coperta: false
     onCopertaChanged: console.log("dock: app ingrandita sullo schermo =", coperta)
     property bool tenuta: false          // menu del tasto destro aperto: resta visibile

@@ -6,7 +6,7 @@ molti NAS (Synology, QNAP) e dei router con disco: il telefono funziona anche co
 
 Solo lettura: dal telefono si vedono e si scaricano le foto, non si cancella niente.
 
-Uso (sul PC SolidOS, sul Mac o su un altro computer con Python 3):
+Uso (sul PC SolidOS o su un altro computer con Python 3):
     python3 -m nucleo.fotoserver [CARTELLA] [--porta 8765] [--password PAROLA]
 Senza cartella condivide ~/Immagini (o ~/Pictures). Con --password il telefono chiede
 utente «foto» e quella password.
@@ -183,7 +183,7 @@ def main() -> int:
     ip = _ip_locale()
     print(f"Server delle foto di casa: {radice}")
     print(f"  Indirizzo per il telefono:          http://{ip}:{arg.porta}")
-    print(f"  Dal telefono virtuale sul Mac:      http://10.0.2.2:{arg.porta}")
+    print(f"  Dal telefono virtuale (QEMU):        http://10.0.2.2:{arg.porta}")
     print("  " + (f"Utente «foto», password «{arg.password}»" if arg.password else "Senza password (solo per la rete di casa)"))
     print("  " + ("I telefoni sulla stessa rete Wi-Fi lo trovano da soli." if annuncio else "Per farlo trovare da solo serve il modulo «zeroconf»."))
     print("Premi Ctrl+C per fermarlo.")

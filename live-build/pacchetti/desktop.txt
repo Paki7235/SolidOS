@@ -23,13 +23,13 @@ qt6-svg-plugins
 # App di base
 pcmanfm-qt
 ?gvfs-daemons
-# File manager completo: rete (Windows/SMB, FTP, SFTP, WebDAV), telefoni (MTP, iPhone), cestino
+# File manager completo: rete (SMB, FTP, SFTP, WebDAV), telefoni (MTP), cestino
 gvfs
 gvfs-backends
 ?gvfs-fuse
 ?usbmuxd
 ?cifs-utils
-# Rete: vede i PC Windows (WS-Discovery) e le cartelle condivise (SMB)
+# Rete: vede gli altri PC (WS-Discovery) e le cartelle condivise (SMB)
 ?wsdd
 ?smbclient
 qterminal

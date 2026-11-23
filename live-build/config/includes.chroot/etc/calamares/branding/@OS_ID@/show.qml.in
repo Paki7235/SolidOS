@@ -13,7 +13,7 @@ Presentation {
             ["Benvenuto in @OS_NAME@", "@OS_TAGLINE@"],
             ["Linea del Tempo", "Ogni ora e prima di ogni aggiornamento il sistema salva un punto di ripristino. Se qualcosa va storto, scegli «Torna a ieri» all'accensione."],
             ["Installa qualsiasi programma", "Doppio clic su .deb, .rpm, .AppImage, Flatpak, .exe e .msi: ci pensa «Installa con @OS_NAME@»."],
-            ["Condivisione Vicina", "Invia e ricevi file da telefoni Android, iPhone e altri computer, anche solo con un codice QR."],
+            ["Condivisione Vicina", "Invia e ricevi file da telefoni e altri computer, anche solo con un codice QR."],
             ["Spazi di vita", "Lavoro, Studio, Gioco, Famiglia: app, notifiche e sfondo cambiano con un clic."]
         ]
         Slide {

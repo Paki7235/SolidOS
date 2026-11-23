@@ -79,7 +79,7 @@
  {
   "id": "com.valvesoftware.Steam",
   "nome": "Steam",
-  "descrizione": "Giochi (anche per Windows, con Proton)",
+  "descrizione": "Giochi (anche quelli per altri sistemi operativi, con Proton)",
   "origine": "flatpak",
   "icona": "steam"
  },

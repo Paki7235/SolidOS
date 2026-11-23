@@ -500,7 +500,7 @@ Finestra {
                         Text {
                             Layout.fillWidth: true; wrapMode: Text.Wrap
                             text: finestra.account.collegato
-                                  ? I18n.t("Ogni app che prendi dallo Store, qui o sul telefono, resta nel tuo Solid ID: la ritrovi su tutti i tuoi dispositivi, come con l'ID Apple.")
+                                  ? I18n.t("Ogni app che prendi dallo Store, qui o sul telefono, resta nel tuo Solid ID: la ritrovi su tutti i tuoi dispositivi.")
                                   : I18n.t("Accedi al Solid ID (Impostazioni › Solid ID): le app che prendi sul telefono compariranno anche qui, e al contrario.")
                             color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 14
                         }

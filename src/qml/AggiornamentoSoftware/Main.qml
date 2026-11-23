@@ -1,4 +1,4 @@
-// Aggiornamento software, come su Mac e iPhone: una scheda sola che dice se il sistema è
+// Aggiornamento software: una scheda sola che dice se il sistema è
 // aggiornato o cosa c'è di nuovo, quanto pesa, e un pulsante «Aggiorna ora» con la barra
 // di avanzamento (scaricamento, verifica, punto di ripristino, installazione); alla fine
 // «Riavvia ora» o «Più tardi».
@@ -38,7 +38,7 @@ Finestra {
         ripristino: I18n.t("Creazione di un punto di ripristino…"),
         installa: I18n.t("Installazione…")
     })
-    // la barra avanza per tutte le fasi insieme, come su Mac
+    // la barra avanza per tutte le fasi insieme
     readonly property real totale: {
         var f = passo.fase || "controllo", p = (passo.percento || 0) / 100
         if (f === "scarica") return 0.05 + 0.55 * p

@@ -1,4 +1,4 @@
-// Il simbolo vero del Wi-Fi (il ventaglio: un punto e tre archi), come su Mac, Windows e telefono.
+// Il simbolo vero del Wi-Fi (il ventaglio: un punto e tre archi).
 // Le parti accese dicono quanto è forte il segnale, cioè quanto si è vicini al modem:
 // tutto acceso = vicino, solo il punto = molto lontano. Senza rete: ventaglio spento e barretta.
 import QtQuick

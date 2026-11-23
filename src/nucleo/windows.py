@@ -1,4 +1,4 @@
-"""Accesso alle partizioni Windows (per Salvataggio e Migrazione)."""
+"""Accesso alle partizioni di un altro sistema operativo installato (per Salvataggio e Migrazione)."""
 
 from __future__ import annotations
 
@@ -53,7 +53,7 @@ def monta(percorso: str, sola_lettura: bool = True) -> dict:
     if r.returncode != 0 or not m:
         messaggio = r.stderr.strip()
         if "hibernat" in messaggio.lower() or "dirty" in messaggio.lower():
-            messaggio = "Windows è in ibernazione o con «avvio rapido» attivo: apertura in sola lettura non riuscita."
+            messaggio = "L'altro sistema è in ibernazione o con «avvio rapido» attivo: apertura in sola lettura non riuscita."
         return {"ok": False, "messaggio": messaggio}
     return {"ok": True, "punto": m.group(1).rstrip(".")}
 
