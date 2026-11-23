@@ -38,3 +38,4 @@ mobile	nucleo.mobile	@OS_NAME@ Mobile	@OS_ID@-logo	Utility;	Anteprima dell'inter
 web	nucleo.apps.web	Vela	epiphany	Network;WebBrowser;	Naviga in internet: schede, preferiti, download e finestra privata	no	text/html;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;
 aggiornamento-software	nucleo.apps.aggiornamento_software	Aggiornamento software	system-software-update	Settings;System;	Nuove versioni di @OS_NAME@: cosa cambia, aggiorna e riavvia	no	
 contatti	nucleo.apps.contatti	Contatti	org.gnome.Contacts	Office;ContactManagement;	Rubrica condivisa con il telefono: numeri, email, indirizzi	no	text/vcard;text/x-vcard;
+desktop-remoto	nucleo.apps.desktop_remoto	Desktop remoto	org.remmina.Remmina	Network;RemoteAccess;	Usa un altro computer da qui, o lascia usare questo	no	

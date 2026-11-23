@@ -66,6 +66,24 @@ def ammesso(nome: str) -> bool:
     return nome.startswith(CONSENTITI) and not nome.startswith(ESCLUSI)
 
 
+def _pacchetti_richiesti():
+    """Installa i programmi che servono alle app nuove (elenco nel pacchetto), se mancano."""
+    elenco = Path("/usr/share/nucleo/pacchetti-richiesti.txt")
+    if not elenco.is_file():
+        return
+    voluti = [r.strip() for r in elenco.read_text().splitlines() if r.strip() and not r.startswith("#")]
+    mancanti = [p for p in voluti if subprocess.run(["dpkg-query", "-W", "-f=${Status}", p], capture_output=True,
+                                                    text=True).stdout.strip() != "install ok installed"]
+    if not mancanti:
+        return
+    avanzamento("installa", 99, "programmi aggiuntivi")
+    ambiente = dict(os.environ, DEBIAN_FRONTEND="noninteractive")
+    subprocess.run(["apt-get", "update", "-qq"], capture_output=True, env=ambiente, timeout=900)
+    for p in mancanti:   # uno alla volta: se uno non esiste per questo processore, gli altri si installano lo stesso
+        subprocess.run(["apt-get", "install", "-y", "-qq", "--no-install-recommends", p],
+                       capture_output=True, env=ambiente, timeout=1800)
+
+
 def _senza_password():
     """Account senza password (creati prima di questa versione): nel gruppo che evita le
     richieste di password vuote (regola polkit 50-senza-password)."""
@@ -142,6 +160,10 @@ def main():
     subprocess.run(["systemctl", "daemon-reload"], check=False)
     subprocess.run(["systemd-tmpfiles", "--create"], check=False, capture_output=True)
     _senza_password()
+    try:
+        _pacchetti_richiesti()
+    except (OSError, subprocess.TimeoutExpired):
+        pass
     subprocess.run(["glib-compile-schemas", "/usr/share/glib-2.0/schemas"], check=False, capture_output=True)
     subprocess.run(["update-desktop-database", "-q", "/usr/share/applications"], check=False, capture_output=True)
     avanzamento("fatto", 100, str(nuova))

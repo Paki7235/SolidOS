@@ -396,6 +396,20 @@ class PannelloDataOra(Pannello):
         return None
 
 
+def _nome_dispositivo() -> str:
+    from ..nome import nome_dispositivo
+
+    return nome_dispositivo()
+
+
+def _avvisa_condivisione() -> None:
+    """La Condivisione Vicina riprende subito il nome nuovo (se non ne ha uno suo)."""
+    from ..dbusutil import chiama
+
+    n = branding.nome_dbus("Condivisione1")
+    chiama(n, branding.percorso_dbus("Condivisione1"), n, "RicaricaConfigurazione", timeout=2)
+
+
 def _build() -> int:
     from ..aggiornamento import versione_installata
 
@@ -421,7 +435,8 @@ class PannelloInformazioni(Pannello):
             info("sistema", T("Sistema"), f'{branding.nome()} {branding.get("OS_VERSION")}'
                  + (f' (build {_build()})' if _build() else "")),
             info("base", T("Basato su"), f"Debian {debian}"),
-            campo("hostname", T("Nome del computer"), platform.node()),
+            campo("hostname", T("Nome del computer"), _nome_dispositivo(),
+                  T("Lo vedono i telefoni, gli altri computer della rete e «Dov'è»")),
             info("modello", T("Modello"), modello or "—"),
             info("cpu", T("Processore"), cpu),
             info("ram", T("Memoria"), f"{ram_totale_mb()} MB"),
@@ -432,7 +447,9 @@ class PannelloInformazioni(Pannello):
 
     def imposta(self, voce, valore):
         if voce == "hostname":
-            return _esito_helper(helper("hostname", str(valore).strip()), T("Nome cambiato"))
+            r = _esito_helper(helper("nome-dispositivo", str(valore).strip()), T("Nome cambiato"))
+            _avvisa_condivisione()
+            return r
         return None
 
     def azione(self, voce, elemento, az, dati):

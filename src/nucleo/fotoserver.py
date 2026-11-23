@@ -166,12 +166,21 @@ def _annuncia(porta: int, nome: str):
     return z, info
 
 
+def _nome_predefinito() -> str:
+    try:
+        from nucleo.nome import nome_dispositivo
+
+        return f"Foto di {nome_dispositivo()}"
+    except Exception:  # noqa: BLE001 — anche fuori da SolidOS (altri computer con Python)
+        return f"Foto di {socket.gethostname().split('.')[0]}"
+
+
 def main() -> int:
     a = argparse.ArgumentParser(description="Condivide una cartella di foto con i telefoni SolidOS")
     a.add_argument("cartella", nargs="?", default=str(_cartella_predefinita()))
     a.add_argument("--porta", type=int, default=8765)
     a.add_argument("--password", default=os.environ.get("FOTO_PASSWORD", ""))
-    a.add_argument("--nome", default=f"Foto di {socket.gethostname().split('.')[0]}")
+    a.add_argument("--nome", default=_nome_predefinito())
     arg = a.parse_args()
     radice = Path(arg.cartella).expanduser().resolve()
     if not radice.is_dir():

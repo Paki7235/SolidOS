@@ -1,0 +1,7 @@
+# Programmi che servono alle app di SolidOS: l'aggiornamento li installa se mancano
+# (un PC installato da una ISO vecchia li riceve così). Uno per riga.
+remmina
+remmina-plugin-rdp
+remmina-plugin-vnc
+wayvnc
+openssl

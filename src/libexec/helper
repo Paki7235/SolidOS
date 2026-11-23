@@ -175,6 +175,19 @@ def cmd_hostname(nome: str):
     sys.exit(esegui(["hostnamectl", "set-hostname", nome]))
 
 
+def cmd_nome_dispositivo(nome: str):
+    """Nome del dispositivo (con spazi e accenti) e nome di rete derivato."""
+    sys.path.insert(0, "/usr/lib/python3/dist-packages")
+    from nucleo.nome import nome_rete, nome_valido
+
+    if not nome_valido(nome):
+        errore("nome non valido (massimo 64 caratteri, senza virgolette)")
+    nome = nome.strip()
+    codice = esegui(["hostnamectl", "set-hostname", "--pretty", nome])
+    codice = codice or esegui(["hostnamectl", "set-hostname", "--static", nome_rete(nome)])
+    sys.exit(codice)
+
+
 def cmd_firewall(azione: str, valore: str = ""):
     if azione == "attiva":
         sys.exit(esegui(["systemctl", "enable", "--now", "firewalld"]))
@@ -405,6 +418,7 @@ COMANDI = {
     "utente-nome": cmd_utente_nome, "utente-senza-password": cmd_utente_senza_password, "utente-foto": cmd_utente_foto,
     "profilo-leggero": cmd_profilo_leggero, "aggiorna-ora": cmd_aggiorna_ora,
     "aggiorna-solidos": cmd_aggiorna_solidos,
+    "nome-dispositivo": cmd_nome_dispositivo,
     "condivisione-porta": cmd_condivisione_porta, "persistenza": cmd_persistenza,
 }
 

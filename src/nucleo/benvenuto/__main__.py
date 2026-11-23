@@ -66,7 +66,11 @@ class BackendBenvenuto(Backend):
         conf = leggi_json(file, {})
         conf["visibilita"] = visibilita
         if nome:
-            conf["nome"] = nome
+            # un nome solo per tutto: telefoni, rete, «Dov'è» (la condivisione lo riprende da lì)
+            from ..sistema import helper
+
+            helper("nome-dispositivo", nome.strip(), timeout=60)
+            conf.pop("nome", None)
         scrivi_json(file, conf)
         nome_dbus = branding.nome_dbus("Condivisione1")
         chiama(nome_dbus, branding.percorso_dbus("Condivisione1"), nome_dbus, "RicaricaConfigurazione")

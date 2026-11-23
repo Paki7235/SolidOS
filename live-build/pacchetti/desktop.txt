@@ -34,6 +34,11 @@ gvfs-backends
 ?smbclient
 qterminal
 firefox-esr
+# Desktop remoto: collegarsi ad altri computer (RDP, VNC) e farsi usare (VNC)
+?remmina
+?remmina-plugin-rdp
+?remmina-plugin-vnc
+?wayvnc
 
 # Aspetto
 papirus-icon-theme

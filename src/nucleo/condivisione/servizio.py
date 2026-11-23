@@ -123,8 +123,9 @@ class Gestore:
 
     @property
     def nome_dispositivo(self) -> str:
-        return self.conf.get("nome") or T("{s} di {u}", s=branding.nome(),
-                                          u=Path.home().name.capitalize()) or socket.gethostname()
+        from ..nome import nome_dispositivo
+
+        return self.conf.get("nome") or nome_dispositivo()
 
     @property
     def cartella(self) -> Path:

@@ -302,7 +302,7 @@ Finestra {
                 Layout.preferredWidth: 320
                 model: [{ testo: I18n.t("Nessuno (consigliato, la attivi quando serve)"), valore: "nessuno" }, { testo: I18n.t("Solo dispositivi associati"), valore: "associati" }, { testo: I18n.t("Tutti per 10 minuti"), valore: "tutti10" }]
             }
-            CampoTesto { id: nomeDisp; Layout.preferredWidth: 320; placeholderText: I18n.t("Nome del computer sui telefoni (facoltativo)") }
+            CampoTesto { id: nomeDisp; Layout.preferredWidth: 320; placeholderText: I18n.t("Nome di questo computer, es. «PC di Anna»") }
             Pulsante { text: I18n.t("Salva e verifica la compatibilità"); onClicked: ponte.avvia("condivisione", [vis.currentValue, nomeDisp.text], "condivisione") }
             Repeater {
                 model: Object.keys(finestra.statoCondivisione)
