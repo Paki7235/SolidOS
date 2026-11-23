@@ -6,4 +6,6 @@ remmina-plugin-vnc
 wayvnc
 openssl
 speech-dispatcher
+pipewire-bin
+alsa-utils
 espeak-ng

@@ -39,6 +39,9 @@ firefox-esr
 ?remmina-plugin-rdp
 ?remmina-plugin-vnc
 ?wayvnc
+# Suoneria di sveglia e timer (PipeWire o ALSA)
+?pipewire-bin
+?alsa-utils
 # Mappe: indicazioni a voce del navigatore
 ?speech-dispatcher
 ?espeak-ng

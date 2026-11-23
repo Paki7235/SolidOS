@@ -35,5 +35,7 @@ xdg-user-dirs-update >/dev/null 2>&1
 grep -q '"attiva": true' "${XDG_CONFIG_HOME:-$HOME/.config}/@OS_ID@/foto-server.json" 2>/dev/null && @OS_ID@-foto --condividi >/dev/null 2>&1 &
 # Desktop remoto: questo computer resta raggiungibile se «Consenti» è acceso
 grep -q '"attivo": true' "${XDG_CONFIG_HOME:-$HOME/.config}/@OS_ID@/desktop-remoto.json" 2>/dev/null && @OS_ID@-desktop-remoto --avvia-server >/dev/null 2>&1 &
+# Sveglie, timer, appuntamenti e promemoria: suonano e avvisano anche ad app chiuse
+@OS_ID@-avvisi >/dev/null 2>&1 &
 # Avviso «Aggiornamento disponibile» (con il pulsante Aggiorna) quando esce una nuova versione
 @OS_ID@-aggiornamento-software --avvisa >/dev/null 2>&1 &
