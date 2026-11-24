@@ -48,3 +48,4 @@ promemoria	nucleo.apps.promemoria	Promemoria	org.gnome.Todo	Office;ProjectManage
 registratore	nucleo.apps.registratore	Registratore	org.gnome.SoundRecorder	AudioVideo;Audio;Recorder;	Registrazioni vocali con pausa, riascolto e forma d'onda	no	
 password	nucleo.apps.password	Password	dialog-password	Utility;Security;	Password dei siti, codici di verifica e Wi-Fi in una cassaforte cifrata	no	
 mail	nucleo.apps.mail	Mail	internet-mail	Network;Email;	Posta con più account, lettura sicura, allegati e avvisi	no	x-scheme-handler/mailto;
+videochiamate	nucleo.apps.videochiamate	Videochiamate	camera-web	Network;VideoConference;	Chiamate audio e video con chi ha un Solid ID, dirette e cifrate	no	

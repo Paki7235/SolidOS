@@ -223,3 +223,60 @@ language sql stable security definer set search_path = public as $$
 $$;
 revoke all on function public.blocco_attivazione(text) from public;
 grant execute on function public.blocco_attivazione(text) to anon, authenticated;
+
+-- ══ Videochiamate ═══════════════════════════════════════════════════════════════════
+-- Audio e video vanno DIRETTI tra i due dispositivi (WebRTC, cifrati da un capo all'altro):
+-- qui passano solo i messaggi per mettersi in contatto (offerta, risposta, indirizzi di rete,
+-- fine). Ognuno vede solo i messaggi che ha mandato o che sono per lui; si cancellano da soli
+-- dopo un giorno.
+create table if not exists public.chiamate_segnali (
+  id bigint generated always as identity primary key,
+  chiamata uuid not null,
+  da uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  a uuid not null references auth.users (id) on delete cascade,
+  dispositivo text not null default '' check (char_length(dispositivo) <= 80),   -- dispositivo che manda
+  tipo text not null check (tipo in ('offerta', 'risposta', 'candidato', 'fine', 'rifiuta', 'occupato', 'presa')),
+  dati jsonb not null default '{}'::jsonb check (pg_column_size(dati) <= 16000),
+  creato timestamptz not null default now()
+);
+create index if not exists chiamate_segnali_a on public.chiamate_segnali (a, chiamata);
+alter table public.chiamate_segnali enable row level security;
+drop policy if exists "segnali miei" on public.chiamate_segnali;
+create policy "segnali miei" on public.chiamate_segnali for select to authenticated
+  using (a = auth.uid() or da = auth.uid());
+drop policy if exists "segnali mandati da me" on public.chiamate_segnali;
+create policy "segnali mandati da me" on public.chiamate_segnali for insert to authenticated
+  with check (da = auth.uid());
+revoke all on public.chiamate_segnali from anon;
+grant select, insert on public.chiamate_segnali to authenticated;
+
+do $$
+begin
+  if not exists (select 1 from pg_publication_tables
+                 where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'chiamate_segnali') then
+    alter publication supabase_realtime add table public.chiamate_segnali;
+  end if;
+end $$;
+
+-- Pulizia automatica dei segnali vecchi di chi scrive
+create or replace function public.pulisci_segnali() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  delete from public.chiamate_segnali where creato < now() - interval '1 day' and (da = new.da or a = new.da);
+  return new;
+end $$;
+drop trigger if exists pulisci_segnali on public.chiamate_segnali;
+create trigger pulisci_segnali after insert on public.chiamate_segnali
+  for each row when (new.tipo = 'offerta') execute function public.pulisci_segnali();
+
+-- Trova una persona da chiamare: solo con l'email esatta, risponde id e nome (niente elenchi).
+create or replace function public.persona_da_email(e text) returns table (id uuid, nome text)
+language sql stable security definer set search_path = public as $$
+  select u.id, coalesce(nullif(p.nome, ''), split_part(u.email, '@', 1))
+  from auth.users u left join public.profili p on p.id = u.id
+  where auth.uid() is not null and e is not null and char_length(e) <= 254
+    and lower(u.email) = lower(trim(e))
+  limit 1
+$$;
+revoke all on function public.persona_da_email(text) from public;
+grant execute on function public.persona_da_email(text) to authenticated;

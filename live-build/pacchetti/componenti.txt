@@ -29,6 +29,7 @@ qml6-module-qtcore
 # Browser «Web» (motore Chromium di Qt)
 python3-pyqt6.qtwebengine
 qml6-module-qtwebengine
+qml6-module-qtwebchannel
 ?qml6-module-qtwebengine-controlsdelegates
 qml6-module-qt-labs-platform
 qml6-module-qt-labs-folderlistmodel

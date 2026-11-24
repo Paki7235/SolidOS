@@ -136,8 +136,47 @@ def _controlla_posta() -> None:
         time.sleep(300)
 
 
+def _ascolta_chiamate() -> None:
+    """Chiamate in arrivo (Solid ID): apre la schermata della chiamata, anche ad app chiusa."""
+    import asyncio
+    import base64
+    import json as _json
+    from datetime import datetime as _dt
+
+    try:
+        from . import chiamate
+    except ImportError:
+        return
+
+    def in_arrivo(r: dict) -> None:
+        try:
+            quando = _dt.fromisoformat(str(r.get("creato", "")).replace("Z", "+00:00")).timestamp()
+        except ValueError:
+            quando = time.time()
+        if time.time() - quando > chiamate.SQUILLO_MAX:
+            return                       # offerta vecchia (arrivata mentre eravamo scollegati)
+        from pathlib import Path as _P
+        import os as _os
+
+        if (_P(_os.environ.get("XDG_RUNTIME_DIR", "/tmp")) / "solidos-in-chiamata").exists():
+            try:                         # già in chiamata: chi chiama sente «Occupato»
+                from . import solidid
+
+                solidid.rest("POST", "chiamate_segnali", {"chiamata": r["chiamata"], "a": r["da"], "dispositivo": chiamate.dispositivo(),
+                                                          "tipo": "occupato", "dati": {}}, rappresenta=False)
+            except Exception:  # noqa: BLE001
+                pass
+            return
+        dati = base64.urlsafe_b64encode(_json.dumps(r).encode()).decode()
+        subprocess.Popen([f"{branding.id_os()}-videochiamate", "--in-arrivo", dati],
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+
+    asyncio.run(chiamate.ascolta(in_arrivo))
+
+
 def main() -> int:
     _in_sottofondo(_controlla_posta)
+    _in_sottofondo(_ascolta_chiamate)
     try:
         from . import agenda   # Calendario e Promemoria
 

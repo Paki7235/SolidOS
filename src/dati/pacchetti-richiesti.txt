@@ -11,3 +11,4 @@ alsa-utils
 espeak-ng
 python3-cryptography
 python3-qrcode
+qml6-module-qtwebchannel
