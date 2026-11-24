@@ -278,5 +278,5 @@ language sql stable security definer set search_path = public as $$
     and lower(u.email) = lower(trim(e))
   limit 1
 $$;
-revoke all on function public.persona_da_email(text) from public;
+revoke all on function public.persona_da_email(text) from public, anon;
 grant execute on function public.persona_da_email(text) to authenticated;
