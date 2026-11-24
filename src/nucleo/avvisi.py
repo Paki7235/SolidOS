@@ -109,7 +109,35 @@ def ciclo() -> None:
         time.sleep(1)
 
 
+def _controlla_posta() -> None:
+    """Ogni 5 minuti: messaggi nuovi in Entrata di ogni account → notifica (la prima volta solo si prende nota)."""
+    from .sistema import leggi_json, notifica, scrivi_json
+
+    try:
+        from . import mail
+        from .mail import conti
+    except ImportError:
+        return
+    file = stato_utente("mail-visti.json")
+    while True:
+        visti = leggi_json(file, {})
+        for a in conti.elenco():
+            try:
+                prima = visti.get(a["id"], {})
+                risposta = mail.casella(a["id"]).nuovi_in_entrata(prima.get("massimo", 10 ** 12))
+                info, nuovi = risposta[0], risposta[1:]
+                if prima and prima.get("validita") == info["validita"]:
+                    for m in nuovi:
+                        notifica(m["da"] or a["email"], m["oggetto"] or T("(senza oggetto)"), "internet-mail")
+                visti[a["id"]] = {"validita": info["validita"], "massimo": max(info["massimo"], prima.get("massimo", 0) if prima.get("validita") == info["validita"] else 0)}
+            except Exception as e:  # noqa: BLE001 — rete assente, password cambiata…: si riprova dopo
+                print(f"avvisi posta {a.get('email')}: {e}", file=sys.stderr)
+        scrivi_json(file, visti)
+        time.sleep(300)
+
+
 def main() -> int:
+    _in_sottofondo(_controlla_posta)
     try:
         from . import agenda   # Calendario e Promemoria
 

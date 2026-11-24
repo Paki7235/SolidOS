@@ -47,3 +47,4 @@ calendario	nucleo.apps.calendario	Calendario	org.gnome.Calendar	Office;Calendar;
 promemoria	nucleo.apps.promemoria	Promemoria	org.gnome.Todo	Office;ProjectManagement;	Liste di cose da fare con scadenze, avvisi e bandiere	no	
 registratore	nucleo.apps.registratore	Registratore	org.gnome.SoundRecorder	AudioVideo;Audio;Recorder;	Registrazioni vocali con pausa, riascolto e forma d'onda	no	
 password	nucleo.apps.password	Password	dialog-password	Utility;Security;	Password dei siti, codici di verifica e Wi-Fi in una cassaforte cifrata	no	
+mail	nucleo.apps.mail	Mail	internet-mail	Network;Email;	Posta con più account, lettura sicura, allegati e avvisi	no	x-scheme-handler/mailto;
