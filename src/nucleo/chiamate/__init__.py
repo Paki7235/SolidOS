@@ -129,8 +129,10 @@ def preferito(p: dict, si: bool) -> list[dict]:
 
 def contatti_con_email() -> list[dict]:
     try:
-        from .. import rubrica
-
+        try:
+            from ..mobile import telefonia as rubrica       # telefono
+        except ImportError:
+            from .. import rubrica                          # PC
         out = []
         for c in rubrica.contatti():
             e = c.get("email")

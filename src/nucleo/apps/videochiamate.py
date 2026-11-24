@@ -103,7 +103,8 @@ class BackendVideochiamate(Backend):
     def pagina(self) -> str:
         from ..qmlapp import CARTELLA_QML
 
-        return (CARTELLA_QML / "Videochiamate" / "chiamata.html").as_uri()
+        pc = CARTELLA_QML / "Videochiamate" / "chiamata.html"
+        return (pc if pc.exists() else CARTELLA_QML / "Mobile" / "chiamata-video.html").as_uri()   # PC o telefono
 
 
 def main() -> int:
