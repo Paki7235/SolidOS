@@ -240,6 +240,69 @@ class BackendWeb(Backend):
 
         avvia([branding.comando("web")] + (["--privata"] if privata else []) + ([url] if url else []))
 
+    # ── Password (la cassaforte dell'app Password) ────────────────────────
+    # Si apre una volta con la password di SolidOS e resta aperta mentre si usa il browser;
+    # dopo 15 minuti senza usarla si richiude.
+    _CHIUDI_DOPO = 15 * 60
+
+    def _cassaforte(self):
+        if not hasattr(self, "_cass"):
+            from .. import password
+
+            self._cass = password.Cassaforte()
+        c = self._cass
+        if c.aperta() and time.time() - c.ultimo_uso > self._CHIUDI_DOPO:
+            c.chiudi()
+        if c.aperta():
+            c.tocca()
+        return c
+
+    def statoPassword(self) -> dict:
+        c = self._cassaforte()
+        return {"aperta": c.aperta(), "servePassword": c.serve_password()}
+
+    def sbloccaPassword(self, pw: str = "") -> dict:
+        return self._cassaforte().apri(str(pw))
+
+    def accountSito(self, url: str) -> dict:
+        c = self._cassaforte()
+        if not c.aperta():
+            return {"bloccata": True, "account": []}
+        return {"bloccata": False, "account": c.per_sito(str(url))}
+
+    def credenziali(self, ident: str) -> dict:
+        c = self._cassaforte()
+        v = c.voce(str(ident)) if c.aperta() else None
+        return {"utente": v.get("utente", ""), "password": v.get("password", "")} if v else {}
+
+    def daSalvare(self, url: str, utente: str, pw: str) -> bool:
+        """Vale la pena chiedere «Salvare la password?» (no se già uguale o se «Mai» per il sito)?"""
+        from .. import password
+
+        if password.dominio(str(url)) in _leggi("password-mai.json", []):
+            return False
+        c = self._cassaforte()
+        return not (c.aperta() and c.gia_salvata(str(url), str(utente), str(pw)))
+
+    def salvaPassword(self, url: str, utente: str, pw: str) -> dict:
+        c = self._cassaforte()
+        if not c.aperta():
+            return {"ok": False, "bloccata": True}
+        return c.salva_da_browser(str(url), str(utente), str(pw))
+
+    def maiPerSito(self, url: str) -> None:
+        from .. import password
+
+        mai = _leggi("password-mai.json", [])
+        d = password.dominio(str(url))
+        if d and d not in mai:
+            _scrivi("password-mai.json", mai + [d])
+
+    def generaPassword(self) -> str:
+        from .. import password
+
+        return password.genera()
+
 
 def main() -> int:
     from ..qmlapp import carica, crea_app, prepara_ambiente

@@ -1,11 +1,14 @@
 // Vela: il browser di SolidOS.
 // Schede in alto · barra degli indirizzi che apre i siti o cerca · stella per i preferiti ·
 // pagina «Nuova scheda» con ricerca e siti più visitati · download · cronologia ·
-// finestra privata · zoom · trova nella pagina · tutto schermo per i video.
+// finestra privata · zoom · trova nella pagina · tutto schermo per i video ·
+// password: «Salvare la password?» dopo l'accesso a un sito e la chiave per compilare
+// (cassaforte dell'app Password; lo script nelle pagine è password.js, in un mondo separato).
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import QtWebEngine
+import QtWebChannel
 import SolidUI
 
 Finestra {
@@ -66,6 +69,43 @@ Finestra {
         if (f === WebEngineView.DesktopVideoCapture || f === WebEngineView.DesktopAudioVideoCapture) return I18n.t("vuole registrare lo schermo")
         return I18n.t("chiede un permesso")
     }
+    // ── Password ─────────────────────────────────────────────────────────
+    property var barraPassword: null            // {tipo: "salva" | "sblocca", dati, poi}
+    function compila(v, ident) {
+        var c = ponte.chiama("credenziali", [ident])
+        if (!c.password || !v) return
+        v.runJavaScript("window.__solidosRiempi && window.__solidosRiempi(" + JSON.stringify(c.utente) + "," + JSON.stringify(c.password) + ")",
+                        WebEngineScript.ApplicationWorld)
+    }
+    function chiavePremuta() {
+        var v = vista
+        if (!v) return
+        var r = ponte.chiama("accountSito", [v.url.toString()])
+        if (r.bloccata) { barraPassword = { tipo: "sblocca", poi: "compila", vista: v }; return }
+        if (r.account.length === 0) { avvisoBreve.mostra(I18n.t("Nessuna password salvata per questo sito")); return }
+        if (r.account.length === 1) { compila(v, r.account[0].id); return }
+        menuAccount.account = r.account; menuAccount.vista = v
+        menuAccount.popup(tastoChiave, 0, tastoChiave.height + 4)
+    }
+    function accessoInviato(v, dati) {
+        if (!dati.password || !ponte.chiama("daSalvare", [dati.url, dati.utente, dati.password])) return
+        barraPassword = { tipo: "salva", dati: dati, vista: v }
+    }
+    function salvaPassword() {
+        var r = ponte.chiama("salvaPassword", [barraPassword.dati.url, barraPassword.dati.utente, barraPassword.dati.password])
+        if (r.bloccata) { barraPassword = { tipo: "sblocca", poi: "salva", dati: barraPassword.dati, vista: barraPassword.vista }; return }
+        barraPassword = null
+        if (r.messaggio) avvisoBreve.mostra(r.messaggio)
+    }
+    function sblocca(pw) {
+        var r = ponte.chiama("sbloccaPassword", [pw])
+        if (!r.ok) { campoSblocca.text = ""; erroreSblocca.text = r.messaggio || ""; return }
+        erroreSblocca.text = ""; campoSblocca.text = ""
+        var b = barraPassword
+        barraPassword = null
+        if (b.poi === "salva") { barraPassword = { tipo: "salva", dati: b.dati, vista: b.vista }; salvaPassword() }
+        else chiavePremuta()
+    }
     function aggiornaPreferiti() { preferiti = ponte.chiama0("preferiti") }
     function zoom(passo) { if (vista) vista.zoomFactor = passo === 0 ? 1.0 : Math.max(0.3, Math.min(3.0, vista.zoomFactor + passo)) }
     function dimensione(b) { return b >= 1073741824 ? (b / 1073741824).toFixed(1).replace(".", ",") + " GB" : (b >= 1048576 ? (b / 1048576).toFixed(1).replace(".", ",") + " MB" : Math.round(b / 1024) + " KB") }
@@ -85,7 +125,21 @@ Finestra {
         persistentCookiesPolicy: finestra.privata ? WebEngineProfile.NoPersistentCookies : WebEngineProfile.AllowPersistentCookies
         httpCacheType: finestra.privata ? WebEngineProfile.MemoryHttpCache : WebEngineProfile.DiskHttpCache
         downloadPath: ponte.chiama0("cartellaDownload")
-        Component.onCompleted: httpUserAgent = httpUserAgent.replace(/QtWebEngine\/[\d.]+ /, "")
+        Component.onCompleted: {
+            httpUserAgent = httpUserAgent.replace(/QtWebEngine\/[\d.]+ /, "")
+            // QWebChannel e lo script delle password, nel mondo separato (le pagine non li vedono)
+            var canale = WebEngine.script()
+            canale.name = "qwebchannel"
+            canale.sourceUrl = "qrc:///qtwebchannel/qwebchannel.js"
+            canale.injectionPoint = WebEngineScript.DocumentCreation
+            canale.worldId = WebEngineScript.ApplicationWorld
+            var pw = WebEngine.script()
+            pw.name = "password"
+            pw.sourceUrl = Qt.resolvedUrl("password.js")
+            pw.injectionPoint = WebEngineScript.DocumentReady
+            pw.worldId = WebEngineScript.ApplicationWorld
+            userScripts.collection = [canale, pw]
+        }
         onDownloadRequested: function (d) {
             d.accept()
             finestra.scaricamenti = [d].concat(finestra.scaricamenti).slice(0, 30)
@@ -243,6 +297,15 @@ Finestra {
                             color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 11
                             MouseArea { anchors.fill: parent; onClicked: finestra.zoom(0) }
                         }
+                        Rectangle {
+                            id: tastoChiave
+                            visible: !!(finestra.vista && finestra.vista.moduloAccesso)
+                            width: 28; height: 28; radius: 8
+                            color: maChiave.containsMouse ? (Tema.chiaro ? "#12000000" : "#18FFFFFF") : "transparent"
+                            Simbolo { anchors.centerIn: parent; nome: "chiave"; lato: 16; colore: finestra.accentoWeb }
+                            MouseArea { id: maChiave; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: finestra.chiavePremuta() }
+                            ToolTip.visible: maChiave.containsMouse; ToolTip.delay: 600; ToolTip.text: I18n.t("Compila con una password salvata")
+                        }
                         Tasto {
                             visible: !finestra.nuovaPagina(finestra.vista)
                             width: 28; height: 28
@@ -374,6 +437,45 @@ Finestra {
             }
         }
 
+        Rectangle {
+            id: barraPw
+            visible: finestra.barraPassword !== null
+            Layout.fillWidth: true
+            implicitHeight: finestra.barraPassword && finestra.barraPassword.tipo === "sblocca" && erroreSblocca.text ? 70 : 50
+            color: Tema.chiaro ? "#EEF2FF" : "#1E2238"
+            RowLayout {
+                anchors.left: parent.left; anchors.right: parent.right; anchors.top: parent.top
+                height: 50; anchors.leftMargin: 16; anchors.rightMargin: 10
+                spacing: 10
+                Simbolo { nome: "chiave"; lato: 18; colore: finestra.accentoWeb }
+                Text {
+                    Layout.fillWidth: true; elide: Text.ElideRight
+                    color: Tema.testo; font.family: Tema.font; font.pixelSize: 13
+                    text: !finestra.barraPassword ? "" : finestra.barraPassword.tipo === "salva"
+                          ? I18n.t("Salvare la password per {s}?").replace("{s}", (finestra.barraPassword.dati.url.split("/")[2] || "").replace(/^www\./, ""))
+                            + (finestra.barraPassword.dati.utente ? "  ·  " + finestra.barraPassword.dati.utente : "")
+                          : I18n.t("Scrivi la password di SolidOS per usare le password salvate")
+                }
+                // salva
+                Pulsante { visible: !!finestra.barraPassword && finestra.barraPassword.tipo === "salva"; text: I18n.t("Mai per questo sito"); onClicked: { ponte.chiama("maiPerSito", [finestra.barraPassword.dati.url]); finestra.barraPassword = null } }
+                Pulsante { visible: !!finestra.barraPassword && finestra.barraPassword.tipo === "salva"; text: I18n.t("Non ora"); onClicked: finestra.barraPassword = null }
+                Pulsante { visible: !!finestra.barraPassword && finestra.barraPassword.tipo === "salva"; text: I18n.t("Salva"); principale: true; onClicked: finestra.salvaPassword() }
+                // sblocca
+                CampoTesto {
+                    id: campoSblocca
+                    visible: !!finestra.barraPassword && finestra.barraPassword.tipo === "sblocca"
+                    Layout.preferredWidth: 220
+                    echoMode: TextInput.Password
+                    placeholderText: I18n.t("Password di SolidOS")
+                    onVisibleChanged: if (visible) forceActiveFocus()
+                    onAccepted: finestra.sblocca(text)
+                }
+                Pulsante { visible: campoSblocca.visible; text: I18n.t("Annulla"); onClicked: { finestra.barraPassword = null; erroreSblocca.text = "" } }
+                Pulsante { visible: campoSblocca.visible; text: I18n.t("Sblocca"); principale: true; onClicked: finestra.sblocca(campoSblocca.text) }
+            }
+            Text { id: erroreSblocca; visible: text !== ""; x: 44; y: 48; color: "#EF4444"; font.family: Tema.font; font.pixelSize: 12 }
+        }
+
         // ── Pagine ───────────────────────────────────────────────────────────
         Item {
             Layout.fillWidth: true
@@ -390,6 +492,22 @@ Finestra {
                         required property string iniziale
                         profile: profilo
                         url: iniziale
+                        property bool moduloAccesso: false
+                        webChannelWorld: WebEngineScript.ApplicationWorld
+                        webChannel: WebChannel { registeredObjects: [pontePassword] }
+                        QtObject {
+                            id: pontePassword
+                            WebChannel.id: "solidosPassword"
+                            function modulo(indirizzo, presente) {
+                                pagina.moduloAccesso = presente
+                                if (!presente) return
+                                // cassaforte aperta e un solo account esatto per il sito: si compila da solo
+                                var r = ponte.chiama("accountSito", [indirizzo])
+                                if (!r.bloccata && r.account.length === 1 && r.account[0].esatto) finestra.compila(pagina, r.account[0].id)
+                            }
+                            function inviato(json) { finestra.accessoInviato(pagina, JSON.parse(json)) }
+                        }
+                        onUrlChanged: moduloAccesso = false
                         settings.fullScreenSupportEnabled: true
                         settings.pluginsEnabled: true
                         settings.dnsPrefetchEnabled: true
@@ -724,4 +842,17 @@ Finestra {
     Shortcut { sequence: "Ctrl+0"; onActivated: finestra.zoom(0) }
     Shortcut { sequence: "F11"; onActivated: { finestra.schermoIntero = !finestra.schermoIntero; if (finestra.schermoIntero) finestra.showFullScreen(); else finestra.showNormal() } }
     Shortcut { sequence: "Escape"; enabled: finestra.schermoIntero; onActivated: { if (finestra.vista) finestra.vista.triggerWebAction(WebEngineView.ExitFullScreen); finestra.schermoIntero = false; finestra.showNormal() } }
+    // account del sito da scegliere (se ce n'è più di uno)
+    Menu {
+        id: menuAccount
+        property var account: []
+        property var vista: null
+        Instantiator {
+            model: menuAccount.account
+            MenuItem { text: (modelData.utente || I18n.t("(senza nome utente)")) + (modelData.esatto ? "" : "  ·  " + modelData.titolo); onTriggered: finestra.compila(menuAccount.vista, modelData.id) }
+            onObjectAdded: function (i, o) { menuAccount.insertItem(i, o) }
+            onObjectRemoved: function (i, o) { menuAccount.removeItem(o) }
+        }
+    }
+    Messaggio { id: avvisoBreve }
 }

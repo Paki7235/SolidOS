@@ -333,6 +333,44 @@ class Cassaforte:
             return {"ok": True, "messaggio": T("{n} password compaiono tra quelle trapelate: cambiale", n=trovate)}
         return {"ok": True, "messaggio": T("Nessuna password compare tra quelle trapelate")}
 
+    # ── dal browser ──
+    def per_sito(self, url: str) -> list[dict]:
+        """Gli account salvati per il sito di questa pagina (anche i sottodomini: accounts.google.com
+        trova quelli di google.com e viceversa)."""
+        host = dominio(url)
+        if not host:
+            return []
+        out = []
+        for v in self.voci:
+            d = dominio(v.get("sito", ""))
+            if v.get("eliminata") or not d or not v.get("password"):
+                continue
+            if host == d or host.endswith("." + d) or d.endswith("." + host) or _base(host) == _base(d):
+                out.append({"id": v["id"], "utente": v.get("utente", ""), "titolo": v["titolo"], "esatto": host == d})
+        out.sort(key=lambda x: (not x["esatto"], x["utente"].lower()))
+        return out
+
+    def salva_da_browser(self, url: str, utente: str, password: str) -> dict:
+        """«Salva» del browser: aggiorna l'account dello stesso sito e utente, o ne crea uno."""
+        host = dominio(url)
+        if not host or not password:
+            return {"ok": False}
+        esistente = next((v for v in self.voci if not v.get("eliminata") and dominio(v.get("sito", "")) == host
+                          and v.get("utente", "") == utente), None)
+        if esistente:
+            if esistente.get("password") == password:
+                return {"ok": True, "uguale": True, "messaggio": T("Password già salvata")}
+            r = self.salva_voce({**esistente, "password": password})
+            return {**r, "messaggio": T("Password aggiornata")}
+        u = urlparse(url if "://" in url else "https://" + url)
+        r = self.salva_voce({"titolo": _base(host), "sito": f"{u.scheme or 'https'}://{host}", "utente": utente, "password": password})
+        return {**r, "messaggio": T("Password salvata")}
+
+    def gia_salvata(self, url: str, utente: str, password: str) -> bool:
+        host = dominio(url)
+        return any(not v.get("eliminata") and dominio(v.get("sito", "")) == host and v.get("utente", "") == utente
+                   and v.get("password") == password for v in self.voci)
+
     # ── importa ed esporta ──
     def importa_csv(self, percorso: str) -> dict:
         try:
@@ -398,6 +436,14 @@ def dominio(sito: str) -> str:
         sito = "https://" + sito
     host = (urlparse(sito).hostname or "").lower()
     return host[4:] if host.startswith("www.") else host
+
+
+def _base(host: str) -> str:
+    """Dominio «di base» (google.com da accounts.google.com; esempio.co.uk resta intero)."""
+    parti = host.split(".")
+    if len(parti) >= 3 and len(parti[-2]) <= 3 and len(parti[-1]) == 2:      # co.uk, com.br…
+        return ".".join(parti[-3:])
+    return ".".join(parti[-2:])
 
 
 def forza(p: str) -> dict:
