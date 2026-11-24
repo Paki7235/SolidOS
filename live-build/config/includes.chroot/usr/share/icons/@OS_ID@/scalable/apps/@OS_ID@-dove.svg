@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+ <defs>
+  <linearGradient id="f-dove" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6E8BFF"/><stop offset="1" stop-color="#3B4FE0"/></linearGradient>
+  <linearGradient id="l-dove" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.22"/><stop offset="0.45" stop-color="#FFFFFF" stop-opacity="0"/></linearGradient>
+ </defs>
+ <rect x="4" y="5.2" width="56" height="56" rx="12.5" fill="#000000" opacity="0.18"/>
+ <rect x="4" y="4" width="56" height="56" rx="12.5" fill="url(#f-dove)"/>
+ <rect x="4" y="4" width="56" height="56" rx="12.5" fill="url(#l-dove)"/>
+ 
+ <circle cx="32" cy="33" r="21" fill="none" stroke="#FFFFFF" stroke-opacity="0.22" stroke-width="2"/>
+ <circle cx="32" cy="33" r="14" fill="none" stroke="#FFFFFF" stroke-opacity="0.38" stroke-width="2"/>
+ <path d="M32 33 L48.5 20.5 A21 21 0 0 1 53 33 Z" fill="#FFFFFF" fill-opacity="0.22"/>
+ <g transform="translate(0 0.8)" opacity="0.18"><path d="M32 17c-6.1 0-11 4.8-11 10.8 0 8 11 18.7 11 18.7s11-10.7 11-18.7C43 21.8 38.1 17 32 17Z" fill="#000"/></g>
+ <path d="M32 17c-6.1 0-11 4.8-11 10.8 0 8 11 18.7 11 18.7s11-10.7 11-18.7C43 21.8 38.1 17 32 17Z" fill="#FFFFFF"/>
+ <circle cx="32" cy="27.8" r="4.6" fill="#4A62F0"/>
+ <circle cx="48.5" cy="20.5" r="2.4" fill="#7CF5C4"/>
+</svg>

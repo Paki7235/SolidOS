@@ -1,8 +1,9 @@
 """Desktop remoto: vedere e usare un altro computer da qui, e lasciare che un altro computer
 veda e usi questo.
 
-- «Collegati»: indirizzo (o un computer trovato nella rete), protocollo RDP o VNC, utente.
-  La finestra del collegamento la apre Remmina, che parla entrambi i protocolli.
+- «Collegati»: indirizzo (o un computer trovato nella rete), utente e password; il protocollo lo
+  riconosce da solo. VNC (SolidOS, Mac, Linux) si apre DENTRO l'app, con il nostro client
+  (nucleo/remoto); RDP (Windows) apre la finestra di FreeRDP con lo schermo dell'altro computer.
 - «Questo computer»: con l'interruttore acceso parte wayvnc (VNC, porta 5900), con utente e
   password e la cifratura RSA-AES; la porta si apre solo per la sessione. Qualsiasi programma
   VNC degli altri sistemi operativi si collega con indirizzo, utente e password.
@@ -146,37 +147,63 @@ class BackendDesktopRemoto(Backend):
         with ThreadPoolExecutor(max_workers=16) as pool:
             return [x for x in pool.map(prova, trovati) if x]
 
-    def collega(self, indirizzo: str, protocollo: str = "auto", utente: str = "") -> dict:
+    def collega(self, indirizzo: str, protocollo: str = "auto", utente: str = "", password: str = "") -> dict:
         indirizzo, utente = str(indirizzo).strip(), str(utente).strip()
-        if not indirizzo or any(c in indirizzo for c in " \n\t;"):
+        if not indirizzo or any(c in indirizzo for c in " \n\t;/"):
             return {"ok": False, "messaggio": T("Scrivi l'indirizzo dell'altro computer, es. 192.168.1.20")}
-        host = indirizzo.rsplit(":", 1)[0] if indirizzo.count(":") == 1 else indirizzo
+        host, porta = (indirizzo.rsplit(":", 1) if indirizzo.count(":") == 1 else (indirizzo, ""))
+        if porta and not porta.isdigit():
+            return {"ok": False, "messaggio": T("Indirizzo non valido")}
         if protocollo not in ("rdp", "vnc"):
-            protocollo = next((p for p, porta in PORTE.items() if _porta_aperta(host, porta, 1.5)), "")
+            if porta:
+                protocollo = "rdp" if int(porta) == PORTE["rdp"] else "vnc"
+            else:
+                protocollo = next((p for p in ("vnc", "rdp") if _porta_aperta(host, PORTE[p], 1.5)), "")
             if not protocollo:
-                return {"ok": False, "messaggio": T("«{h}» non accetta collegamenti di desktop remoto (RDP o VNC). "
-                                                    "Sull'altro computer attiva il desktop remoto o la condivisione schermo.", h=host)}
-        profilo = Path.home() / ".cache" / branding.id_os() / "collegamento.remmina"
-        profilo.parent.mkdir(parents=True, exist_ok=True)
-        righe = ["[remmina]", f"name={host}", f"protocol={protocollo.upper()}", f"server={indirizzo}",
-                 "scale=2" if protocollo == "vnc" else "scale=2", "viewmode=1"]
-        if utente:
-            righe.append(f"username={utente}")
-        profilo.write_text("\n".join(righe) + "\n", encoding="utf-8")
-        os.chmod(profilo, 0o600)
-        avvia(["remmina", "-c", str(profilo)])
+                return {"ok": False, "messaggio": T("«{h}» non accetta collegamenti. Sull'altro computer attiva la condivisione "
+                                                    "dello schermo (SolidOS, Mac) o il Desktop remoto (Windows).", h=host)}
         c = _conf()
         recenti = [r for r in c.get("recenti", []) if r.get("indirizzo") != indirizzo]
         c["recenti"] = [{"indirizzo": indirizzo, "protocollo": protocollo, "utente": utente}] + recenti[:7]
         _salva(c)
-        return {"ok": True, "messaggio": T("Collegamento a {h} ({p})…", h=host, p=protocollo.upper())}
+        if protocollo == "vnc":
+            # si apre dentro l'app (SchermoRemoto): qui basta dire dove
+            return {"ok": True, "vnc": True, "host": host, "porta": int(porta or PORTE["vnc"])}
+        return self._rdp(indirizzo, host, utente, str(password))
+
+    def _rdp(self, indirizzo: str, host: str, utente: str, password: str) -> dict:
+        import shutil
+
+        programma = shutil.which("wlfreerdp3") or shutil.which("sdl-freerdp3") or shutil.which("xfreerdp3")
+        if not programma:
+            return {"ok": False, "messaggio": T("Per i computer Windows serve un componente che arriva con il prossimo aggiornamento")}
+        comando = [programma, f"/v:{indirizzo}", "/cert:tofu", "/dynamic-resolution", "+clipboard", "/sound",
+                   f"/title:{T('Desktop remoto')} — {host}", "/from-stdin:force"]
+        if utente:
+            comando.append(f"/u:{utente}")
+        # la password passa da stdin, non dalla riga di comando (che altri potrebbero leggere)
+        processo = subprocess.Popen(comando, stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                                    start_new_session=True)
+        try:
+            righe = ([utente] if not utente else []) + ["", password]   # utente, dominio, password se chiesti
+            processo.stdin.write(("\n".join(righe) + "\n").encode())
+            processo.stdin.close()
+        except OSError:
+            pass
+        return {"ok": True, "messaggio": T("Collegamento a {h}…", h=host)}
 
 
 def main() -> int:
     if "--avvia-server" in sys.argv[1:]:   # all'accesso, se «Consenti» è acceso
         avvia_server()
         return 0
-    return esegui_app("desktop-remoto", "DesktopRemoto/Main.qml", lambda app: {"ponte": crea_ponte(BackendDesktopRemoto())})
+    def contesto(app):
+        from ..remoto.schermo import registra
+
+        registra()
+        return {"ponte": crea_ponte(BackendDesktopRemoto())}
+
+    return esegui_app("desktop-remoto", "DesktopRemoto/Main.qml", contesto)
 
 
 if __name__ == "__main__":

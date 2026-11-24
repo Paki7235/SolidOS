@@ -1,9 +1,13 @@
-// Desktop remoto: in alto «Collegati a un altro computer» (indirizzo o computer trovati nella
-// rete, RDP o VNC), sotto «Questo computer» con l'interruttore, l'indirizzo, l'utente e la password.
+// Desktop remoto: in alto «Collegati a un altro computer» (indirizzo o un computer trovato nella
+// rete, utente e password), sotto «Questo computer» con l'interruttore, l'indirizzo, l'utente e la
+// password. Lo schermo di un computer SolidOS, Mac o Linux si apre qui dentro (SchermoRemoto);
+// quello di un PC Windows in una finestra a parte.
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtQuick.Window
 import SolidUI
+import SolidOS.Remoto 1.0
 
 Finestra {
     id: finestra
@@ -16,6 +20,19 @@ Finestra {
     property var stato: ({})
     property var trovati: []
     property bool cercando: false
+    property bool collegando: false
+    property var remoto: null              // collegamento aperto qui dentro (VNC)
+    property bool remotoPronto: false
+    function collega() {
+        if (!indirizzo.text.trim()) { avviso.mostra(I18n.t("Scrivi l'indirizzo dell'altro computer")); indirizzo.forceActiveFocus(); return }
+        collegando = true
+        ponte.avvia("collega", [indirizzo.text, "auto", utente.text, password.text], "collega")
+    }
+    function scollega() {
+        schermo.chiudi()
+        remoto = null; remotoPronto = false
+        if (visibility === Window.FullScreen) showNormal()
+    }
 
     function aggiorna() { stato = ponte.chiama0("stato") }
     function cerca() { cercando = true; ponte.avvia("cerca", [], "cerca") }
@@ -23,7 +40,12 @@ Finestra {
         target: ponte
         function onCompletato(id, r) {
             if (id === "cerca") { finestra.trovati = r; finestra.cercando = false }
-            else if (id === "collega") { avviso.mostra(r.messaggio); finestra.aggiorna() }
+            else if (id === "collega") {
+                finestra.collegando = false
+                finestra.aggiorna()
+                if (r.ok && r.vnc) { finestra.remoto = { host: r.host, nome: r.host }; schermo.collega(r.host, r.porta, utente.text, password.text); password.text = "" }
+                else { if (r.ok) password.text = ""; avviso.mostra(r.messaggio) }
+            }
             else if (id === "consenti" || id === "password") finestra.stato = r
         }
     }
@@ -80,31 +102,25 @@ Finestra {
                     anchors.margins: 16
                     spacing: 10
                     Text { text: I18n.t("Collegati a un altro computer"); color: Tema.testo; font.family: Tema.font; font.pixelSize: 16; font.weight: Font.DemiBold }
-                    RowLayout {
+                    GridLayout {
                         Layout.fillWidth: true
-                        spacing: 8
-                        CampoTesto { id: indirizzo; Layout.fillWidth: true; placeholderText: I18n.t("Indirizzo, es. 192.168.1.20"); onAccepted: vai.clicked() }
-                        ComboBox {
-                            id: protocollo
-                            Layout.preferredWidth: 140
-                            textRole: "t"; valueRole: "v"
-                            model: [{ t: I18n.t("Automatico"), v: "auto" }, { t: "RDP", v: "rdp" }, { t: "VNC", v: "vnc" }]
-                        }
+                        columns: 2; columnSpacing: 10; rowSpacing: 8
+                        Text { text: I18n.t("Indirizzo"); color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 13 }
+                        CampoTesto { id: indirizzo; Layout.fillWidth: true; placeholderText: I18n.t("es. 192.168.1.20, o tocca un computer qui sotto"); onAccepted: utente.forceActiveFocus() }
+                        Text { text: I18n.t("Utente"); color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 13 }
+                        CampoTesto { id: utente; Layout.fillWidth: true; placeholderText: I18n.t("Il nome con cui entri nell'altro computer"); onAccepted: password.forceActiveFocus() }
+                        Text { text: I18n.t("Password"); color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 13 }
+                        CampoTesto { id: password; Layout.fillWidth: true; echoMode: TextInput.Password; placeholderText: I18n.t("La password dell'altro computer"); onAccepted: finestra.collega() }
                     }
                     RowLayout {
                         Layout.fillWidth: true
-                        spacing: 8
-                        CampoTesto { id: utente; Layout.fillWidth: true; placeholderText: I18n.t("Utente sull'altro computer (se serve)") }
-                        Pulsante {
-                            id: vai
-                            text: I18n.t("Collega"); principale: true
-                            onClicked: ponte.avvia("collega", [indirizzo.text, protocollo.currentValue, utente.text], "collega")
+                        Text {
+                            Layout.fillWidth: true; wrapMode: Text.WordWrap
+                            text: I18n.t("Sull'altro computer va attivata la condivisione dello schermo (SolidOS, Mac) o il Desktop remoto (Windows).")
+                            color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 12
                         }
-                    }
-                    Text {
-                        Layout.fillWidth: true; wrapMode: Text.WordWrap
-                        text: I18n.t("La password la chiede la finestra del collegamento. Sull'altro computer va attivato il desktop remoto (RDP) o la condivisione schermo (VNC).")
-                        color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 12
+                        BusyIndicator { visible: finestra.collegando; running: visible; Layout.preferredWidth: 24; Layout.preferredHeight: 24 }
+                        Pulsante { id: vai; text: finestra.collegando ? I18n.t("Collegamento…") : I18n.t("Collega"); principale: true; enabled: !finestra.collegando; onClicked: finestra.collega() }
                     }
 
                     // Computer trovati e recenti
@@ -145,8 +161,8 @@ Finestra {
                                     }
                                 }
                                 Pulsante {
-                                    text: I18n.t("Collega")
-                                    onClicked: ponte.avvia("collega", [modelData.ip, modelData.protocolli[0], modelData.utente || utente.text], "collega")
+                                    text: I18n.t("Scegli")
+                                    onClicked: { indirizzo.text = modelData.ip; if (modelData.utente) utente.text = modelData.utente; (utente.text ? password : utente).forceActiveFocus() }
                                 }
                             }
                         }
@@ -211,5 +227,54 @@ Finestra {
         }
     }
     Timer { interval: 3000; repeat: true; running: finestra.stato.attivo === true && !finestra.stato.inCorso; onTriggered: finestra.aggiorna() }
+    // ── Lo schermo dell'altro computer, dentro l'app ──
+    Rectangle {
+        anchors.fill: parent
+        visible: !!finestra.remoto
+        color: "#0B0C10"
+        z: 10
+        SchermoRemoto {
+            id: schermo
+            anchors.left: parent.left; anchors.right: parent.right
+            anchors.top: barraRemoto.bottom; anchors.bottom: parent.bottom
+            focus: !!finestra.remoto
+            onCollegato: function (nome, larghezza, altezza) {
+                finestra.remotoPronto = true
+                if (nome) finestra.remoto = { host: finestra.remoto.host, nome: nome }
+                if (finestra.visibility !== Window.FullScreen) { finestra.width = Math.max(finestra.width, Math.min(Screen.width - 40, larghezza)); finestra.height = Math.max(finestra.height, Math.min(Screen.height - 60, altezza + 44)) }
+                forceActiveFocus()
+            }
+            onErrore: function (messaggio) { avviso.mostra(messaggio); finestra.scollega() }
+            onFinito: function (messaggio) { avviso.mostra(I18n.t("Collegamento chiuso")); finestra.scollega() }
+        }
+        Column {
+            anchors.centerIn: parent
+            visible: !finestra.remotoPronto
+            spacing: 12
+            BusyIndicator { anchors.horizontalCenter: parent.horizontalCenter; running: parent.visible }
+            Text { text: I18n.t("Collegamento a {h}…").replace("{h}", finestra.remoto ? finestra.remoto.host : ""); color: "#F5F5F7"; font.family: Tema.font; font.pixelSize: 15 }
+        }
+        Rectangle {
+            id: barraRemoto
+            anchors.left: parent.left; anchors.right: parent.right; anchors.top: parent.top
+            height: 44
+            color: "#1C1D22"
+            RowLayout {
+                anchors.fill: parent; anchors.leftMargin: 14; anchors.rightMargin: 10
+                spacing: 8
+                Simbolo { nome: "schermo"; lato: 18; colore: "#F5F5F7" }
+                Text { text: finestra.remoto ? finestra.remoto.nome : ""; color: "#F5F5F7"; font.family: Tema.font; font.pixelSize: 14; font.weight: Font.DemiBold; elide: Text.ElideRight; Layout.fillWidth: true }
+                Pulsante { text: I18n.t("Incolla"); visible: finestra.remotoPronto; onClicked: { incollatore.text = ""; incollatore.paste(); if (incollatore.text) schermo.scrivi(incollatore.text); schermo.forceActiveFocus() } }
+                Pulsante { text: "Ctrl+Alt+Canc"; visible: finestra.remotoPronto; onClicked: { schermo.ctrlAltCanc(); schermo.forceActiveFocus() } }
+                Pulsante {
+                    text: finestra.visibility === Window.FullScreen ? I18n.t("Esci da schermo intero") : I18n.t("Schermo intero")
+                    onClicked: { finestra.visibility === Window.FullScreen ? finestra.showNormal() : finestra.showFullScreen(); schermo.forceActiveFocus() }
+                }
+                Pulsante { text: I18n.t("Scollega"); pericoloso: true; onClicked: finestra.scollega() }
+            }
+        }
+        TextEdit { id: incollatore; visible: false }
+    }
+
     Messaggio { id: avviso }
 }

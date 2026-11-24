@@ -1,0 +1,7 @@
+# Programmi che SolidOS non usa più: l'aggiornamento li toglie se ci sono (uno per riga).
+# Remmina: Desktop remoto ora ha il suo visore (VNC) e usa FreeRDP per i PC Windows.
+remmina
+remmina-plugin-rdp
+remmina-plugin-vnc
+remmina-plugin-secret
+remmina-common

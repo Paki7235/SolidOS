@@ -59,3 +59,5 @@ Lo stato «da verificare» va confermato sul repository ufficiale prima dell'int
 **Marchi:** «AirDrop», «Quick Share», «Windows», «iPhone» sono citati solo per indicare compatibilità.
 
 **Simboli a linea** (`src/dati/icone/linea`, gli stessi di SolidOS Mobile, generati da `scripts/genera-icone-linea.py` del telefono): in parte ricavati da Lucide (licenza ISC, © Lucide Contributors), in parte disegnati per SolidOS.
+
+- **FreeRDP** (Apache-2.0): usato da Desktop remoto solo per collegarsi ai computer Windows (RDP). Il collegamento VNC è scritto da SolidOS.

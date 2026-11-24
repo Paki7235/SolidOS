@@ -119,7 +119,7 @@ Finestra {
         }
     }
 
-    // ── Aggiungere un account ──
+    // ── Aggiungere un account: prima si sceglie il servizio, poi email e password ──
     Rectangle {
         id: nuovoConto
         anchors.fill: parent
@@ -129,6 +129,39 @@ Finestra {
         property bool lavoro: false
         property bool avanzate: false
         property var conf: null
+        property var servizio: null           // voce di «servizi» scelta
+        readonly property var servizi: [
+            { id: "gmail", nome: "Gmail", esempio: "nome@gmail.com", colore: "#EA4335", app: true,
+              pagina: "https://myaccount.google.com/apppasswords",
+              guida: I18n.t("Google chiede una password apposta per le app (la tua password normale non funziona qui).") + "\n"
+                     + I18n.t("1. Premi «Apri la pagina» e accedi al tuo account Google.") + "\n"
+                     + I18n.t("2. Come nome dell'app scrivi SolidOS e premi Crea.") + "\n"
+                     + I18n.t("3. Copia il codice di 16 lettere che compare e incollalo qui sotto.") + "\n"
+                     + I18n.t("Se la pagina dice che non è disponibile, attiva prima la «Verifica in due passaggi» nello stesso account.") },
+            { id: "icloud", nome: "iCloud", esempio: "nome@icloud.com", colore: "#3B82F6", app: true,
+              pagina: "https://account.apple.com",
+              guida: I18n.t("Apple chiede una password apposta per le app.") + "\n"
+                     + I18n.t("1. Premi «Apri la pagina» e accedi con il tuo account Apple.") + "\n"
+                     + I18n.t("2. Vai in «Accesso e sicurezza», poi «Password specifiche per le app», e creane una chiamata SolidOS.") + "\n"
+                     + I18n.t("3. Copia la password che compare e incollala qui sotto.") },
+            { id: "outlook", nome: "Outlook / Hotmail", esempio: "nome@outlook.it", colore: "#0EA5E9", app: true,
+              pagina: "https://account.live.com/proofs/AppPassword",
+              guida: I18n.t("Microsoft spesso accetta solo una password apposta per le app.") + "\n"
+                     + I18n.t("1. Premi «Apri la pagina» e accedi al tuo account Microsoft.") + "\n"
+                     + I18n.t("2. Crea una nuova password per le app e incollala qui sotto.") + "\n"
+                     + I18n.t("Se Microsoft non la propone, per ora Outlook e Hotmail potrebbero non funzionare.") },
+            { id: "libero", nome: "Libero", esempio: "nome@libero.it", colore: "#F59E0B", app: false },
+            { id: "yahoo", nome: "Yahoo", esempio: "nome@yahoo.it", colore: "#8B5CF6", app: true,
+              pagina: "https://login.yahoo.com/myaccount/security/app-password",
+              guida: I18n.t("Yahoo chiede una password apposta per le app.") + "\n"
+                     + I18n.t("1. Premi «Apri la pagina» e accedi.") + "\n"
+                     + I18n.t("2. Crea una password per l'app SolidOS e incollala qui sotto.") },
+            { id: "tim", nome: "Virgilio · Alice · TIM", esempio: "nome@virgilio.it", colore: "#22C55E", app: false },
+            { id: "aruba", nome: "Aruba · PEC", esempio: "nome@tuodominio.it", colore: "#EF4444", app: false },
+            { id: "altro", nome: I18n.t("Altra posta"), esempio: "nome@esempio.it", colore: "#64748B", app: false }
+        ]
+        function scegli(v) { servizio = v; conf = null; errore.text = ""; avanzate = false; campoPw.text = ""; campoEmail.forceActiveFocus() }
+        function indietro() { servizio = null; errore.text = "" }
         function trovata(c) {
             lavoro = false; conf = c
             campoImap.text = c.imap; campoPortaImap.text = c.portaImap; campoSmtp.text = c.smtp; campoPortaSmtp.text = c.portaSmtp
@@ -139,21 +172,28 @@ Finestra {
         function aggiungi() {
             lavoro = true
             errore.text = ""
-            ponte.avvia("aggiungiConto", [{ email: campoEmail.text.trim(), nome: campoNome.text.trim(), password: campoPw.text, utente: campoUtente.text,
-                                             imap: campoImap.text, portaImap: parseInt(campoPortaImap.text), smtp: campoSmtp.text,
+            ponte.avvia("aggiungiConto", [{ email: campoEmail.text.trim(), nome: campoNome.text.trim(), password: campoPw.text.replace(/\s/g, servizio && servizio.app ? "" : " ").trim(),
+                                             utente: campoUtente.text, imap: campoImap.text, portaImap: parseInt(campoPortaImap.text), smtp: campoSmtp.text,
                                              portaSmtp: parseInt(campoPortaSmtp.text), sicurezzaSmtp: sicurezza.currentIndex === 1 ? "starttls" : "ssl" }], "aggiungi")
         }
         function finito(r) {
             lavoro = false
-            if (!r.ok) { errore.text = r.messaggio; avanzate = true; return }
-            campoPw.text = ""; conf = null; avanzate = false
+            if (!r.ok) {
+                var m = r.messaggio || ""
+                if (servizio && servizio.app && /password/i.test(m)) m = I18n.t("La password non è stata accettata. Serve la password per le app, non quella che usi di solito: segui i passaggi qui sopra.")
+                else if (servizio && servizio.id === "altro") avanzate = true
+                errore.text = m
+                return
+            }
+            campoPw.text = ""; conf = null; avanzate = false; servizio = null
             finestra.configurazione = false
             finestra.ricaricaConti()
             finestra.vai(r.id, "INBOX", I18n.t("Entrata"))
             if (r.messaggio) avviso.mostra(r.messaggio)
         }
         function avanti() {
-            if (!campoEmail.text.includes("@") || !campoPw.text) { errore.text = I18n.t("Scrivi l'email e la password"); return }
+            if (!campoEmail.text.includes("@")) { errore.text = I18n.t("Scrivi il tuo indirizzo email"); campoEmail.forceActiveFocus(); return }
+            if (!campoPw.text) { errore.text = I18n.t("Scrivi la password"); campoPw.forceActiveFocus(); return }
             if (conf) { aggiungi(); return }
             lavoro = true; errore.text = ""
             ponte.avvia("configura", [campoEmail.text.trim()], "configura")
@@ -163,62 +203,116 @@ Finestra {
             contentHeight: Math.max(height, moduloConto.implicitHeight + 80)
             ColumnLayout {
                 id: moduloConto
-                width: Math.min(440, parent.width - 48)
+                width: Math.min(nuovoConto.servizio ? 460 : 560, parent.width - 48)
                 anchors.horizontalCenter: parent.horizontalCenter
                 y: Math.max(40, (parent.height - implicitHeight) / 2 - 20)
-                spacing: 12
+                spacing: 14
                 Rectangle {
                     Layout.alignment: Qt.AlignHCenter
                     width: 72; height: 72; radius: 18
                     gradient: Gradient { GradientStop { position: 0; color: "#60A5FA" } GradientStop { position: 1; color: "#2563EB" } }
                     Simbolo { anchors.centerIn: parent; nome: "busta"; lato: 38; colore: "#FFFFFF" }
                 }
-                Text { Layout.alignment: Qt.AlignHCenter; text: I18n.t("Aggiungi un account di posta"); color: Tema.testo; font.family: Tema.font; font.pixelSize: 22; font.weight: Font.Bold }
                 Text {
-                    Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter; wrapMode: Text.WordWrap
-                    text: I18n.t("Funziona con Gmail, iCloud, Yahoo, Libero, Virgilio, Alice e TIM, Tiscali, Aruba e PEC, Fastweb e con ogni posta IMAP.")
-                    color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 13
+                    Layout.alignment: Qt.AlignHCenter
+                    text: nuovoConto.servizio ? nuovoConto.servizio.nome : I18n.t("Quale posta usi?")
+                    color: Tema.testo; font.family: Tema.font; font.pixelSize: 24; font.weight: Font.Bold
                 }
-                CampoTesto { id: campoNome; Layout.fillWidth: true; placeholderText: I18n.t("Il tuo nome (lo vede chi riceve)") }
-                CampoTesto { id: campoEmail; Layout.fillWidth: true; placeholderText: I18n.t("Indirizzo email"); inputMethodHints: Qt.ImhEmailCharactersOnly; onTextChanged: nuovoConto.conf = null }
-                CampoTesto { id: campoPw; Layout.fillWidth: true; placeholderText: I18n.t("Password"); echoMode: TextInput.Password; onAccepted: nuovoConto.avanti() }
-                Text {
-                    visible: !!nuovoConto.conf && !!nuovoConto.conf.nota
-                    Layout.fillWidth: true; wrapMode: Text.WordWrap
-                    text: nuovoConto.conf ? nuovoConto.conf.nota : ""
-                    color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 12
-                }
-                Text {
-                    text: nuovoConto.avanzate ? I18n.t("Nascondi i server") : I18n.t("Server e porte…")
-                    color: Tema.accento; font.family: Tema.font; font.pixelSize: 13
-                    MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: nuovoConto.avanzate = !nuovoConto.avanzate }
-                }
+
+                // passo 1: il servizio
                 GridLayout {
-                    visible: nuovoConto.avanzate
+                    visible: !nuovoConto.servizio
                     Layout.fillWidth: true
-                    columns: 3; columnSpacing: 8; rowSpacing: 8
-                    Text { text: I18n.t("Ricezione (IMAP)"); color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 12 }
-                    CampoTesto { id: campoImap; Layout.fillWidth: true; placeholderText: "imap.esempio.it" }
-                    CampoTesto { id: campoPortaImap; Layout.preferredWidth: 64; text: "993"; inputMethodHints: Qt.ImhDigitsOnly }
-                    Text { text: I18n.t("Invio (SMTP)"); color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 12 }
-                    CampoTesto { id: campoSmtp; Layout.fillWidth: true; placeholderText: "smtp.esempio.it" }
-                    CampoTesto { id: campoPortaSmtp; Layout.preferredWidth: 64; text: "465"; inputMethodHints: Qt.ImhDigitsOnly }
-                    Text { text: I18n.t("Sicurezza invio"); color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 12 }
-                    Scelta { id: sicurezza; Layout.fillWidth: true; Layout.columnSpan: 2; model: [I18n.t("SSL/TLS (porta 465)"), I18n.t("STARTTLS (porta 587)")]; textRole: ""; valueRole: "" }
-                    Text { text: I18n.t("Nome utente"); color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 12 }
-                    CampoTesto { id: campoUtente; Layout.fillWidth: true; Layout.columnSpan: 2; placeholderText: I18n.t("di solito l'email") }
+                    Layout.topMargin: 6
+                    columns: 2; columnSpacing: 10; rowSpacing: 10
+                    Repeater {
+                        model: nuovoConto.servizi
+                        Rectangle {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 56
+                            radius: 12
+                            color: sopraServ.hovered ? Tema.superficieAlta : Tema.superficie
+                            border.color: sopraServ.hovered ? modelData.colore : "transparent"; border.width: 1.5
+                            HoverHandler { id: sopraServ }
+                            Row {
+                                anchors.verticalCenter: parent.verticalCenter; x: 16; spacing: 12
+                                Rectangle { anchors.verticalCenter: parent.verticalCenter; width: 12; height: 12; radius: 6; color: modelData.colore }
+                                Text { anchors.verticalCenter: parent.verticalCenter; text: modelData.nome; color: Tema.testo; font.family: Tema.font; font.pixelSize: 15; font.weight: Font.DemiBold }
+                            }
+                            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: nuovoConto.scegli(modelData) }
+                        }
+                    }
                 }
-                Text { id: errore; visible: text !== ""; Layout.fillWidth: true; wrapMode: Text.WordWrap; color: "#EF4444"; font.family: Tema.font; font.pixelSize: 13 }
+
+                // passo 2: chi sei, email e password
+                ColumnLayout {
+                    visible: !!nuovoConto.servizio
+                    Layout.fillWidth: true
+                    spacing: 10
+                    Rectangle {
+                        visible: !!nuovoConto.servizio && nuovoConto.servizio.app === true
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: guida.implicitHeight + 64
+                        radius: 12; color: Tema.superficie
+                        ColumnLayout {
+                            anchors.fill: parent; anchors.margins: 14; spacing: 10
+                            Text { id: guida; Layout.fillWidth: true; wrapMode: Text.WordWrap; lineHeight: 1.25; text: nuovoConto.servizio ? (nuovoConto.servizio.guida || "") : ""; color: Tema.testo; font.family: Tema.font; font.pixelSize: 13 }
+                            Pulsante { text: I18n.t("Apri la pagina"); onClicked: ponte.chiama("apriLink", [nuovoConto.servizio.pagina]) }
+                        }
+                    }
+                    Text { text: I18n.t("Il tuo nome"); color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 12 }
+                    CampoTesto { id: campoNome; Layout.fillWidth: true; placeholderText: I18n.t("Lo vede chi riceve i tuoi messaggi") }
+                    Text { text: I18n.t("Indirizzo email"); color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 12 }
+                    CampoTesto {
+                        id: campoEmail; Layout.fillWidth: true
+                        placeholderText: nuovoConto.servizio ? nuovoConto.servizio.esempio : ""
+                        inputMethodHints: Qt.ImhEmailCharactersOnly
+                        onTextChanged: nuovoConto.conf = null
+                        onAccepted: campoPw.forceActiveFocus()
+                    }
+                    Text {
+                        text: nuovoConto.servizio && nuovoConto.servizio.app ? I18n.t("Password per le app") : I18n.t("Password")
+                        color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 12
+                    }
+                    CampoTesto { id: campoPw; Layout.fillWidth: true; placeholderText: nuovoConto.servizio && nuovoConto.servizio.id === "gmail" ? "abcd efgh ijkl mnop" : ""; echoMode: TextInput.Password; onAccepted: nuovoConto.avanti() }
+                    Text { id: errore; visible: text !== ""; Layout.fillWidth: true; wrapMode: Text.WordWrap; color: "#EF4444"; font.family: Tema.font; font.pixelSize: 13 }
+                    // impostazioni dei server: solo per «Altra posta», e solo se servono
+                    Text {
+                        visible: !!nuovoConto.servizio && nuovoConto.servizio.id === "altro"
+                        text: nuovoConto.avanzate ? I18n.t("Nascondi le impostazioni dei server") : I18n.t("Impostazioni dei server (di solito non servono)")
+                        color: Tema.accento; font.family: Tema.font; font.pixelSize: 12
+                        MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: nuovoConto.avanzate = !nuovoConto.avanzate }
+                    }
+                    GridLayout {
+                        visible: nuovoConto.avanzate
+                        Layout.fillWidth: true
+                        columns: 3; columnSpacing: 8; rowSpacing: 8
+                        Text { text: I18n.t("Ricezione (IMAP)"); color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 12 }
+                        CampoTesto { id: campoImap; Layout.fillWidth: true; placeholderText: "imap.esempio.it" }
+                        CampoTesto { id: campoPortaImap; Layout.preferredWidth: 64; text: "993"; inputMethodHints: Qt.ImhDigitsOnly }
+                        Text { text: I18n.t("Invio (SMTP)"); color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 12 }
+                        CampoTesto { id: campoSmtp; Layout.fillWidth: true; placeholderText: "smtp.esempio.it" }
+                        CampoTesto { id: campoPortaSmtp; Layout.preferredWidth: 64; text: "465"; inputMethodHints: Qt.ImhDigitsOnly }
+                        Text { text: I18n.t("Sicurezza invio"); color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 12 }
+                        Scelta { id: sicurezza; Layout.fillWidth: true; Layout.columnSpan: 2; model: [I18n.t("SSL/TLS (porta 465)"), I18n.t("STARTTLS (porta 587)")]; textRole: ""; valueRole: "" }
+                        Text { text: I18n.t("Nome utente"); color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 12 }
+                        CampoTesto { id: campoUtente; Layout.fillWidth: true; Layout.columnSpan: 2; placeholderText: I18n.t("di solito l'email") }
+                    }
+                }
                 RowLayout {
                     Layout.fillWidth: true; Layout.topMargin: 6
-                    Pulsante { visible: finestra.conti.length > 0; text: I18n.t("Annulla"); onClicked: { finestra.configurazione = false; nuovoConto.conf = null; errore.text = "" } }
+                    Pulsante {
+                        visible: !!nuovoConto.servizio || finestra.conti.length > 0
+                        text: nuovoConto.servizio ? I18n.t("Indietro") : I18n.t("Annulla")
+                        onClicked: nuovoConto.servizio ? nuovoConto.indietro() : (finestra.configurazione = false)
+                    }
                     Item { Layout.fillWidth: true }
                     BusyIndicator { visible: nuovoConto.lavoro; running: visible; Layout.preferredWidth: 26; Layout.preferredHeight: 26 }
-                    Pulsante { text: nuovoConto.lavoro ? I18n.t("Collegamento…") : I18n.t("Aggiungi"); principale: true; enabled: !nuovoConto.lavoro; onClicked: nuovoConto.avanti() }
+                    Pulsante { visible: !!nuovoConto.servizio; text: nuovoConto.lavoro ? I18n.t("Collegamento…") : I18n.t("Accedi"); principale: true; enabled: !nuovoConto.lavoro; onClicked: nuovoConto.avanti() }
                 }
                 Text {
-                    Layout.fillWidth: true; Layout.topMargin: 10; wrapMode: Text.WordWrap; horizontalAlignment: Text.AlignHCenter
-                    text: I18n.t("La password resta su questo computer, cifrata. I messaggi si scaricano direttamente dal tuo fornitore di posta.")
+                    Layout.fillWidth: true; Layout.topMargin: 6; wrapMode: Text.WordWrap; horizontalAlignment: Text.AlignHCenter
+                    text: I18n.t("La password resta su questo computer, cifrata. I messaggi arrivano direttamente dal tuo servizio di posta.")
                     color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 11
                 }
             }
@@ -242,7 +336,20 @@ Finestra {
                     Layout.fillWidth: true; Layout.margins: 12
                     Text { text: I18n.t("Caselle"); color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 12; font.weight: Font.DemiBold; Layout.fillWidth: true }
                     BottoneIcona { simbolo: "freccia-giro"; suggerimento: I18n.t("Controlla la posta"); ruota: finestra.aggiornando; onClicked: finestra.aggiorna() }
-                    BottoneIcona { simbolo: "matita"; suggerimento: I18n.t("Scrivi un messaggio"); colore: Tema.accento; onClicked: finestra.scrivi() }
+
+                }
+                Rectangle {
+                    Layout.fillWidth: true; Layout.leftMargin: 10; Layout.rightMargin: 10; Layout.bottomMargin: 8
+                    Layout.preferredHeight: 40
+                    radius: 10
+                    color: sopraScrivi.hovered ? Qt.lighter(Tema.accento, 1.1) : Tema.accento
+                    HoverHandler { id: sopraScrivi }
+                    Row {
+                        anchors.centerIn: parent; spacing: 8
+                        Simbolo { anchors.verticalCenter: parent.verticalCenter; nome: "matita"; lato: 17; colore: "#FFFFFF" }
+                        Text { anchors.verticalCenter: parent.verticalCenter; text: I18n.t("Scrivi un messaggio"); color: "white"; font.family: Tema.font; font.pixelSize: 14; font.weight: Font.DemiBold }
+                    }
+                    MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: finestra.scrivi() }
                 }
                 Flickable {
                     Layout.fillWidth: true
@@ -389,28 +496,25 @@ Finestra {
                 anchors.fill: parent
                 visible: !!finestra.aperto
                 spacing: 0
-                // comandi
+                // comandi: i più usati con il nome scritto, gli altri in «Altro»
                 RowLayout {
+                    id: barraComandi
                     Layout.fillWidth: true; Layout.leftMargin: 12; Layout.rightMargin: 12; Layout.topMargin: 8; Layout.bottomMargin: 8
-                    spacing: 2
-                    BottoneIcona { simbolo: "rispondi"; suggerimento: I18n.t("Rispondi"); onClicked: finestra.scrivi(ponte.chiama("bozza", [finestra.aperto.conto, finestra.aperto.cartella, finestra.aperto.uid, "rispondi"])) }
-                    BottoneIcona { simbolo: "rispondi-tutti"; suggerimento: I18n.t("Rispondi a tutti"); onClicked: finestra.scrivi(ponte.chiama("bozza", [finestra.aperto.conto, finestra.aperto.cartella, finestra.aperto.uid, "tutti"])) }
-                    BottoneIcona { simbolo: "inoltra"; suggerimento: I18n.t("Inoltra"); onClicked: finestra.scrivi(ponte.chiama("bozza", [finestra.aperto.conto, finestra.aperto.cartella, finestra.aperto.uid, "inoltra"])) }
-                    Rectangle { width: 1; height: 20; color: Tema.bordo; Layout.leftMargin: 6; Layout.rightMargin: 6 }
-                    BottoneIcona { simbolo: "archivio"; suggerimento: I18n.t("Archivia"); onClicked: finestra.azione("sposta", [finestra.aperto.conto, finestra.aperto.cartella, finestra.aperto.uid, "archivio"], true) }
-                    BottoneIcona { simbolo: "attenzione"; suggerimento: I18n.t("Sposta in Indesiderata"); onClicked: finestra.azione("sposta", [finestra.aperto.conto, finestra.aperto.cartella, finestra.aperto.uid, "indesiderata"], true) }
-                    BottoneIcona { simbolo: "cestino"; suggerimento: I18n.t("Elimina"); onClicked: finestra.azione("elimina", [finestra.aperto.conto, finestra.aperto.cartella, finestra.aperto.uid], true) }
-                    BottoneIcona { simbolo: "cartella"; suggerimento: I18n.t("Sposta in…"); onClicked: menuSposta.popup() }
+                    spacing: 6
+                    readonly property var m: finestra.messaggi.find(function (x) { return finestra.aperto && x.uid === finestra.aperto.uid && x.conto === finestra.aperto.conto }) || {}
+                    BottoneTesto { simbolo: "rispondi"; testo: I18n.t("Rispondi"); onClicked: finestra.scrivi(ponte.chiama("bozza", [finestra.aperto.conto, finestra.aperto.cartella, finestra.aperto.uid, "rispondi"])) }
+                    BottoneTesto { simbolo: "inoltra"; testo: I18n.t("Inoltra"); onClicked: finestra.scrivi(ponte.chiama("bozza", [finestra.aperto.conto, finestra.aperto.cartella, finestra.aperto.uid, "inoltra"])) }
+                    BottoneTesto { simbolo: "archivio"; testo: I18n.t("Archivia"); onClicked: finestra.azione("sposta", [finestra.aperto.conto, finestra.aperto.cartella, finestra.aperto.uid, "archivio"], true) }
+                    BottoneTesto { simbolo: "cestino"; testo: I18n.t("Elimina"); onClicked: finestra.azione("elimina", [finestra.aperto.conto, finestra.aperto.cartella, finestra.aperto.uid], true) }
                     Item { Layout.fillWidth: true }
-                    BottoneIcona {
-                        readonly property var m: finestra.messaggi.find(function (x) { return finestra.aperto && x.uid === finestra.aperto.uid && x.conto === finestra.aperto.conto }) || {}
-                        simbolo: m.bandiera ? "bandiera-piena" : "bandiera"; colore: m.bandiera ? "#F59E0B" : Tema.testoSecondario
-                        suggerimento: m.bandiera ? I18n.t("Togli la bandiera") : I18n.t("Bandiera")
-                        onClicked: finestra.azione("segna", [finestra.aperto.conto, finestra.aperto.cartella, finestra.aperto.uid, "bandiera", !m.bandiera], false)
-                    }
-                    BottoneIcona {
-                        simbolo: "busta"; suggerimento: I18n.t("Segna come non letto")
-                        onClicked: { finestra.azione("segna", [finestra.aperto.conto, finestra.aperto.cartella, finestra.aperto.uid, "letto", false], false); finestra.aperto = null }
+                    BottoneTesto { simbolo: "elenco"; testo: I18n.t("Altro"); onClicked: menuAltro.popup() }
+                    Menu {
+                        id: menuAltro
+                        MenuItem { text: I18n.t("Rispondi a tutti"); onTriggered: finestra.scrivi(ponte.chiama("bozza", [finestra.aperto.conto, finestra.aperto.cartella, finestra.aperto.uid, "tutti"])) }
+                        MenuItem { text: barraComandi.m.bandiera ? I18n.t("Togli la bandiera") : I18n.t("Metti la bandiera"); onTriggered: finestra.azione("segna", [finestra.aperto.conto, finestra.aperto.cartella, finestra.aperto.uid, "bandiera", !barraComandi.m.bandiera], false) }
+                        MenuItem { text: I18n.t("Segna come non letto"); onTriggered: { finestra.azione("segna", [finestra.aperto.conto, finestra.aperto.cartella, finestra.aperto.uid, "letto", false], false); finestra.aperto = null } }
+                        MenuItem { text: I18n.t("Sposta in Indesiderata"); onTriggered: finestra.azione("sposta", [finestra.aperto.conto, finestra.aperto.cartella, finestra.aperto.uid, "indesiderata"], true) }
+                        MenuItem { text: I18n.t("Sposta in un'altra cartella…"); onTriggered: menuSposta.popup() }
                     }
                 }
                 Rectangle { Layout.fillWidth: true; height: 1; color: Tema.bordo }
@@ -637,6 +741,22 @@ Finestra {
             Text { visible: parent.parent.numero > 0; text: parent.parent.numero; color: Tema.testoSecondario; font.family: Tema.font; font.pixelSize: 12; font.weight: Font.DemiBold }
         }
         MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: parent.scelta() }
+    }
+    component BottoneTesto: Rectangle {
+        property string simbolo
+        property string testo
+        signal clicked()
+        implicitWidth: rigaBT.implicitWidth + 22; implicitHeight: 32
+        radius: 8
+        color: sopraBT.hovered ? Tema.superficieAlta : Tema.superficie
+        HoverHandler { id: sopraBT }
+        Row {
+            id: rigaBT; anchors.centerIn: parent; spacing: 7
+            Simbolo { anchors.verticalCenter: parent.verticalCenter; nome: parent.parent.simbolo; lato: 16; colore: Tema.testo }
+            Text { anchors.verticalCenter: parent.verticalCenter; text: parent.parent.testo; color: Tema.testo; font.family: Tema.font; font.pixelSize: 13 }
+        }
+        MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: parent.clicked() }
+        Accessible.role: Accessible.Button; Accessible.name: testo
     }
     component BottoneIcona: Rectangle {
         property string simbolo

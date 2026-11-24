@@ -35,9 +35,7 @@ gvfs-backends
 qterminal
 firefox-esr
 # Desktop remoto: collegarsi ad altri computer (RDP, VNC) e farsi usare (VNC)
-?remmina
-?remmina-plugin-rdp
-?remmina-plugin-vnc
+?freerdp3-wayland
 ?wayvnc
 # Suoneria di sveglia e timer (PipeWire o ALSA)
 ?pipewire-bin

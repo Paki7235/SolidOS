@@ -32,13 +32,13 @@ calcolatrice	nucleo.apps.calcolatrice	Calcolatrice	org.gnome.Calculator	Utility;
 archivi	nucleo.apps.archivi	Archivi	org.gnome.FileRoller	Utility;Archiving;	Apri, estrai e crea archivi zip	no	application/zip;application/x-tar;application/x-compressed-tar;application/x-bzip-compressed-tar;application/x-xz-compressed-tar;application/x-7z-compressed;application/vnd.rar;application/x-rar;application/gzip;
 file	nucleo.apps.file	File	system-file-manager	System;FileManager;Utility;	Sfoglia file, cartelle, rete e dispositivi	no	inode/directory;
 note	nucleo.apps.note	Note	accessories-notes	Office;Utility;	Appunti veloci, liste di cose da fare e idee	no	
-dove	nucleo.apps.dove	Dov'è	org.gnome.Maps	Utility;Network;	Trova i tuoi dispositivi: posizione sulla mappa, fai suonare, blocca	no	
+dove	nucleo.apps.dove	Dov'è	@OS_ID@-dove	Utility;Network;	Trova i tuoi dispositivi: posizione sulla mappa, fai suonare, blocca	no	
 solidid	nucleo.solidid
 mobile	nucleo.mobile	@OS_NAME@ Mobile	@OS_ID@-logo	Utility;	Anteprima dell'interfaccia per telefoni: blocco, Home, Libreria app, Centro di controllo e Personalizza	no	
 web	nucleo.apps.web	Vela	epiphany	Network;WebBrowser;	Naviga in internet: schede, preferiti, download e finestra privata	no	text/html;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;
 aggiornamento-software	nucleo.apps.aggiornamento_software	Aggiornamento software	system-software-update	Settings;System;	Nuove versioni di @OS_NAME@: cosa cambia, aggiorna e riavvia	no	
 contatti	nucleo.apps.contatti	Contatti	org.gnome.Contacts	Office;ContactManagement;	Rubrica condivisa con il telefono: numeri, email, indirizzi	no	text/vcard;text/x-vcard;
-desktop-remoto	nucleo.apps.desktop_remoto	Desktop remoto	org.remmina.Remmina	Network;RemoteAccess;	Usa un altro computer da qui, o lascia usare questo	no	
+desktop-remoto	nucleo.apps.desktop_remoto	Desktop remoto	@OS_ID@-desktop-remoto	Network;RemoteAccess;	Usa un altro computer da qui, o lascia usare questo	no	
 mappe	nucleo.apps.mappe	Mappe	org.gnome.Maps	Utility;Maps;	Mappe di @OS_NAME@, ricerca dei luoghi e navigatore	no	
 meteo	nucleo.apps.meteo	Meteo	org.gnome.Weather	Utility;	Il tempo di adesso, delle prossime ore e dei prossimi giorni	no	
 orologio	nucleo.apps.orologio	Orologio	org.gnome.clocks	Utility;Clock;	Sveglie, timer, cronometro e ora nel mondo	no	
@@ -46,6 +46,6 @@ avvisi	nucleo.avvisi
 calendario	nucleo.apps.calendario	Calendario	org.gnome.Calendar	Office;Calendar;	Appuntamenti con avvisi, calendari colorati, file .ics	no	text/calendar;
 promemoria	nucleo.apps.promemoria	Promemoria	org.gnome.Todo	Office;ProjectManagement;	Liste di cose da fare con scadenze, avvisi e bandiere	no	
 registratore	nucleo.apps.registratore	Registratore	org.gnome.SoundRecorder	AudioVideo;Audio;Recorder;	Registrazioni vocali con pausa, riascolto e forma d'onda	no	
-password	nucleo.apps.password	Password	dialog-password	Utility;Security;	Password dei siti, codici di verifica e Wi-Fi in una cassaforte cifrata	no	
+password	nucleo.apps.password	Password	@OS_ID@-password	Utility;Security;	Password dei siti, codici di verifica e Wi-Fi in una cassaforte cifrata	no	
 mail	nucleo.apps.mail	Mail	internet-mail	Network;Email;	Posta con più account, lettura sicura, allegati e avvisi	no	x-scheme-handler/mailto;
-videochiamate	nucleo.apps.videochiamate	Videochiamate	camera-web	Network;VideoConference;	Chiamate audio e video con chi ha un Solid ID, dirette e cifrate	no	
+videochiamate	nucleo.apps.videochiamate	Videochiamate	@OS_ID@-videochiamate	Network;VideoConference;	Chiamate audio e video con chi ha un Solid ID, dirette e cifrate	no	

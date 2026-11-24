@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+ <defs>
+  <linearGradient id="f-desktop-remoto" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4A5163"/><stop offset="1" stop-color="#232733"/></linearGradient>
+  <linearGradient id="l-desktop-remoto" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.22"/><stop offset="0.45" stop-color="#FFFFFF" stop-opacity="0"/></linearGradient>
+ </defs>
+ <rect x="4" y="5.2" width="56" height="56" rx="12.5" fill="#000000" opacity="0.18"/>
+ <rect x="4" y="4" width="56" height="56" rx="12.5" fill="url(#f-desktop-remoto)"/>
+ <rect x="4" y="4" width="56" height="56" rx="12.5" fill="url(#l-desktop-remoto)"/>
+ 
+ <rect x="26" y="14" width="27" height="19" rx="3.5" fill="#FFFFFF" fill-opacity="0.35"/>
+ <g transform="translate(0 0.8)" opacity="0.2"><rect x="11" y="23" width="33" height="23" rx="4" fill="#000"/></g>
+ <rect x="11" y="23" width="33" height="23" rx="4" fill="#FFFFFF"/>
+ <rect x="14" y="26" width="27" height="17" rx="2.2" fill="#4F8BFF"/>
+ <path d="M23 51h9M27.5 46v5" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/>
+ <path d="M21.5 35.5h11m-3.5-3.8 3.8 3.8-3.8 3.8" fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

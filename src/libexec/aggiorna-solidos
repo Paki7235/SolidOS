@@ -84,6 +84,22 @@ def _pacchetti_richiesti():
                        capture_output=True, env=ambiente, timeout=1800)
 
 
+def _pacchetti_tolti():
+    """Toglie i programmi che SolidOS non usa più (elenco nel pacchetto), se ci sono."""
+    import re
+
+    elenco = Path("/usr/share/nucleo/pacchetti-tolti.txt")
+    if not elenco.is_file():
+        return
+    nomi = [r.strip() for r in elenco.read_text().splitlines() if r.strip() and not r.startswith("#")]
+    nomi = [n for n in nomi if re.fullmatch(r"[a-z0-9][a-z0-9.+-]{1,80}", n)]
+    presenti = [p for p in nomi if subprocess.run(["dpkg-query", "-W", "-f=${Status}", p], capture_output=True,
+                                                  text=True).stdout.strip() == "install ok installed"]
+    if presenti:
+        ambiente = dict(os.environ, DEBIAN_FRONTEND="noninteractive")
+        subprocess.run(["apt-get", "remove", "-y", "-qq", *presenti], capture_output=True, env=ambiente, timeout=900)
+
+
 def _senza_password():
     """Account senza password (creati prima di questa versione): nel gruppo che evita le
     richieste di password vuote (regola polkit 50-senza-password)."""
@@ -162,6 +178,7 @@ def main():
     _senza_password()
     try:
         _pacchetti_richiesti()
+        _pacchetti_tolti()
     except (OSError, subprocess.TimeoutExpired):
         pass
     subprocess.run(["glib-compile-schemas", "/usr/share/glib-2.0/schemas"], check=False, capture_output=True)
