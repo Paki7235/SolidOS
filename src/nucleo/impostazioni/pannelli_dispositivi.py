@@ -126,8 +126,9 @@ class PannelloAudio(Pannello):
 
 class PannelloEnergia(Pannello):
     id = "energia"
-    titolo = T("Alimentazione e batteria")
-    icona = "battery"
+    # Sui fissi niente batteria: il pannello si chiama solo «Alimentazione»
+    titolo = T("Alimentazione e batteria") if energia.portatile() else T("Alimentazione")
+    icona = "battery" if energia.portatile() else "preferences-system-power"
     gruppo = T("Dispositivi")
     chiavi = "batteria risparmio energetico prestazioni sospensione blocco schermo"
 
