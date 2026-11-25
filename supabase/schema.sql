@@ -280,3 +280,26 @@ language sql stable security definer set search_path = public as $$
 $$;
 revoke all on function public.persona_da_email(text) from public, anon;
 grant execute on function public.persona_da_email(text) to authenticated;
+
+-- ── Sincronia dei dati tra i dispositivi (contatti, calendari, eventi, liste, promemoria, note) ──
+-- Una riga per voce, visibile solo al proprietario; «modificato» si aggiorna da solo.
+create table if not exists public.sincronia (
+  proprietario uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  raccolta text not null,
+  voce text not null,
+  dati jsonb,
+  eliminato boolean not null default false,
+  dispositivo text,
+  modificato timestamptz not null default now(),
+  primary key (proprietario, raccolta, voce)
+);
+create index if not exists sincronia_modificato on public.sincronia (proprietario, modificato);
+alter table public.sincronia enable row level security;
+drop policy if exists "sincronia propria" on public.sincronia;
+create policy "sincronia propria" on public.sincronia
+  for all to authenticated using (proprietario = auth.uid()) with check (proprietario = auth.uid());
+create or replace function public.sincronia_modificato() returns trigger language plpgsql as $$
+begin new.modificato := now(); return new; end $$;
+drop trigger if exists sincronia_modificato on public.sincronia;
+create trigger sincronia_modificato before insert or update on public.sincronia
+  for each row execute function public.sincronia_modificato();
